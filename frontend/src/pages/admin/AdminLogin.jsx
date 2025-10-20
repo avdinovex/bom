@@ -139,15 +139,6 @@ const AdminLogin = () => {
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
-              <p className="text-xs text-blue-600">
-                Email: admin@ridebooking.com<br />
-                Password: admin123
-              </p>
-            </div>
           </form>
         </div>
       </div>
