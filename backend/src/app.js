@@ -26,10 +26,26 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(morgan('dev'));
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://brotherhoodofmumbai.cloud',
+  'https://www.brotherhoodofmumbai.cloud'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
+
 
 // Rate limiting for general API routes - Very lenient for development
 const limiter = rateLimit({
