@@ -1,0 +1,228 @@
+import mongoose from 'mongoose';
+
+const { Schema, model } = mongoose;
+
+const bookingSchema = new Schema({
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User is required']
+  },
+  ride: {
+    type: Schema.Types.ObjectId,
+    ref: 'UpcomingRide',
+    required: [true, 'Ride is required']
+  },
+  
+  // Personal Information
+  personalInfo: {
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      trim: true,
+      lowercase: true
+    },
+    fullName: {
+      type: String,
+      required: [true, 'Full name is required'],
+      trim: true
+    },
+    address: {
+      type: String,
+      required: [true, 'Address is required'],
+      trim: true
+    },
+    contactNumber: {
+      type: String,
+      required: [true, 'Contact number is required'],
+      trim: true
+    },
+    gender: {
+      type: String,
+      required: [true, 'Gender is required'],
+      enum: ['Male', 'Female']
+    },
+    dateOfBirth: {
+      type: Date,
+      required: [true, 'Date of birth is required']
+    },
+    bloodGroup: {
+      type: String,
+      required: [true, 'Blood group is required'],
+      enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+    }
+  },
+
+  // Motorcycle Information
+  motorcycleInfo: {
+    modelName: {
+      type: String,
+      required: [true, 'Motorcycle model name is required'],
+      trim: true
+    },
+    motorcycleNumber: {
+      type: String,
+      required: [true, 'Motorcycle number is required'],
+      trim: true,
+      uppercase: true
+    }
+  },
+
+  // Emergency Contact
+  emergencyContact: {
+    personName: {
+      type: String,
+      required: [true, 'Emergency contact person name is required'],
+      trim: true
+    },
+    number: {
+      type: String,
+      required: [true, 'Emergency contact number is required'],
+      trim: true
+    }
+  },
+
+  // Medical Information
+  medicalHistory: {
+    type: String,
+    required: [true, 'Medical history information is required'],
+    trim: true
+  },
+
+  // Payment Information
+  amount: {
+    type: Number,
+    required: [true, 'Amount is required'],
+    min: [0, 'Amount cannot be negative']
+  },
+  currency: {
+    type: String,
+    default: 'INR'
+  },
+  paymentUtr: {
+    type: String,
+    trim: true
+    // Made optional - will be validated in routes based on payment method
+  },
+
+  // Agreements
+  agreements: {
+    foodAndRefreshments: {
+      type: Boolean,
+      required: [true, 'Food and refreshments agreement is required'],
+      default: false
+    },
+    informationAccuracy: {
+      type: Boolean,
+      required: [true, 'Information accuracy agreement is required'],
+      default: false
+    },
+    noContrabands: {
+      type: Boolean,
+      required: [true, 'No contrabands agreement is required'],
+      default: false
+    },
+    rulesAndRegulations: {
+      type: Boolean,
+      required: [true, 'Rules and regulations agreement is required'],
+      default: false
+    }
+  },
+  razorpayOrderId: {
+    type: String,
+    trim: true
+  },
+  razorpayPaymentId: {
+    type: String,
+    trim: true
+  },
+  razorpaySignature: {
+    type: String,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: {
+      values: ['created', 'paid', 'failed', 'refunded', 'cancelled'],
+      message: 'Status must be one of: created, paid, failed, refunded, cancelled'
+    },
+    default: 'created'
+  },
+  paymentMethod: {
+    type: String,
+    default: 'razorpay'
+  },
+  bookingNumber: {
+    type: String,
+    unique: true,
+    trim: true
+  },
+  notes: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Notes cannot exceed 500 characters']
+  },
+  refundAmount: {
+    type: Number,
+    min: [0, 'Refund amount cannot be negative'],
+    default: 0
+  },
+  refundReason: {
+    type: String,
+    trim: true
+  },
+  refundedAt: {
+    type: Date
+  },
+  paidAt: {
+    type: Date
+  },
+  cancelledAt: {
+    type: Date
+  },
+  cancellationReason: {
+    type: String,
+    trim: true
+  }
+}, {
+  timestamps: true
+});
+
+// Indexes for better query performance (bookingNumber index is created automatically by unique: true)
+bookingSchema.index({ user: 1, status: 1 });
+bookingSchema.index({ ride: 1, status: 1 });
+bookingSchema.index({ razorpayOrderId: 1 });
+bookingSchema.index({ razorpayPaymentId: 1 });
+bookingSchema.index({ createdAt: -1 });
+
+// Generate booking number before saving
+bookingSchema.pre('save', async function(next) {
+  if (!this.bookingNumber) {
+    // Generate a unique booking number
+    const timestamp = Date.now().toString();
+    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    this.bookingNumber = `BK${timestamp}${randomNum}`;
+  }
+  
+  // Set timestamps based on status changes
+  if (this.isModified('status')) {
+    switch (this.status) {
+      case 'paid':
+        if (!this.paidAt) this.paidAt = new Date();
+        break;
+      case 'cancelled':
+        if (!this.cancelledAt) this.cancelledAt = new Date();
+        break;
+      case 'refunded':
+        if (!this.refundedAt) this.refundedAt = new Date();
+        break;
+    }
+  }
+  
+  next();
+});
+
+// Compound index to ensure one booking per user per ride
+bookingSchema.index({ user: 1, ride: 1 }, { unique: true });
+
+export default model('Booking', bookingSchema);
