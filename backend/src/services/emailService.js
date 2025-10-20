@@ -8,19 +8,36 @@ class EmailService {
   }
 
   init() {
-    // Create transporter using Gmail SMTP
+    // Validate environment variables
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.error('Email configuration error: EMAIL_USER and EMAIL_PASSWORD must be set');
+      return;
+    }
+
+    // Create transporter using Gmail SMTP with explicit configuration
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
 
     // Verify connection configuration
     this.transporter.verify((error, success) => {
       if (error) {
-        console.log('Email configuration error:', error);
+        console.error('Email configuration error:', {
+          message: error.message,
+          code: error.code,
+          command: error.command,
+          response: error.response
+        });
       } else {
         console.log('Email server is ready to send messages');
       }
