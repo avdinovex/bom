@@ -95,6 +95,24 @@ router.get('/featured/list', asyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, { rides }, 'Featured rides retrieved successfully'));
 }));
 
+// @route   GET /api/rides/next
+// @desc    Get the next upcoming ride for countdown
+// @access  Public
+router.get('/next/upcoming', asyncHandler(async (req, res) => {
+  const nextRide = await UpcomingRide.findOne({ 
+    isActive: true,
+    startTime: { $gte: new Date() }
+  })
+    .populate('organizer', 'fullName')
+    .sort({ startTime: 1 }); // Get the earliest upcoming ride
+
+  if (!nextRide) {
+    return res.json(new ApiResponse(200, { ride: null }, 'No upcoming rides found'));
+  }
+
+  res.json(new ApiResponse(200, { ride: nextRide }, 'Next ride retrieved successfully'));
+}));
+
 // @route   GET /api/rides/search/filters
 // @desc    Get available filters for rides
 // @access  Public
