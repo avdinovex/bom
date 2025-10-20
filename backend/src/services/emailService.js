@@ -4,10 +4,16 @@ import { ApiError } from '../utils/ApiError.js';
 class EmailService {
   constructor() {
     this.transporter = null;
-    this.init();
+    this.initialized = false;
+    // Don't initialize immediately - do it lazily when first used
   }
 
   init() {
+    // Skip if already initialized
+    if (this.initialized) {
+      return;
+    }
+
     // Validate environment variables
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       console.error('Email configuration error: EMAIL_USER and EMAIL_PASSWORD must be set');
@@ -40,8 +46,16 @@ class EmailService {
         });
       } else {
         console.log('Email server is ready to send messages');
+        this.initialized = true;
       }
     });
+  }
+
+  // Ensure initialization before any email operation
+  ensureInitialized() {
+    if (!this.initialized) {
+      this.init();
+    }
   }
 
   // Generate 6-digit OTP
@@ -51,6 +65,7 @@ class EmailService {
 
   // Send OTP email for registration
   async sendRegistrationOTP(email, otp, fullName) {
+    this.ensureInitialized();
     try {
       const mailOptions = {
         from: {
@@ -114,6 +129,7 @@ class EmailService {
 
   // Send OTP email for forgot password
   async sendForgotPasswordOTP(email, otp) {
+    this.ensureInitialized();
     try {
       const mailOptions = {
         from: {
@@ -179,6 +195,7 @@ class EmailService {
 
   // Send welcome email after successful registration
   async sendWelcomeEmail(email, fullName) {
+    this.ensureInitialized();
     try {
       const mailOptions = {
         from: {
