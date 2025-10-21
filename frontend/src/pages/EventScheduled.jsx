@@ -43,7 +43,10 @@ export default function EventSchedule() {
             </p>
             <button 
               style={styles.viewButton}
-              onClick={() => navigate('/events')}
+              onClick={() => {
+  window.scrollTo(0, 0);
+  navigate('/events');
+}}
               onMouseEnter={(e) => {
                 e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                 e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -71,7 +74,10 @@ export default function EventSchedule() {
               <p style={styles.hostText}>Host by : <span style={styles.hostName}>Brotherhood Of Mumbai</span></p>
               <button 
                 style={styles.cardButton}
-                onClick={() => navigate('/event-detail', { state: malshejEventData })}
+                onClick={() => {
+  window.scrollTo(0, 0);
+  navigate('/event-detail', { state: malshejEventData });
+}}
                 onMouseEnter={(e) => {
                   e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                   e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -102,7 +108,10 @@ export default function EventSchedule() {
               <p style={styles.hostText}>Host by : <span style={styles.hostName}>Brotherhood Of Mumbai</span></p>
               <button 
                 style={styles.cardButton}
-                onClick={() => navigate('/event-detail', { state: damanEventData })}
+                onClick={() => {
+  window.scrollTo(0, 0);
+  navigate('/event-detail', { state: damanEventData });
+}}
                 onMouseEnter={(e) => {
                   e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                   e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -120,7 +129,7 @@ export default function EventSchedule() {
 
           <div style={styles.statsGrid} className="event-stats-grid">
             <div style={styles.statCard}>
-              <h2 style={styles.statNumber}>32</h2>
+              <h2 style={styles.statNumber}>160+</h2>
               <p style={styles.statText}>Brotherhood Of<br />Mumbai Family</p>
             </div>
             <div style={styles.statCard}>

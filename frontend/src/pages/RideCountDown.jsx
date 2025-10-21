@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import api from "../services/api.js";
 
 export default function RideCountdown() {
   const navigate = useNavigate();
@@ -9,39 +8,10 @@ export default function RideCountdown() {
     hours: 0,
     minutes: 0,
     seconds: 0
-  });
-  const [nextRide, setNextRide] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  });  
 
-  // Fetch next ride from backend
   useEffect(() => {
-    const fetchNextRide = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/rides/next/upcoming');
-        
-        if (response.data?.success && response.data?.data?.ride) {
-          setNextRide(response.data.data.ride);
-        } else {
-          setNextRide(null);
-        }
-      } catch (error) {
-        console.error('Error fetching next ride:', error);
-        setError('Failed to load next ride');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNextRide();
-  }, []);
-
-  // Timer effect for countdown
-  useEffect(() => {
-    if (!nextRide || !nextRide.startTime) return;
-
-    const targetDate = new Date(nextRide.startTime).getTime();
+    const targetDate = new Date('2022-06-06T10:30:00').getTime();
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
@@ -55,75 +25,22 @@ export default function RideCountdown() {
           seconds: Math.floor((difference % (1000 * 60)) / 1000)
         });
       } else {
-        // Ride has started, refetch next ride
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        // Optionally refetch the next ride when current one has started
-        window.location.reload();
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [nextRide]);
+  }, []);
 
   const formatNumber = (num) => String(num).padStart(2, '0');
-
-  const formatRideDate = (dateString) => {
-    if (!dateString) return 'TBD';
-    const date = new Date(dateString);
-    const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = monthNames[date.getMonth()];
-    const year = date.getFullYear();
-    const time = date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
-    
-    return { day, month, year, time };
-  };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div style={{...styles.container, justifyContent: 'center'}}>
-        <div style={{color: '#666', fontSize: '18px'}}>Loading next ride...</div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div style={{...styles.container, justifyContent: 'center'}}>
-        <div style={{color: '#d9434d', fontSize: '18px'}}>Error: {error}</div>
-      </div>
-    );
-  }
-
-  // Show no rides state
-  if (!nextRide) {
-    return (
-      <div style={{...styles.container, justifyContent: 'center'}}>
-        <div style={{color: '#666', fontSize: '18px'}}>No upcoming rides scheduled</div>
-      </div>
-    );
-  }
-
-  const rideDate = formatRideDate(nextRide.startTime);
 
   return (
     <div style={styles.container} className="countdown-container">
       <div style={styles.banner} className="countdown-banner">
         <div style={styles.redSection}>
           <div style={styles.textContainer}>
-            <h2 style={styles.title}>NEXT RIDE START AT</h2>
-            <h2 style={{...styles.title}}>{rideDate.month} {rideDate.day}, {rideDate.year} - {rideDate.time}</h2>
-            {nextRide.title && (
-              <h3 style={styles.rideTitle}>{nextRide.title}</h3>
-            )}
+            <h2 style={styles.title}>NEXT RIDE START AT JUNE</h2>
+            <h2 style={styles.title}>06, 2022 - 10:30 AM</h2>
           </div>
           <div style={styles.slant}></div>
         </div>
@@ -152,17 +69,17 @@ export default function RideCountdown() {
         </div>
       </div>
 
-      <button
-        style={styles.registerButton}
-        className="register-button"
-        onClick={() => navigate("/upcoming-rides")}
-      >
-        {timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0
-          ? "RIDE STARTED - VIEW OTHER RIDES"
-          : "REGISTER FOR THIS RIDE"
-        }
-        <span style={styles.arrows}> »</span>
-      </button>
+     <button
+  style={styles.registerButton}
+  className="register-button"
+  onClick={() => {
+  window.scrollTo(0, 0);
+  navigate("/upcoming-rides");
+}}
+>  
+  REGISTER NOW NEXT RIDE
+  <span style={styles.arrows}> »</span>
+</button>
     </div>
   );
 }
@@ -203,27 +120,10 @@ const styles = {
   },
   title: {
     color: 'white',
-    fontSize: 'clamp(14px, 2.5vw, 20px)',
+    fontSize: 'clamp(16px, 3vw, 24px)',
     fontWeight: 'bold',
-    margin: '2px 0',
-    letterSpacing: '1px'
-  },
-  monthTitle: {
-    color: 'white',
-    fontSize: 'clamp(28px, 5vw, 42px)',
-    fontWeight: '900',
     margin: '5px 0',
-    letterSpacing: '2px',
-    textAlign: 'center'
-  },
-  rideTitle: {
-    color: 'white',
-    fontSize: 'clamp(12px, 2.5vw, 16px)',
-    fontWeight: '600',
-    margin: '8px 0 0 0',
-    letterSpacing: '0.5px',
-    opacity: 0.9,
-    lineHeight: '1.2'
+    letterSpacing: '1px'
   },
   slant: {
     position: 'absolute',

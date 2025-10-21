@@ -14,10 +14,10 @@ import Carousel from "./pages/Carousel";
 import Footer from "./pages/Footer";
 import Member from "./pages/Members";
 import Discover from "./pages/DiscoverMore.jsx";
-import Blogs from "./pages/Blogs";
+import Blogs from "./pages/RidesNavbar.jsx";
+// import Events from "./pages/Events";
 import EventNavbar from "./pages/EventNavbar";
 import BlogNavbar from "./pages/BlogNavbar";
-import BlogDetails from "./pages/BlogDetails";
 import SliderTop from "./components/SliderTop";
 import Riders from "./pages/Riders.jsx";
 import UpcomingRides from "./pages/UpcomingRides";
@@ -27,7 +27,7 @@ import OTPVerification from "./pages/OTPage";
 import OTPForgot from "./pages/OTPForgotPass";
 import EmailVerify from "./pages/EmailVerify";
 import ResetPassword from "./pages/ResetPassword";
-
+import ScrollToTop from "./pages/ScrollToTop.jsx";
 // Admin components
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
@@ -39,7 +39,7 @@ import AdminCompletedRides from './pages/admin/CompletedRides';
 import AdminEvents from './pages/admin/Events';
 import AdminBlogs from './pages/admin/Blogs';
 import Bookings from './pages/admin/Bookings';
-import EventBookings from './pages/admin/EventBookings';
+import BlogDetails from "./pages/BlogDetails.jsx";
 
 // Event Detail Wrapper Component
 function EventDetail() {
@@ -86,8 +86,8 @@ function MainPage() {
     <div style={{ position: "relative", fontFamily: "Poppins, sans-serif" }}>
       <Home />
       <RideCountdown />
+      <Member/>
       <Riders />
-      <Member />
       <Testimonials />
       <EventSchedule />
       <About />
@@ -102,13 +102,14 @@ function App() {
     <AuthProvider>
       <div className="App">
         <Toaster position="top-right" />
+        <ScrollToTop />
         <Routes>
           {/* Main Website Routes */}
           <Route path="/" element={<MainPage />} />
           <Route path="/upcoming-rides" element={<UpcomingRides />} /> 
           <Route path="/rides" element={<Blogs />} />
           <Route path="/blog" element={<BlogNavbar />} />
-          <Route path="/blog/:slug" element={<BlogDetails />} />
+          <Route path="/blog/:id" element={<BlogDetails />} />
           <Route path="/events" element={<EventNavbar />} />
           <Route path="/discover-more" element={<Discover />} />
           <Route path="/testimonials-stories" element={<Blogs />} />
@@ -142,7 +143,6 @@ function App() {
             <Route path="events" element={<AdminEvents />} />
             <Route path="blogs" element={<AdminBlogs />} />
             <Route path="bookings" element={<Bookings />} />
-            <Route path="event-bookings" element={<EventBookings />} />
           </Route>
         </Routes>
       </div>

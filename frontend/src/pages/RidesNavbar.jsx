@@ -1,4 +1,3 @@
-
 import Navbar from '../components/Navbar';
 import Footer from './Footer';
 import Saphale from '../assets/Saphale.jpg';
@@ -8,18 +7,14 @@ import Kasmal from '../assets/Kasmal.jpg';
 import Freedom from "../assets/FreedomRide.jpg";
 import Background from '../assets/bgBlogs.png';
 import Satara from '../assets/Satara.jpg'
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Blogs = () => {
+  const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [rides, setRides] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Static fallback data for demonstration
-  const staticRides = [
+  const rides = [
     {
       id: 1,
       image: Saphale,
@@ -65,7 +60,7 @@ const Blogs = () => {
       description: 'The Brotherhood of Mumbai (BOM) explored one of the most peaceful hidden gems near the city — Vandri Lake. Tucked away from the usual chaos, Vandri offered calm waters, open skies, and the perfect spot for a relaxing early morning ride. The group began the day with a refreshing breakfast by the lakeside, followed by some amazing drone shots capturing the serene blue waters and green surroundings. Riders also took the opportunity to photograph nature and scenic landscapes, preserving the beauty of the moment. The peaceful environment, light breeze, and reflection of the hills on the water made the entire experience feel calm and refreshing — a perfect short escape from the city hustle. The Vandri Lake ride reminded everyone that sometimes the best rides aren\'t about distance, but about peace, simplicity, and pure connection with nature.',
       stats: { date: 'May 5-6, 2024', stay: 'Near Mumbai' },
     },
-      {
+    {
       id: 6,
       image: Satara,
       title: 'Wai-Satara Ride',
@@ -75,58 +70,6 @@ const Blogs = () => {
       stats: { date: 'October 10-12, 2025', stay: 'Farmhouse,Wai' },
     },
   ];
-
-  useEffect(() => {
-    fetchCompletedRides();
-  }, []);
-
-  const fetchCompletedRides = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/completed-rides?sortBy=date&sortOrder=desc');
-      
-      if (response.data?.success && response.data?.data?.data) {
-        const apiRides = response.data.data.data.map(ride => ({
-          id: ride._id,
-          image: ride.imgUrl || Saphale, // Fallback to static image if no image URL
-          title: ride.title,
-          location: ride.venue,
-          date: new Date(ride.date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }),
-          description: ride.details || 'An amazing ride experience with the Brotherhood of Mumbai.',
-          stats: { 
-            date: new Date(ride.date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            }),
-            stay: ride.venue 
-          },
-          difficulty: ride.difficulty,
-          participants: ride.participants,
-          distance: ride.distance,
-          duration: ride.duration
-        }));
-        
-        // Combine API data with static data or use API data if available
-        setRides(apiRides.length > 0 ? apiRides : staticRides);
-      } else {
-        // Fallback to static data if API fails
-        setRides(staticRides);
-      }
-    } catch (error) {
-      console.error('Error fetching completed rides:', error);
-      toast.error('Failed to load rides data');
-      // Fallback to static data on error
-      setRides(staticRides);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const styles = {
     pageContainer: { width: '100%', backgroundColor: '#0a0a0a', minHeight: '100vh' },
@@ -145,7 +88,7 @@ const Blogs = () => {
       left: 0,
       right: 0,
       bottom: 0,
-    backgroundImage: `url(${Background})`,
+      backgroundImage: `url(${Background})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       filter: 'brightness(0.4)',
@@ -486,20 +429,6 @@ const Blogs = () => {
             </p>
           </div>
 
-          {loading && (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#fff' }}>
-              <div style={{ fontSize: '18px', marginBottom: '10px' }}>Loading rides...</div>
-              <div style={{ fontSize: '14px', color: '#999' }}>Please wait while we fetch the latest ride data</div>
-            </div>
-          )}
-
-          {error && !loading && (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#e63946' }}>
-              <div style={{ fontSize: '16px', marginBottom: '10px' }}>⚠️ Error loading rides data</div>
-              <div style={{ fontSize: '14px', color: '#999' }}>Showing static content instead</div>
-            </div>
-          )}
-
           <div style={styles.ridesGrid} className="rides-grid">
             {rides.map((ride) => (
               <div
@@ -547,33 +476,6 @@ const Blogs = () => {
                       <div style={styles.statValue} className="stat-value">{ride.stats.stay}</div>
                     </div>
                   </div>
-
-                  {/* Additional info for API data */}
-                  {(ride.difficulty || ride.participants || ride.distance) && (
-                    <div style={styles.statsRow} className="stats-row">
-                      {ride.difficulty && (
-                        <div style={styles.statBox} className="stat-box">
-                          <div style={styles.statIcon}>🏔️</div>
-                          <div style={styles.statLabel}>Difficulty</div>
-                          <div style={styles.statValue} className="stat-value">{ride.difficulty}</div>
-                        </div>
-                      )}
-                      {ride.participants && (
-                        <div style={styles.statBox} className="stat-box">
-                          <div style={styles.statIcon}>👥</div>
-                          <div style={styles.statLabel}>Riders</div>
-                          <div style={styles.statValue} className="stat-value">{ride.participants}</div>
-                        </div>
-                      )}
-                      {ride.distance && (
-                        <div style={styles.statBox} className="stat-box">
-                          <div style={styles.statIcon}>🛣️</div>
-                          <div style={styles.statLabel}>Distance</div>
-                          <div style={styles.statValue} className="stat-value">{ride.distance}km</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -585,7 +487,23 @@ const Blogs = () => {
             <p style={styles.ctaText} className="cta-text">
               Join the Brotherhood and be part of our next epic ride. New adventures await!
             </p>
-            <button style={styles.ctaButton}>
+            <button 
+              style={styles.ctaButton}
+              onClick={() => {window.scrollTo(0,0);
+                navigate('/upcoming-rides')}}
+              onMouseEnter={(e) => {
+                const icon = e.currentTarget.querySelector('.button-icon');
+                const text = e.currentTarget.querySelector('.cta-button-text');
+                if (icon) icon.style.backgroundColor = '#d43f4d';
+                if (text) text.style.backgroundColor = '#1a1a1a';
+              }}
+              onMouseLeave={(e) => {
+                const icon = e.currentTarget.querySelector('.button-icon');
+                const text = e.currentTarget.querySelector('.cta-button-text');
+                if (icon) icon.style.backgroundColor = '#e63946';
+                if (text) text.style.backgroundColor = '#2b2b2b';
+              }}
+            >
               <span style={styles.buttonIcon} className="button-icon">»</span>
               <span style={styles.ctaButtonText} className="cta-button-text">JOIN OUR NEXT RIDE</span>
             </button>

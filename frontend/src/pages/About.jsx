@@ -42,7 +42,10 @@ const AboutUs = () => {
           </div>
         </div>
 
-        <button style={styles.button} onClick={() => navigate("/discover-more")}>
+        <button style={styles.button} onClick={() => {
+  window.scrollTo(0, 0);
+  navigate("/discover-more");
+}}>
           <span style={styles.buttonArrow}>&#187;</span> DISCOVER MORE
         </button>
       </div>
