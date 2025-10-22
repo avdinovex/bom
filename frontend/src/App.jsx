@@ -93,7 +93,6 @@ function MainPage() {
       <Home />
       <RideCountdown />
       <Member/>
-      <Riders />
       <Testimonials />
       <EventSchedule />
       <About />
@@ -120,7 +119,8 @@ function App() {
           <Route path="/discover-more" element={<Discover />} />
           <Route path="/testimonials-stories" element={<Blogs />} />
           <Route path="/event-detail" element={<EventDetail />} />
-          
+         
+           <Route path="/riders" element={<Riders />} />
           {/* User Authentication Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registration />} />
