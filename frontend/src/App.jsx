@@ -15,7 +15,6 @@ import Footer from "./pages/Footer";
 import Member from "./pages/Members";
 import Discover from "./pages/DiscoverMore.jsx";
 import Blogs from "./pages/RidesNavbar.jsx";
-// import Events from "./pages/Events";
 import EventNavbar from "./pages/EventNavbar";
 import BlogNavbar from "./pages/BlogNavbar";
 import SliderTop from "./components/SliderTop";
@@ -28,6 +27,13 @@ import OTPForgot from "./pages/OTPForgotPass";
 import EmailVerify from "./pages/EmailVerify";
 import ResetPassword from "./pages/ResetPassword";
 import ScrollToTop from "./pages/ScrollToTop.jsx";
+
+// Policy Pages
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsCondition";
+import CancellationRefund from "./pages/CancellationRefund";
+import ShippingDelivery from "./pages/ShippingDelivery";
+
 // Admin components
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
@@ -124,6 +130,12 @@ function App() {
           <Route path="/forgot-password" element={<EmailVerify />} />
           <Route path="/verify-otp-forgot" element={<OTPForgot />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Policy Routes */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-conditions" element={<TermsConditions />} />
+          <Route path="/cancellation-refund" element={<CancellationRefund />} />
+          {/* <Route path="/shipping-delivery" element={<ShippingDelivery />} /> */}
         
           {/* Admin Login Route */}
           <Route path="/admin/login" element={<AdminLogin />} />

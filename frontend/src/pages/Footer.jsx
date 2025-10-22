@@ -81,9 +81,14 @@ const Footer = () => {
         <div style={styles.navLinks} className="footer-nav">
           <span onClick={() => handleNavClick("/", "home")} style={styles.navLink}>Home</span>
           <span onClick={() => handleNavClick("/events")} style={styles.navLink}>Event Info</span>
-          {/* <span style={styles.navLink}>Results</span> */}
           <span onClick={() => handleNavClick("/register")} style={styles.navLink}>Registered?</span>
           <span onClick={() => handleNavClick("/", "contactus")} style={styles.navLink}>Contact Us</span>
+        </div>
+        <div style={styles.policyLinks} className="footer-policy">
+          <span onClick={() => handleNavClick("/privacy-policy")} style={styles.navLink}>Privacy Policy</span>
+          <span onClick={() => handleNavClick("/terms-conditions")} style={styles.navLink}>Terms & Conditions</span>
+          <span onClick={() => handleNavClick("/cancellation-refund")} style={styles.navLink}>Cancellation & Refund</span>
+          {/* <span onClick={() => handleNavClick("/shipping-delivery")} style={styles.navLink}>Shipping & Delivery</span> */}
         </div>
         <div style={styles.socialIcons}>
           <div 
@@ -175,6 +180,14 @@ const styles = {
     fontSize: "clamp(13px, 2vw, 15px)",
     color: "#ccc",
   },
+  policyLinks: {
+    display: "flex",
+    gap: "20px",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    fontSize: "clamp(12px, 1.8vw, 14px)",
+    color: "#999",
+  },
   navLink: {
     cursor: "pointer",
     transition: "color 0.3s ease",
@@ -209,6 +222,10 @@ if (typeof document !== "undefined") {
       color: #e63946 !important;
     }
     
+    .footer-policy span:hover {
+      color: #e63946 !important;
+    }
+    
     @media (max-width: 768px) {
       footer {
         padding: 30px 20px 20px !important;
@@ -220,11 +237,17 @@ if (typeof document !== "undefined") {
       .footer-nav {
         gap: 15px !important;
       }
+      .footer-policy {
+        gap: 12px !important;
+      }
     }
     
     @media (max-width: 480px) {
       .footer-nav span {
         font-size: 13px;
+      }
+      .footer-policy span {
+        font-size: 11px;
       }
     }
   `;

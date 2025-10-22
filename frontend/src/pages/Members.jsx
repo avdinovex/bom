@@ -3,7 +3,7 @@ import { Instagram, Youtube } from 'lucide-react';
 
 // Import images
 import Kunal from "../assets/Kunal Mestry.png";
-import Parth from "../assets/Parth Mehta.jpg";
+import Parth from "../assets/Parth Mehta.png";
 import Aditya from '../assets/Aditya Gajare.jpg';
 import Ajay from '../assets/Ajay Yadav.jpg';
 import Arijit from '../assets/Arijit Das.jpg';
@@ -180,7 +180,7 @@ export default function CoreMembers() {
         {/* Leadership - 3 Card Layout */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
           gap: '2rem',
           marginBottom: '6rem'
         }}>
