@@ -9,7 +9,7 @@ import Ajay from '../assets/Ajay Yadav.jpg';
 import Arijit from '../assets/Arijit Das.jpg';
 import Ashish from '../assets/Ashish Mestry.jpg';
 import Jigar from '../assets/Jigar Thakkar.jpg';
-import Poonam from '../assets/Poonam Sanas.jpg';
+import Poonam from '../assets/Poonam sanas.jpg';
 import Pralad from '../assets/Pralad Parab.jpg';
 import Soumen from '../assets/Soumen Roy.jpg';
 
