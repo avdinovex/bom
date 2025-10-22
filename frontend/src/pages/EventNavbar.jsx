@@ -188,15 +188,6 @@ const Events = () => {
     if (eventList.length === 0) {
       return (
         <div className="text-center py-10">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            {activeTab === 'upcoming' ? 'No Upcoming Events' : 'No Past Events Found'}
-          </h2>
-          <p className="text-gray-300 mb-8">
-            {activeTab === 'upcoming' 
-              ? 'Stay tuned for exciting upcoming Mumbai Bikers Mania events! New events are being planned.'
-              : 'Previous Mumbai Bikers Mania events will appear here once they are completed.'
-            }
-          </p>
           {/* Show fallback content as preview for both tabs when no real events */}
           <div className="mt-12">
             <h3 className="text-xl font-semibold text-red-500 mb-6">

@@ -433,11 +433,14 @@ const UpcomingRides = () => {
             <div className="space-y-4">
               <div className="flex gap-4">
                 {selectedRide?.imgUrl && (
-                  <img 
-                    src={selectedRide.imgUrl} 
-                    alt={selectedRide.title}
-                    className="w-32 h-32 object-cover rounded-lg"
-                  />
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={selectedRide.imgUrl} 
+                      alt={selectedRide.title}
+                      className="max-w-48 h-auto max-h-48 rounded-lg border border-gray-200"
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
                 )}
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{selectedRide?.title}</h3>
@@ -589,7 +592,8 @@ const UpcomingRides = () => {
                     <img 
                       src={imagePreview} 
                       alt="Preview" 
-                      className="w-32 h-32 object-cover rounded-lg"
+                      className="max-w-full h-auto max-h-64 rounded-lg border border-gray-200"
+                      style={{ objectFit: 'contain' }}
                     />
                   </div>
                 )}

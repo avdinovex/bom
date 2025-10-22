@@ -1,76 +1,71 @@
 import Navbar from '../components/Navbar';
 import Footer from './Footer';
-import Saphale from '../assets/Saphale.jpg';
-import Trungali from "../assets/Trungali.jpg";
-import Vandri from '../assets/Vandri.jpg';
-import Kasmal from '../assets/Kasmal.jpg';
-import Freedom from "../assets/FreedomRide.jpg";
 import Background from '../assets/bgBlogs.png';
-import Satara from '../assets/Satara.jpg'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { publicCompletedRidesAPI } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const Blogs = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [rides, setRides] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const rides = [
-    {
-      id: 1,
-      image: Saphale,
-      title: 'Saphale Ride',
-      location: 'Saphale, Maharashtra',
-      date: 'March 15-16, 2024',
-      description: 'The Brotherhood of Mumbai (BOM) set out on an amazing ride to Saphale, a peaceful coastal destination surrounded by hills and scenic roads. The route featured smooth highways mixed with beautiful ghat sections, offering the perfect blend of curves, climbs, and coastal breeze. During the ride, the group visited a temple dedicated to Mata, located close to the beach. The spot offered a serene atmosphere with a breathtaking sea view, making it a peaceful and spiritually refreshing halt for all riders. After exploring the area, the group enjoyed a delicious lunch at a local restaurant, known for its amazing food and warm hospitality — the perfect way to end the day\'s journey. The Saphale ride brought together everything that defines BOM — brotherhood, devotion, adventure, and the joy of riding through nature\'s best routes',
-      stats: { date: 'March 15-16, 2024', stay: 'Saphale, Maharashtra' },
-    },
-    {
-      id: 2,
-      image: Trungali,
-      title: 'Tungrali Dam Adventure',
-      location: 'Tungrali Dam',
-      date: 'February 22-23, 2024',
-      description: 'The Brotherhood of Mumbai (BOM) explored the scenic beauty of Tungrali Dam in Lonavala — a destination known for its calm waters, lush greenery, and breathtaking hilltop views. The ride included an exciting off-road trail that led the riders to an elevated point overlooking the dam. The climb was thrilling, and once on top, the panoramic view of the valley and water below made every effort worth it. As the group reached the off-road section, light rain showers added to the adventure, making the trail even more exciting and memorable. Mud, mist, and machine — the perfect combination for any true rider. The Tungrali Dam ride was not just about the destination, but the journey itself — full of energy, brotherhood, and the spirit of exploration that defines BOM. This ride perfectly blended adventure and scenic beauty, leaving everyone with memories of laughter, rain, and stunning landscapes.',
-      stats: { date: 'Feb 22-23, 2024', stay: 'Lonavala, Maharashtra' },
-    },
-    {
-      id: 3,
-      image: Freedom,
-      title: 'Freedom Ride',
-      location: 'Mumbai Coast',
-      date: 'August 15, 2025',
-      description: 'The Brotherhood of Mumbai (BOM) celebrated Independence Day with a spirited Freedom Ride to Karnala. Riders proudly displayed the Indian flag on their bikes, riding through scenic roads that offered both excitement and a sense of national pride. The route featured smooth stretches and gentle curves, perfect for a morning ride. After reaching Karnala, the group enjoyed a hearty breakfast at a comfortable hotel, setting the tone for the rest of the day\'s adventure. The ride captured the essence of freedom, brotherhood, and joy — riding together, exploring nature, and celebrating the spirit of India. The beautiful landscape, crisp morning air, and camaraderie among riders made the Freedom Ride a truly memorable experience. This ride reminded everyone that riding is not just about the destination — it\'s about celebrating liberty, adventure, and the bonds of brotherhood on the open road.',
-      stats: { date: 'August 15, 2025', stay: 'Karnala, Maharashtra' },
-    },
-    {
-      id: 4,
-      image: Kasmal,
-      title: 'Kasmal Plateau Expedition',
-      location: 'Kasmal Plateau',
-      date: 'September 14, 2025',
-      description: 'The Brotherhood of Mumbai (BOM) rode into another refreshing chapter — the Kasmal Plateau Breakfast Ride, a perfect blend of early-morning chill, scenic countryside trails, and the strong bond that unites every brother on two wheels. The ride kicked off before sunrise as engines roared to life across the city, heading towards the serene Kasmal Plateau near Pen. The route, surrounded by rolling hills, misty paths, and winding turns, offered every rider a pure taste of freedom and nature. Upon reaching the plateau, riders were greeted with breathtaking panoramic views — a peaceful escape from city chaos. Over a hearty breakfast and hot tea, the group shared laughter, conversations, and the unspoken connection that comes from the open road. The return ride carried the same energy — filled with smiles beneath helmets and hearts full of contentment. The Kasmal Plateau Breakfast Ride perfectly reflected the BOM spirit — Ride. Explore. Celebrate. A short journey that reminded everyone why mornings are best spent with bikes, brothers, and endless horizons.',
-      stats: { date: 'September 14, 2025', stay: 'Pen, Maharashtra' },
-    },
-    {
-      id: 5,
-      image: Vandri,
-      title: 'Vandri Lake Ride',
-      location: 'Vandri Lake',
-      date: 'May 5-6, 2024',
-      description: 'The Brotherhood of Mumbai (BOM) explored one of the most peaceful hidden gems near the city — Vandri Lake. Tucked away from the usual chaos, Vandri offered calm waters, open skies, and the perfect spot for a relaxing early morning ride. The group began the day with a refreshing breakfast by the lakeside, followed by some amazing drone shots capturing the serene blue waters and green surroundings. Riders also took the opportunity to photograph nature and scenic landscapes, preserving the beauty of the moment. The peaceful environment, light breeze, and reflection of the hills on the water made the entire experience feel calm and refreshing — a perfect short escape from the city hustle. The Vandri Lake ride reminded everyone that sometimes the best rides aren\'t about distance, but about peace, simplicity, and pure connection with nature.',
-      stats: { date: 'May 5-6, 2024', stay: 'Near Mumbai' },
-    },
-    {
-      id: 6,
-      image: Satara,
-      title: 'Wai-Satara Ride',
-      location: 'Wai - Satara',
-      date: 'October 10-12, 2025',
-      description: 'The Brotherhood of Mumbai (BOM) explored one of the most peaceful hidden gems near the city — Vandri Lake. Tucked away from the usual chaos, Vandri offered calm waters, open skies, and the perfect spot for a relaxing early morning ride. The group began the day with a refreshing breakfast by the lakeside, followed by some amazing drone shots capturing the serene blue waters and green surroundings. Riders also took the opportunity to photograph nature and scenic landscapes, preserving the beauty of the moment. The peaceful environment, light breeze, and reflection of the hills on the water made the entire experience feel calm and refreshing — a perfect short escape from the city hustle. The Vandri Lake ride reminded everyone that sometimes the best rides aren\'t about distance, but about peace, simplicity, and pure connection with nature.',
-      stats: { date: 'October 10-12, 2025', stay: 'Farmhouse,Wai' },
-    },
-  ];
+  // Fetch completed rides from backend
+  useEffect(() => {
+    const fetchRides = async () => {
+      try {
+        setLoading(true);
+        const response = await publicCompletedRidesAPI.getAll({
+          limit: 10,
+          sortBy: 'date',
+          sortOrder: 'desc'
+        });
+        
+        if (response.data?.data) {
+          setRides(response.data.data);
+        } else {
+          setRides([]);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching completed rides:', err);
+        setError('Failed to load rides');
+        toast.error('Failed to load rides');
+        setRides([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchRides();
+  }, []);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  // Get date range for rides
+  const getDateRange = (ride) => {
+    const startDate = new Date(ride.date);
+    if (ride.duration && ride.duration.includes('day')) {
+      const days = parseInt(ride.duration);
+      if (days > 1) {
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + days - 1);
+        return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      }
+    }
+    return formatDate(startDate);
+  };
   const styles = {
     pageContainer: { width: '100%', backgroundColor: '#0a0a0a', minHeight: '100vh' },
     heroSection: {
@@ -430,55 +425,98 @@ const Blogs = () => {
           </div>
 
           <div style={styles.ridesGrid} className="rides-grid">
-            {rides.map((ride) => (
-              <div
-                key={ride.id}
-                style={{
-                  ...styles.rideCard,
-                  transform: hoveredCard === ride.id ? 'translateY(-10px)' : 'translateY(0)',
-                  boxShadow: hoveredCard === ride.id ? '0 20px 50px rgba(230, 57, 70, 0.3)' : '0 5px 20px rgba(0,0,0,0.1)',
-                }}
-                onMouseEnter={() => setHoveredCard(ride.id)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div style={styles.imageWrapper}>
-                  <img
-                    src={ride.image}
-                    alt={ride.title}
-                    style={{
-                      ...styles.rideImage,
-                      transform: hoveredCard === ride.id ? 'scale(1.1)' : 'scale(1)',
-                    }}
-                  />
-                  <div style={styles.imageOverlay}>
-                    <span style={styles.dateTag}>{ride.date}</span>
-                  </div>
-                </div>
-
-                <div style={styles.cardContent} className="card-content">
-                  <div style={styles.locationBadge}>
-                    <span>📍</span>
-                    {ride.location}
-                  </div>
-
-                  <h3 style={styles.rideTitle} className="ride-title">{ride.title}</h3>
-                  <p style={styles.rideDescription} className="ride-description">{ride.description}</p>
-
-                  <div style={styles.statsRow} className="stats-row">
-                    <div style={styles.statBox} className="stat-box">
-                      <div style={styles.statIcon}>📅</div>
-                      <div style={styles.statLabel}>Date</div>
-                      <div style={styles.statValue} className="stat-value">{ride.stats.date}</div>
-                    </div>
-                    <div style={styles.statBox} className="stat-box">
-                      <div style={styles.statIcon}>📍</div>
-                      <div style={styles.statLabel}>Location</div>
-                      <div style={styles.statValue} className="stat-value">{ride.stats.stay}</div>
-                    </div>
-                  </div>
-                </div>
+            {loading ? (
+              <div className="col-span-3 text-center text-white py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mb-4"></div>
+                <p>Loading rides...</p>
               </div>
-            ))}
+            ) : error ? (
+              <div className="col-span-3 text-center text-white py-12">
+                <p className="text-red-400 mb-4">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : rides.length === 0 ? (
+              <div className="col-span-3 text-center text-white py-12">
+                <p>No rides available at the moment.</p>
+              </div>
+            ) : (
+              rides.map((ride) => (
+                <div
+                  key={ride._id}
+                  style={{
+                    ...styles.rideCard,
+                    transform: hoveredCard === ride._id ? 'translateY(-10px)' : 'translateY(0)',
+                    boxShadow: hoveredCard === ride._id ? '0 20px 50px rgba(230, 57, 70, 0.3)' : '0 5px 20px rgba(0,0,0,0.1)',
+                  }}
+                  onMouseEnter={() => setHoveredCard(ride._id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  <div style={styles.imageWrapper}>
+                    <img
+                      src={ride.imgUrl || '/images/default-ride.jpg'}
+                      alt={ride.title}
+                      style={{
+                        ...styles.rideImage,
+                        transform: hoveredCard === ride._id ? 'scale(1.1)' : 'scale(1)',
+                      }}
+                      onError={(e) => {
+                        e.target.src = '/images/default-ride.jpg';
+                      }}
+                    />
+                    <div style={styles.imageOverlay}>
+                      <span style={styles.dateTag}>{getDateRange(ride)}</span>
+                    </div>
+                  </div>
+
+                  <div style={styles.cardContent} className="card-content">
+                    <div style={styles.locationBadge}>
+                      <span>📍</span>
+                      {ride.venue}
+                    </div>
+
+                    <h3 style={styles.rideTitle} className="ride-title">{ride.title}</h3>
+                    <p style={styles.rideDescription} className="ride-description">
+                      {ride.details && ride.details.length > 200 
+                        ? `${ride.details.substring(0, 200)}...` 
+                        : ride.details || 'No description available.'}
+                    </p>
+
+                    <div style={styles.statsRow} className="stats-row">
+                      <div style={styles.statBox} className="stat-box">
+                        <div style={styles.statIcon}>📅</div>
+                        <div style={styles.statLabel}>Date</div>
+                        <div style={styles.statValue} className="stat-value">{formatDate(ride.date)}</div>
+                      </div>
+                      <div style={styles.statBox} className="stat-box">
+                        <div style={styles.statIcon}>📍</div>
+                        <div style={styles.statLabel}>Venue</div>
+                        <div style={styles.statValue} className="stat-value">{ride.venue}</div>
+                      </div>
+                    </div>
+
+                    {ride.participants && (
+                      <div style={styles.statsRow} className="stats-row">
+                        <div style={styles.statBox} className="stat-box">
+                          <div style={styles.statIcon}>�</div>
+                          <div style={styles.statLabel}>Participants</div>
+                          <div style={styles.statValue} className="stat-value">{ride.participants}</div>
+                        </div>
+                        <div style={styles.statBox} className="stat-box">
+                          <div style={styles.statIcon}>📏</div>
+                          <div style={styles.statLabel}>Distance</div>
+                          <div style={styles.statValue} className="stat-value">{ride.distance ? `${ride.distance} km` : 'N/A'}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Call to Action */}

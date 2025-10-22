@@ -6,16 +6,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
+    if (config.headers == null) {
+      config.headers = {};
+    }
+
     const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (config.data instanceof FormData) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
     }
     return config;
   },
@@ -141,6 +154,57 @@ export const ridesAPI = {
   
   delete: async (id) => {
     const response = await api.delete(`/admin/rides/${id}`);
+    return response.data;
+  },
+};
+
+// Public Completed Rides API (no auth required)
+export const publicCompletedRidesAPI = {
+  getAll: async (params = {}) => {
+    const response = await api.get('/completed-rides', { params });
+    return response.data;
+  },
+  
+  getById: async (id) => {
+    const response = await api.get(`/completed-rides/${id}`);
+    return response.data;
+  },
+  
+  getFeatured: async () => {
+    const response = await api.get('/completed-rides/featured/list');
+    return response.data;
+  },
+  
+  getRecent: async () => {
+    const response = await api.get('/completed-rides/recent/list');
+    return response.data;
+  },
+};
+
+// Public Rides API (no auth required)
+export const publicRidesAPI = {
+  getAll: async (params = {}) => {
+    const response = await api.get('/rides', { params });
+    return response.data;
+  },
+  
+  getById: async (id) => {
+    const response = await api.get(`/rides/${id}`);
+    return response.data;
+  },
+  
+  getNextUpcoming: async () => {
+    const response = await api.get('/rides/next/upcoming');
+    return response.data;
+  },
+  
+  getFeatured: async () => {
+    const response = await api.get('/rides/featured/list');
+    return response.data;
+  },
+  
+  getFilters: async () => {
+    const response = await api.get('/rides/search/filters');
     return response.data;
   },
 };
