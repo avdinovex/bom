@@ -42,12 +42,31 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('user');
-      // Only redirect if not already on login page
-      if (!window.location.pathname.includes('/admin/login')) {
-        window.location.href = '/admin/login';
+      // Only clear tokens and redirect if the user was previously authenticated
+      // Don't redirect on failed login attempts (which also return 401)
+      const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+      const isForgotPasswordEndpoint = error.config?.url?.includes('/auth/forgot-password');
+      const isVerifyOTPEndpoint = error.config?.url?.includes('/auth/verify');
+      const isRegisterEndpoint = error.config?.url?.includes('/auth/register');
+      
+      // Only redirect if this is an authenticated endpoint (not login/register/forgot-password)
+      if (!isLoginEndpoint && !isForgotPasswordEndpoint && !isVerifyOTPEndpoint && !isRegisterEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('user');
+        
+        // Check if the current page is an admin route
+        const isAdminRoute = window.location.pathname.includes('/admin');
+        
+        // Only redirect if not already on a login page
+        if (!window.location.pathname.includes('/login')) {
+          if (isAdminRoute) {
+            window.location.href = '/admin/login';
+          } else {
+            window.location.href = '/login';
+          }
+        }
       }
     }
     return Promise.reject(error);

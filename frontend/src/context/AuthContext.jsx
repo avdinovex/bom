@@ -68,8 +68,12 @@ export const AuthProvider = ({ children }) => {
         // Store appropriate token
         if (user.role === 'admin') {
           localStorage.setItem('adminToken', token);
+          // Clear user token if exists
+          localStorage.removeItem('userToken');
         } else {
           localStorage.setItem('userToken', token);
+          // Clear admin token if exists
+          localStorage.removeItem('adminToken');
         }
         
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -81,9 +85,15 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Clear any user state on error to prevent unwanted redirects
+      setUser(null);
+      
       let errorMessage = 'Login failed';
       
-      if (error.response && error.response.data) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        errorMessage = 'Server is currently unavailable. Please try again later.';
+      } else if (error.response && error.response.data) {
         errorMessage = error.response.data.message || errorMessage;
       } else if (error.message) {
         errorMessage = error.message;

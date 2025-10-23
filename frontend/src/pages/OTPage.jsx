@@ -94,7 +94,7 @@ const OTPVerification = () => {
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('user', JSON.stringify(response.data.user));
     
-    toast.success('Registration successful! Welcome to Bikers of Maharashtra!');
+    toast.success('Registration successful! Welcome to Brotherhood Of Mumbai!');
     
     // Navigate to login page or home page
     navigate('/login');

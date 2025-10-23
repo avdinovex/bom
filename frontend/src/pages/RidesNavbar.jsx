@@ -182,23 +182,34 @@ const Blogs = () => {
     rideTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#fff', marginBottom: '15px', letterSpacing: '1px' },
     rideDescription: { fontSize: '15px', color: '#aaa', lineHeight: '1.7', marginBottom: '25px' },
     statsRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'stretch',
-      gap: '20px',
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '15px',
       marginBottom: '20px',
     },
     statBox: {
-      flex: 1,
       backgroundColor: '#0a0a0a',
-      padding: '20px 15px',
+      padding: '18px 12px',
       borderRadius: '8px',
       textAlign: 'center',
-      border: '1px solid rgba(255,255,255,0.05)',
+      border: '1px solid rgba(230, 57, 70, 0.1)',
+      transition: 'all 0.3s ease',
     },
-    statIcon: { fontSize: '24px', marginBottom: '8px' },
-    statLabel: { fontSize: '11px', color: '#666', marginBottom: '5px', letterSpacing: '1px', textTransform: 'uppercase' },
-    statValue: { fontSize: '14px', color: '#fff', fontWeight: '700' },
+    statIcon: { fontSize: '28px', marginBottom: '10px', display: 'block' },
+    statLabel: { 
+      fontSize: '10px', 
+      color: '#888', 
+      marginBottom: '8px', 
+      letterSpacing: '1.2px', 
+      textTransform: 'uppercase',
+      fontWeight: '600'
+    },
+    statValue: { 
+      fontSize: '15px', 
+      color: '#fff', 
+      fontWeight: '700',
+      lineHeight: '1.2'
+    },
     ctaSection: {
       textAlign: 'center',
       padding: '80px 40px',
@@ -249,6 +260,12 @@ const Blogs = () => {
     <>
       <style>
         {`
+          .stat-box:hover {
+            border-color: rgba(230, 57, 70, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.15);
+          }
+
           /* Tablet Responsive (768px - 1024px) */
           @media (max-width: 1024px) {
             .rides-grid {
@@ -331,19 +348,29 @@ const Blogs = () => {
             
             .ride-description {
               font-size: 14px !important;
+              line-height: 1.6 !important;
             }
             
             .stats-row {
-              flex-direction: row !important;
-              gap: 15px !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 12px !important;
             }
             
             .stat-box {
               padding: 15px 10px !important;
             }
+
+            .stat-icon {
+              font-size: 24px !important;
+              margin-bottom: 8px !important;
+            }
+
+            .stat-label {
+              font-size: 9px !important;
+            }
             
             .stat-value {
-              font-size: 12px !important;
+              font-size: 13px !important;
             }
             
             .cta-section {
@@ -481,9 +508,7 @@ const Blogs = () => {
 
                     <h3 style={styles.rideTitle} className="ride-title">{ride.title}</h3>
                     <p style={styles.rideDescription} className="ride-description">
-                      {ride.details && ride.details.length > 200 
-                        ? `${ride.details.substring(0, 200)}...` 
-                        : ride.details || 'No description available.'}
+                      {ride.details || 'No description available.'}
                     </p>
 
                     <div style={styles.statsRow} className="stats-row">
@@ -502,12 +527,12 @@ const Blogs = () => {
                     {ride.participants && (
                       <div style={styles.statsRow} className="stats-row">
                         <div style={styles.statBox} className="stat-box">
-                          <div style={styles.statIcon}>�</div>
+                          <div style={styles.statIcon}>👥</div>
                           <div style={styles.statLabel}>Participants</div>
                           <div style={styles.statValue} className="stat-value">{ride.participants}</div>
                         </div>
                         <div style={styles.statBox} className="stat-box">
-                          <div style={styles.statIcon}>📏</div>
+                          <div style={styles.statIcon}>↔️</div>
                           <div style={styles.statLabel}>Distance</div>
                           <div style={styles.statValue} className="stat-value">{ride.distance ? `${ride.distance} km` : 'N/A'}</div>
                         </div>

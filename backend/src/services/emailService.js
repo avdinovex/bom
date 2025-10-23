@@ -69,7 +69,7 @@ class EmailService {
     try {
       const mailOptions = {
         from: {
-          name: 'Bikers of Maharashtra',
+          name: 'Brotherhood Of Mumbai',
           address: process.env.EMAIL_USER
         },
         to: email,
@@ -92,11 +92,11 @@ class EmailService {
           <body>
             <div class="container">
               <div class="header">
-                <h1>Welcome to Bikers of Maharashtra!</h1>
+                <h1>Welcome to Brotherhood Of Mumbai!</h1>
               </div>
               <div class="content">
                 <h2>Hello ${fullName}!</h2>
-                <p>Thank you for registering with Bikers of Maharashtra. To complete your registration, please verify your email address using the OTP below:</p>
+                <p>Thank you for registering with Brotherhood Of Mumbai. To complete your registration, please verify your email address using the OTP below:</p>
                 
                 <div class="otp-box">
                   <p><strong>Your OTP Code:</strong></p>
@@ -108,10 +108,10 @@ class EmailService {
                 <p>Welcome to our riding community!</p>
                 
                 <p>Best regards,<br>
-                Bikers of Maharashtra Team</p>
+                Brotherhood Of Mumbai Team</p>
               </div>
               <div class="footer">
-                <p>&copy; ${new Date().getFullYear()} Bikers of Maharashtra. All rights reserved.</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
               </div>
             </div>
           </body>
@@ -133,7 +133,7 @@ class EmailService {
     try {
       const mailOptions = {
         from: {
-          name: 'Bikers of Maharashtra',
+          name: 'Brotherhood Of Mumbai',
           address: process.env.EMAIL_USER
         },
         to: email,
@@ -161,7 +161,7 @@ class EmailService {
               </div>
               <div class="content">
                 <h2>Reset Your Password</h2>
-                <p>We received a request to reset your password for your Bikers of Maharashtra account. Use the OTP below to proceed:</p>
+                <p>We received a request to reset your password for your Brotherhood Of Mumbai account. Use the OTP below to proceed:</p>
                 
                 <div class="otp-box">
                   <p><strong>Your OTP Code:</strong></p>
@@ -174,10 +174,10 @@ class EmailService {
                 </div>
                 
                 <p>Best regards,<br>
-                Bikers of Maharashtra Team</p>
+                Brotherhood Of Mumbai Team</p>
               </div>
               <div class="footer">
-                <p>&copy; ${new Date().getFullYear()} Bikers of Maharashtra. All rights reserved.</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
               </div>
             </div>
           </body>
@@ -199,11 +199,11 @@ class EmailService {
     try {
       const mailOptions = {
         from: {
-          name: 'Bikers of Maharashtra',
+          name: 'Brotherhood Of Mumbai',
           address: process.env.EMAIL_USER
         },
         to: email,
-        subject: 'Welcome to Bikers of Maharashtra!',
+        subject: 'Welcome to Brotherhood Of Mumbai!',
         html: `
           <!DOCTYPE html>
           <html>
@@ -243,10 +243,10 @@ class EmailService {
                 <p>Ride safe, ride together!</p>
                 
                 <p>Best regards,<br>
-                Bikers of Maharashtra Team</p>
+                Brotherhood Of Mumbai Team</p>
               </div>
               <div class="footer">
-                <p>&copy; ${new Date().getFullYear()} Bikers of Maharashtra. All rights reserved.</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
               </div>
             </div>
           </body>
