@@ -27,7 +27,8 @@ import OTPForgot from "./pages/OTPForgotPass";
 import EmailVerify from "./pages/EmailVerify";
 import ResetPassword from "./pages/ResetPassword";
 import ScrollToTop from "./pages/ScrollToTop.jsx";
-
+import Sponsors from "./pages/Sponsors.jsx";
+import Band from './pages/Band.jsx'
 // Policy Pages
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsCondition";
@@ -96,6 +97,7 @@ function MainPage() {
       <Riders />
       <Testimonials />
       <EventSchedule />
+      <Band/>
       <About />
       <Carousel />
       <Footer />
@@ -120,6 +122,9 @@ function App() {
           <Route path="/discover-more" element={<Discover />} />
           <Route path="/testimonials-stories" element={<Blogs />} />
           <Route path="/event-detail" element={<EventDetail />} />
+          
+          {/* Sponsors Route - ADD THIS */}
+          <Route path="/sponsors" element={<Sponsors />} />
           
           {/* User Authentication Routes */}
           <Route path="/login" element={<Login />} />
