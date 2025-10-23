@@ -117,6 +117,7 @@ const Navbar = () => {
     { text: "RIDES", path: "/rides" },
     { text: "EVENT", path: "/events" },
     { text: "BLOG", path: "/blog" },
+    { text: "RIDERS", path: "/riders"},
     { text: "CONTACT US", path: "/", section: "contactus" },
   ];
 

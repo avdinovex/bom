@@ -33,10 +33,15 @@ export const uploadToCloudinary = async (buffer, options = {}) => {
         {
           resource_type: 'image',
           folder: options.folder || 'ride-booking',
-          transformation: options.transformation || [
-            { quality: 'auto:good' },
-            { format: 'auto' }
-          ],
+          // Remove automatic transformations to preserve original image
+          transformation: options.transformation || [],
+          // Preserve original format and quality
+          quality: options.quality || 'auto',
+          fetch_format: options.fetch_format || 'auto',
+          // Ensure no cropping occurs
+          crop: options.crop || 'limit',
+          // Preserve aspect ratio
+          flags: options.flags || 'preserve_transparency',
           ...options
         },
         (error, result) => {
@@ -52,6 +57,25 @@ export const uploadToCloudinary = async (buffer, options = {}) => {
   } catch (error) {
     logger.error('Upload service error:', error);
     throw new ApiError(500, 'File upload failed');
+  }
+};
+
+// Upload remote URL to Cloudinary
+export const uploadRemoteToCloudinary = async (url, options = {}) => {
+  try {
+    const result = await cloudinary.uploader.upload(url, {
+      resource_type: 'image',
+      folder: options.folder || 'ride-booking',
+      quality: options.quality || 'auto',
+      fetch_format: options.fetch_format || 'auto',
+      crop: options.crop || 'limit',
+      flags: options.flags || 'preserve_transparency',
+      ...options
+    });
+    return result;
+  } catch (error) {
+    logger.error('Cloudinary remote upload error:', error);
+    throw new ApiError(500, 'Remote file upload failed');
   }
 };
 
@@ -75,7 +99,11 @@ export const uploadSingle = (fieldName) => {
       try {
         if (req.file) {
           const result = await uploadToCloudinary(req.file.buffer, {
-            folder: `ride-booking/${fieldName}`
+            folder: `ride-booking/${fieldName}`,
+            // Preserve original image without any cropping
+            crop: 'limit',
+            quality: 'auto',
+            flags: 'preserve_transparency'
           });
           req.file.cloudinaryUrl = result.secure_url;
           req.file.cloudinaryPublicId = result.public_id;
@@ -101,7 +129,11 @@ export const uploadMultiple = (fieldName, maxCount = 5) => {
         if (req.files && req.files.length > 0) {
           const uploadPromises = req.files.map(file => 
             uploadToCloudinary(file.buffer, {
-              folder: `ride-booking/${fieldName}`
+              folder: `ride-booking/${fieldName}`,
+              // Preserve original image without any cropping
+              crop: 'limit',
+              quality: 'auto',
+              flags: 'preserve_transparency'
             })
           );
           
@@ -111,6 +143,49 @@ export const uploadMultiple = (fieldName, maxCount = 5) => {
             publicId: result.public_id
           }));
         }
+        next();
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+};
+
+// Upload multiple fields in one pass (e.g., single cover + multiple gallery)
+export const uploadFields = (fields) => {
+  return [
+    upload.fields(fields),
+    async (req, res, next) => {
+      try {
+        req.uploadedFilesByField = {};
+        const fieldNames = fields.map(f => f.name);
+
+        const uploadsByField = await Promise.all(fieldNames.map(async (name) => {
+          const files = (req.files && req.files[name]) ? req.files[name] : [];
+          if (!files || files.length === 0) return { name, results: [] };
+          const results = await Promise.all(files.map(file => 
+            uploadToCloudinary(file.buffer, {
+              folder: `ride-booking/${name}`,
+              crop: 'limit',
+              quality: 'auto',
+              flags: 'preserve_transparency'
+            }).then(result => ({ url: result.secure_url, publicId: result.public_id }))
+          ));
+          return { name, results };
+        }));
+
+        uploadsByField.forEach(({ name, results }) => {
+          req.uploadedFilesByField[name] = results;
+        });
+
+        // Backward compatibility helpers
+        if (req.uploadedFilesByField.coverImage && req.uploadedFilesByField.coverImage[0]) {
+          req.uploadedFile = req.uploadedFilesByField.coverImage[0];
+        }
+        if (req.uploadedFilesByField.gallery && req.uploadedFilesByField.gallery.length > 0) {
+          req.uploadedFiles = req.uploadedFilesByField.gallery;
+        }
+
         next();
       } catch (error) {
         next(error);

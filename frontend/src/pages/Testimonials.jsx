@@ -84,7 +84,6 @@ const styles = {
     color: "#fff",
     textAlign: "center",
     padding: "100px 40px 120px",
-    marginTop: "80px",
     position: "relative",
     overflow: "hidden",
   },

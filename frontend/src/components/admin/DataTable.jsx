@@ -72,6 +72,11 @@ const DataTable = ({
                     <div className="flex items-center justify-end space-x-2">
                       {actions ? (
                         actions.map((action, actionIndex) => {
+                          // Check if action should be shown for this item
+                          if (action.condition && typeof action.condition === 'function' && !action.condition(item)) {
+                            return null;
+                          }
+                          
                           const IconComponent = action.icon;
                           return (
                             <button

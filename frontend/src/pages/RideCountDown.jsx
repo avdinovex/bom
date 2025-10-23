@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { publicRidesAPI } from '../services/api';
 
 export default function RideCountdown() {
   const navigate = useNavigate();
@@ -8,10 +9,38 @@ export default function RideCountdown() {
     hours: 0,
     minutes: 0,
     seconds: 0
-  });  
+  });
+  const [nextRide, setNextRide] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch the next upcoming ride
   useEffect(() => {
-    const targetDate = new Date('2022-06-06T10:30:00').getTime();
+    const fetchNextRide = async () => {
+      try {
+        setLoading(true);
+        const response = await publicRidesAPI.getNextUpcoming();
+        if (response.data?.ride) {
+          setNextRide(response.data.ride);
+        } else {
+          setError('No upcoming rides found');
+        }
+      } catch (err) {
+        console.error('Error fetching next ride:', err);
+        setError('Failed to fetch ride information');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNextRide();
+  }, []);
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!nextRide?.startTime) return;
+
+    const targetDate = new Date(nextRide.startTime).getTime();
     
     const timer = setInterval(() => {
       const now = new Date().getTime();
@@ -30,17 +59,78 @@ export default function RideCountdown() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [nextRide]);
 
   const formatNumber = (num) => String(num).padStart(2, '0');
+
+  const formatRideDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const options = { 
+      month: 'long', 
+      day: '2-digit', 
+      year: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: true 
+    };
+    return date.toLocaleDateString('en-US', options).toUpperCase();
+  };
+
+  const getRideDateParts = (dateString) => {
+    if (!dateString) return { monthDay: '', year: '', time: '' };
+    const date = new Date(dateString);
+    const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: '2-digit' }).toUpperCase();
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+    return { monthDay, year, time };
+  };
+
+  if (loading) {
+    return (
+      <div style={styles.container} className="countdown-container">
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingSpinner}></div>
+          <p style={styles.loadingText}>Loading next ride...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !nextRide) {
+    return (
+      <div style={styles.container} className="countdown-container">
+        <div style={styles.errorContainer}>
+          <h2 style={styles.errorTitle}>No Upcoming Rides</h2>
+          <p style={styles.errorText}>
+            {error || 'No rides are currently scheduled. Check back later for new adventures!'}
+          </p>
+          <button
+            style={styles.registerButton}
+            onClick={() => {
+              window.scrollTo(0, 0);
+              navigate("/upcoming-rides");
+            }}
+          >
+            VIEW ALL RIDES
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const rideDateParts = getRideDateParts(nextRide.startTime);
 
   return (
     <div style={styles.container} className="countdown-container">
       <div style={styles.banner} className="countdown-banner">
         <div style={styles.redSection}>
           <div style={styles.textContainer}>
-            <h2 style={styles.title}>NEXT RIDE START AT JUNE</h2>
-            <h2 style={styles.title}>06, 2022 - 10:30 AM</h2>
+            <h2 style={styles.title}>NEXT RIDE START AT {rideDateParts.monthDay}</h2>
+            <h2 style={styles.title}>{rideDateParts.year} - {rideDateParts.time}</h2>
+            {nextRide.venue && (
+              <p style={styles.venue}> {nextRide.venue}</p>
+            )}
           </div>
           <div style={styles.slant}></div>
         </div>
@@ -69,17 +159,17 @@ export default function RideCountdown() {
         </div>
       </div>
 
-     <button
-  style={styles.registerButton}
-  className="register-button"
-  onClick={() => {
-  window.scrollTo(0, 0);
-  navigate("/upcoming-rides");
-}}
->  
-  REGISTER NOW NEXT RIDE
-  <span style={styles.arrows}> »</span>
-</button>
+      <button
+        style={styles.registerButton}
+        className="register-button"
+        onClick={() => {
+          window.scrollTo(0, 0);
+          navigate("/upcoming-rides");
+        }}
+      >
+        REGISTER NOW 
+       
+      </button>
     </div>
   );
 }
@@ -190,12 +280,69 @@ const styles = {
   },
   arrows: {
     fontSize: '20px'
+  },
+  venue: {
+    color: 'white',
+    fontSize: 'clamp(12px, 2vw, 16px)',
+    fontWeight: 'normal',
+    margin: '5px 0 0 0',
+    letterSpacing: '0.5px',
+    opacity: 0.9
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '200px',
+    gap: '20px'
+  },
+  loadingSpinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #d9434d',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingText: {
+    fontSize: '18px',
+    color: '#666',
+    margin: 0
+  },
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '200px',
+    gap: '20px',
+    textAlign: 'center',
+    padding: '20px'
+  },
+  errorTitle: {
+    fontSize: 'clamp(24px, 4vw, 32px)',
+    color: '#333',
+    margin: 0,
+    fontWeight: 'bold'
+  },
+  errorText: {
+    fontSize: 'clamp(14px, 2.5vw, 18px)',
+    color: '#666',
+    margin: 0,
+    maxWidth: '600px',
+    lineHeight: '1.5'
   }
 };
 
 if (typeof document !== "undefined") {
   const styleSheet = document.createElement("style");
   styleSheet.innerHTML = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
     @media (max-width: 1200px) {
       .countdown-container {
         justify-content: center !important;

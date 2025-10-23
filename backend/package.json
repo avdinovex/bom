@@ -8,8 +8,6 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest --watchAll --no-cache",
-    "seed": "node src/scripts/seed.js",
-    "seed:mumbai-riders": "node src/scripts/seedMumbaiRiders.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },

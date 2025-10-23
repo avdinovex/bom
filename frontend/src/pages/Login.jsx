@@ -1,4 +1,3 @@
-//new proper login
 import React, { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
@@ -34,14 +33,40 @@ const [showSponsor2, setShowSponsor2] = useState(true);
     setLoading(true);
 
     try {
-      await login({
+      const result = await login({
         email: formData.email,
         password: formData.password
-      });
-      toast.success('Login successful!');
-      navigate('/upcoming-rides');
+      }, false); // Pass false to indicate this is not an admin login
+
+      if (result.success) {
+        toast.success('Login successful!');
+        navigate('/upcoming-rides');
+      } else {
+        // Show specific error message from backend
+        const errorMessage = result.error || 'Login failed';
+        
+        // Handle different error cases with specific messages
+        if (errorMessage.includes('verify your email')) {
+          toast.error('Please verify your email before logging in. Check your inbox for the OTP.');
+        } else if (errorMessage.includes('Invalid email or password')) {
+          toast.error('Invalid email or password. Please check your credentials.');
+        } else if (errorMessage.includes('deactivated')) {
+          toast.error('Your account has been deactivated. Please contact support.');
+        } else if (errorMessage.includes('Server') || errorMessage.includes('Network')) {
+          toast.error('Unable to connect to server. Please check your internet connection and try again.');
+        } else {
+          toast.error(errorMessage);
+        }
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      // Handle unexpected errors (network issues, server down, etc.)
+      console.error('Login error:', error);
+      
+      if (error.message === 'Network Error' || !error.response) {
+        toast.error('Server is currently unavailable. Please try again later.');
+      } else {
+        toast.error(error.response?.data?.message || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

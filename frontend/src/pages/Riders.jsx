@@ -1,62 +1,64 @@
 
 import React, { useState, useEffect } from 'react';
 import { Instagram, Youtube } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
-// Import images
-import Amit from "../assets/Amit Gala.jpg";
-import Chand from "../assets/Chand.jpg";
-import Deep from "../assets/Deep Shah.jpg";
-import Dipesh from "../assets/Dipesh lale.jpg";
-import Ketan from "../assets/Ketan.jpg";
-import Krutali from "../assets/Krutali naik.jpg";
-import Kuldeep from "../assets/Kuldeep Singh.jpg";
-import Kunal from "../assets/Kunal Jadhav.jpg";
-import Mandar from "../assets/Mandar Rane.jpg";
-import Manthan from "../assets/Manthan Vichare.jpg";
-import Narinder from "../assets/Narinder singh kalsi.png";
-import Nikhil from "../assets/Nikhil Naik.jpg";
-import Parth from "../assets/Parth Patil.jpg";
-import Prasad from "../assets/Prasad Sanas.jpg";
-import Prashant from "../assets/Prashant Chalke.jpg";
-import Priyanka from "../assets/Priyanka Parab.jpg";
-import Rohit from "../assets/Rohit Kulkarni.jpg";
-import Sagar from "../assets/Sagar Sharma.jpg";
-import Samruddhi from "../assets/Samruddhi Rane.jpg";
-import Sarvesh from "../assets/Sarvesh Dewalkar.jpg";
-import Shantanu from "../assets/Shantanu Vartak.jpg";
-import Swarup from "../assets/Swarup patil.jpg";
-import Sameet from '../assets/Sameet.jpeg';
-
+// Lazy load images - they will only be fetched when this component is rendered
 const members = [
-  { id: 1, name: "Amit Gala", instagram: "https://www.instagram.com/dr_amitgala_urologist?igsh=MXVoOW1jbnJpbGJlMg==", image: Amit },
-  { id: 2, name: "Chand", instagram: "https://instagram.com/chand", image: Chand },
-  { id: 3, name: "Deep Shah", instagram: "https://www.instgaram.com/kamehameha612", image: Deep },
-  { id: 4, name: "Dipesh Lale", instagram: "https://www.instagram.com/dipeshlale?igsh=MXQ5cm12MWJ4OG9nMg==", image: Dipesh },
-  { id: 5, name: "Ketan", instagram: "https://www.instagram.com/k2_snaps?igsh=MW0wbWlnZTYyaXQ5bg==", image: Ketan },
-  { id: 6, name: "Krutali Naik", instagram: "https://instagram.com/krutalinaik", image: Krutali },
-  { id: 7, name: "Kuldeep Singh", instagram: "https://www.instagram.com/kuldeepsingh.sohal?igsh=MWljZ3VnMjYyNTRtcg==", image: Kuldeep },
-  { id: 8, name: "Kunal Jadhav", instagram: "https://www.instagram.com/ride_along_kunal?igsh=MWw0ZDJkaWNwZjQzNA==", youtube: "https://www.youtube.com/@RideAlongKunal", image: Kunal },
-  { id: 9, name: "Mandar Rane", instagram: "https://instagram.com/mandarrane", image: Mandar },
-  { id: 10, name: "Manthan Vichare", instagram: "https://www.instagram.com/_manthan_99?igsh=cnJwZG12dHphc2Jj", image: Manthan },
-  { id: 11, name: "Narinder Singh", instagram: "https://instagram.com/narindersinghkalsi", image: Narinder },
-  { id: 12, name: "Nikhil Naik", instagram: "https://instagram.com/nikhilnaik", image: Nikhil },
-  { id: 13, name: "Parth Patil", instagram: "https://www.instagram.com/parthpatil__24?igsh=MTJ1dWljdmJveDB1Nw==", image: Parth },
-  { id: 14, name: "Prasad Sanas", instagram: "https://www.instagram.com/sanasganesh.sanasd9?igsh=dmVmZDZ5cmVpc2ky", image: Prasad },
-  { id: 15, name: "Prashant Chalke", instagram: "https://www.instagram.com/cruising_rider?igsh=MW10Y2ZpZ2xqbDlwaA==", youtube: "https://youtube.com/@cruising_rider?si=vpN9bgekH_v6ljqu", image: Prashant },
-  { id: 16, name: "Priyanka Parab", instagram: "https://www.instagram.com/pri_chops?igsh=MmE0ZTk0emVma3J3", image: Priyanka },
-  { id: 17, name: "Rohit Kulkarni", instagram: "https://www.instagram.com/_.rohitkulkarni._?igsh=c3lrOTJxY2Zxa2Fz", image: Rohit },
-  { id: 18, name: "Sagar Sharma", instagram: "https://www.instagram.com/jimlaurac_ss?igsh=NHdsZG1mdDgzY3hm", image: Sagar },
-  { id: 19, name: "Samruddhi Rane", instagram: "https://www.instagram.com/samu.sawant?igsh=MXNqM21lMWZxb21mdA==", image: Samruddhi },
-  { id: 20, name: "Sarvesh Dewalkar", instagram: "https://www.instagram.com/mh02deva?igsh=MXAwdXpmZnYxczBrMA==", image: Sarvesh },
-  { id: 21, name: "Shantanu Vartak", instagram: "https://www.instagram.com/shon___06?igsh=MnBjNWJkN3Znd3Fy&utm_source=qr", image: Shantanu },
-  { id: 22, name: "Swarup Patil", instagram: "https://instagram.com/swaruppatil", youtube: "https://youtube.com/@swaruppatil7117?si=_9j3q_3hVGBjFfHF", image: Swarup },
-  { id: 23, name: "Sameet Raut", instagram: "https://www.instagram.com/samsameetsam?igsh=MTQxaDN2aHo2aHF4eQ==", image: Sameet }
+  { id: 1, name: "Amit Gala", instagram: "https://www.instagram.com/dr_amitgala_urologist?igsh=MXVoOW1jbnJpbGJlMg==", image: () => import("../assets/Amit Gala.jpg") },
+  { id: 2, name: "Chand", instagram: "https://instagram.com/chand", image: () => import("../assets/Chand.jpg") },
+  { id: 3, name: "Deep Shah", instagram: "https://www.instgaram.com/kamehameha612", image: () => import("../assets/Deep Shah.jpg") },
+  { id: 4, name: "Dipesh Lale", instagram: "https://www.instagram.com/dipeshlale?igsh=MXQ5cm12MWJ4OG9nMg==", image: () => import("../assets/Dipesh lale.jpg") },
+  { id: 5, name: "Ketan", instagram: "https://www.instagram.com/k2_snaps?igsh=MW0wbWlnZTYyaXQ5bg==", image: () => import("../assets/Ketan.jpg") },
+  { id: 6, name: "Krutali Naik", instagram: "https://instagram.com/krutalinaik", image: () => import("../assets/Krutali naik.jpg") },
+  { id: 7, name: "Kuldeep Singh", instagram: "https://www.instagram.com/kuldeepsingh.sohal?igsh=MWljZ3VnMjYyNTRtcg==", image: () => import("../assets/Kuldeep Singh.jpg") },
+  { id: 8, name: "Kunal Jadhav", instagram: "https://www.instagram.com/ride_along_kunal?igsh=MWw0ZDJkaWNwZjQzNA==", youtube: "https://www.youtube.com/@RideAlongKunal", image: () => import("../assets/Kunal jadhav.jpg") },
+  { id: 9, name: "Mandar Rane", instagram: "https://instagram.com/mandarrane", image: () => import("../assets/Mandar Rane.jpg") },
+  { id: 10, name: "Manthan Vichare", instagram: "https://www.instagram.com/_manthan_99?igsh=cnJwZG12dHphc2Jj", image: () => import("../assets/Manthan Vichare.jpg") },
+  { id: 11, name: "Narinder Singh", instagram: "https://instagram.com/narindersinghkalsi", image: () => import("../assets/Narinder singh kalsi.png") },
+  { id: 12, name: "Nikhil Naik", instagram: "https://instagram.com/nikhilnaik", image: () => import("../assets/Nikhil Naik.jpg") },
+  { id: 13, name: "Parth Patil", instagram: "https://www.instagram.com/parthpatil__24?igsh=MTJ1dWljdmJveDB1Nw==", image: () => import("../assets/Parth Patil.jpg") },
+  { id: 14, name: "Prasad Sanas", instagram: "https://www.instagram.com/sanasganesh.sanasd9?igsh=dmVmZDZ5cmVpc2ky", image: () => import("../assets/Prasad sanas.jpg") },
+  { id: 15, name: "Prashant Chalke", instagram: "https://www.instagram.com/cruising_rider?igsh=MW10Y2ZpZ2xqbDlwaA==", youtube: "https://youtube.com/@cruising_rider?si=vpN9bgekH_v6ljqu", image: () => import("../assets/Prashant Chalke.jpg") },
+  { id: 16, name: "Priyanka Parab", instagram: "https://www.instagram.com/pri_chops?igsh=MmE0ZTk0emVma3J3", image: () => import("../assets/Priyanka Parab.jpg") },
+  { id: 17, name: "Rohit Kulkarni", instagram: "https://www.instagram.com/_.rohitkulkarni._?igsh=c3lrOTJxY2Zxa2Fz", image: () => import("../assets/Rohit Kulkarni.jpg") },
+  { id: 18, name: "Sagar Sharma", instagram: "https://www.instagram.com/jimlaurac_ss?igsh=NHdsZG1mdDgzY3hm", image: () => import("../assets/Sagar Sharma.jpg") },
+  { id: 19, name: "Samruddhi Rane", instagram: "https://www.instagram.com/samu.sawant?igsh=MXNqM21lMWZxb21mdA==", image: () => import("../assets/Samruddhi Rane.jpg") },
+  { id: 20, name: "Sarvesh Dewalkar", instagram: "https://www.instagram.com/mh02deva?igsh=MXAwdXpmZnYxczBrMA==", image: () => import("../assets/Sarvesh Dewalkar.jpg") },
+  { id: 21, name: "Shantanu Vartak", instagram: "https://www.instagram.com/shon___06?igsh=MnBjNWJkN3Znd3Fy&utm_source=qr", image: () => import("../assets/Shantanu vartak.jpg") },
+  { id: 22, name: "Swarup Patil", instagram: "https://instagram.com/swaruppatil", youtube: "https://youtube.com/@swaruppatil7117?si=_9j3q_3hVGBjFfHF", image: () => import("../assets/Swarup patil.jpg") },
+  { id: 23, name: "Sameet Raut", instagram: "https://www.instagram.com/samsameetsam?igsh=MTQxaDN2aHo2aHF4eQ==", image: () => import('../assets/Sameet.jpeg') }
 ];
 
 export default function Riders() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [loadedImages, setLoadedImages] = useState({});
+
+  // Load images dynamically
+  useEffect(() => {
+    const loadImages = async () => {
+      const imagePromises = members.map(async (member, index) => {
+        try {
+          const imageModule = await member.image();
+          return { index, src: imageModule.default };
+        } catch (error) {
+          console.error(`Failed to load image for ${member.name}:`, error);
+          return { index, src: null };
+        }
+      });
+
+      const results = await Promise.all(imagePromises);
+      const imagesMap = {};
+      results.forEach(({ index, src }) => {
+        imagesMap[index] = src;
+      });
+      setLoadedImages(imagesMap);
+    };
+
+    loadImages();
+  }, []);
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -82,6 +84,9 @@ export default function Riders() {
       padding: '4rem 2rem',
       position: 'relative'
     }}>
+      
+      <Navbar/> 
+
       {/* Subtle Background Pattern */}
       <div style={{
         position: 'absolute',
@@ -94,7 +99,7 @@ export default function Riders() {
         opacity: 0.4
       }}></div>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
+      <div style={{ maxWidth: '1400px', margin: '20px auto', position: 'relative', zIndex: 10 }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{
@@ -155,15 +160,28 @@ export default function Riders() {
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
               position: 'relative'
             }}>
-              <img 
-                src={members[activeIndex].image}
-                alt={members[activeIndex].name}
-                style={{
+              {loadedImages[activeIndex] ? (
+                <img 
+                  src={loadedImages[activeIndex]}
+                  alt={members[activeIndex].name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
+                }}>
+                  <span style={{ color: '#999', fontSize: '0.9rem' }}>Loading...</span>
+                </div>
+              )}
               
               <div style={{
                 position: 'absolute',
@@ -319,17 +337,25 @@ export default function Riders() {
                 transition: 'all 0.3s ease',
                 position: 'relative'
               }}>
-                <img 
-                  src={member.image}
-                  alt={member.name}
-                  style={{
+                {loadedImages[index] ? (
+                  <img 
+                    src={loadedImages[index]}
+                    alt={member.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      filter: activeIndex === index ? 'grayscale(0%)' : 'grayscale(30%)',
+                      transition: 'filter 0.3s ease'
+                    }}
+                  />
+                ) : (
+                  <div style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover',
-                    filter: activeIndex === index ? 'grayscale(0%)' : 'grayscale(30%)',
-                    transition: 'filter 0.3s ease'
-                  }}
-                />
+                    background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
+                  }}></div>
+                )}
                 
                 {/* Name Tooltip on Hover */}
                 {(hoveredId === member.id || activeIndex === index) && (

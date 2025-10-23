@@ -458,7 +458,7 @@ const Registration = () => {
                   />
                   <label htmlFor="terms" style={checkboxLabelStyle}>
                     I agree to the{' '}
-                    <a href="/terms" style={linkStyle}>
+                    <a href="/terms-conditions" style={linkStyle}>
                       Terms and Conditions
                     </a>
                   </label>

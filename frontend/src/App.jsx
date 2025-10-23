@@ -94,7 +94,6 @@ function MainPage() {
       <Home />
       <RideCountdown />
       <Member/>
-      <Riders />
       <Testimonials />
       <EventSchedule />
       <Band/>
@@ -122,10 +121,8 @@ function App() {
           <Route path="/discover-more" element={<Discover />} />
           <Route path="/testimonials-stories" element={<Blogs />} />
           <Route path="/event-detail" element={<EventDetail />} />
-          
-          {/* Sponsors Route - ADD THIS */}
-          <Route path="/sponsors" element={<Sponsors />} />
-          
+         
+           <Route path="/riders" element={<Riders />} />
           {/* User Authentication Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registration />} />
