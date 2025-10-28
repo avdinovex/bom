@@ -151,7 +151,18 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
     }).session(session);
 
     if (existingBooking) {
-      throw new ApiError(400, 'You have already booked this ride');
+      // If there's an existing 'paid' booking, don't allow duplicate
+      if (existingBooking.status === 'paid') {
+        throw new ApiError(400, 'You have already booked this ride');
+      }
+      
+      // If there's a pending 'created' booking (payment not completed), cancel it
+      if (existingBooking.status === 'created') {
+        existingBooking.status = 'cancelled';
+        existingBooking.cancelledAt = new Date();
+        existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+        await existingBooking.save({ session });
+      }
     }
 
     // Calculate amount

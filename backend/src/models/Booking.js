@@ -294,7 +294,9 @@ bookingSchema.pre('save', async function(next) {
   next();
 });
 
-// Compound index to ensure one booking per user per ride
-bookingSchema.index({ user: 1, ride: 1 }, { unique: true });
+// Compound index for faster queries (removed unique constraint to allow cancelled bookings)
+// Uniqueness is now enforced in application logic for active bookings only
+bookingSchema.index({ user: 1, ride: 1 });
+bookingSchema.index({ user: 1, ride: 1, status: 1 });
 
 export default model('Booking', bookingSchema);

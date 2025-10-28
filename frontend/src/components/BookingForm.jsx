@@ -114,8 +114,33 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       setAppliedCoupon(response.data.data);
       toast.success(`Coupon applied! You save ₹${response.data.data.discountAmount}`);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid coupon code');
       setAppliedCoupon(null);
+      
+      // Handle specific error cases with appropriate toast messages
+      const errorMessage = error.response?.data?.message || 'Failed to validate coupon';
+      const statusCode = error.response?.status;
+      
+      if (statusCode === 404 || errorMessage.toLowerCase().includes('invalid coupon')) {
+        toast.error('Coupon not found. Please check the code and try again.');
+      } else if (errorMessage.toLowerCase().includes('expired')) {
+        toast.error('This coupon has expired.');
+      } else if (errorMessage.toLowerCase().includes('not active')) {
+        toast.error('This coupon is currently not active.');
+      } else if (errorMessage.toLowerCase().includes('usage limit')) {
+        toast.error('This coupon has reached its usage limit.');
+      } else if (errorMessage.toLowerCase().includes('already used')) {
+        toast.error('You have already used this coupon.');
+      } else if (errorMessage.toLowerCase().includes('minimum order amount')) {
+        toast.error(errorMessage);
+      } else if (errorMessage.toLowerCase().includes('minimum group size')) {
+        toast.error(errorMessage);
+      } else if (errorMessage.toLowerCase().includes('maximum group size')) {
+        toast.error(errorMessage);
+      } else if (errorMessage.toLowerCase().includes('only applicable for')) {
+        toast.error(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setValidatingCoupon(false);
     }
@@ -248,7 +273,9 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       }
 
       if (appliedCoupon) {
-        bookingData.couponCode = appliedCoupon.coupon.code;
+        // appliedCoupon structure: { coupon: { code, ... }, originalAmount, discountAmount, finalAmount }
+        const couponCodeToSend = appliedCoupon.coupon?.code || couponCode.trim().toUpperCase();
+        bookingData.couponCode = couponCodeToSend;
       }
 
       const orderResponse = await api.post('/bookings/create-order', bookingData);
@@ -676,7 +703,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             <>
               <div style={{...styles.summaryRow, color: '#4CAF50'}}>
                 <span style={styles.summaryLabel}>
-                  Discount ({appliedCoupon.coupon.code}):
+                  Discount ({appliedCoupon.coupon?.code || couponCode}):
                 </span>
                 <span style={styles.summaryValue}>-₹{discount}</span>
               </div>
