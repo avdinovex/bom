@@ -11,6 +11,9 @@ import completedRideRoutes from './completedRides.js';
 import bookingRoutes from './bookings.js';
 import eventBookingRoutes from './eventBookings.js';
 import dashboardRoutes from './dashboard.js';
+import sponsorRoutes from './sponsors.js';
+import sponsorCategoryRoutes from './sponsorCategories.js';
+import couponRoutes from './coupons.js';
 
 const router = express.Router();
 
@@ -27,5 +30,8 @@ router.use('/completed-rides', completedRideRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/event-bookings', eventBookingRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/sponsors', sponsorRoutes);
+router.use('/sponsor-categories', sponsorCategoryRoutes);
+router.use('/coupons', couponRoutes);
 
 export default router;

@@ -14,6 +14,8 @@ import eventBookingRoutes from './routes/eventBookings.js';
 import blogRoutes from './routes/blogs.js';
 import teamRoutes from './routes/team.js';
 import completedRideRoutes from './routes/completedRides.js';
+import sponsorRoutes from './routes/sponsors.js';
+import sponsorCategoryRoutes from './routes/sponsorCategories.js';
 import adminRoutes from './routes/admin/index.js';
 
 // Import middleware
@@ -128,6 +130,8 @@ app.use('/api/event-bookings', eventBookingRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/completed-rides', completedRideRoutes);
+app.use('/api/sponsors', sponsorRoutes);
+app.use('/api/sponsor-categories', sponsorCategoryRoutes);
 app.use('/api/admin', adminLimiter, adminRoutes);
 
 // 404 handler

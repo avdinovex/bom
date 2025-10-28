@@ -46,6 +46,9 @@ import AdminCompletedRides from './pages/admin/CompletedRides';
 import AdminEvents from './pages/admin/Events';
 import AdminBlogs from './pages/admin/Blogs';
 import Bookings from './pages/admin/Bookings';
+import AdminSponsors from './pages/admin/Sponsors';
+import AdminSponsorCategories from './pages/admin/SponsorCategories';
+import AdminCoupons from './pages/admin/Coupons';
 import BlogDetails from "./pages/BlogDetails.jsx";
 
 // Event Detail Wrapper Component
@@ -121,6 +124,7 @@ function App() {
           <Route path="/discover-more" element={<Discover />} />
           <Route path="/testimonials-stories" element={<Blogs />} />
           <Route path="/event-detail" element={<EventDetail />} />
+          <Route path="/sponsors" element={<Sponsors />} />
          
            <Route path="/riders" element={<Riders />} />
           {/* User Authentication Routes */}
@@ -157,6 +161,9 @@ function App() {
             <Route path="events" element={<AdminEvents />} />
             <Route path="blogs" element={<AdminBlogs />} />
             <Route path="bookings" element={<Bookings />} />
+            <Route path="sponsors" element={<AdminSponsors />} />
+            <Route path="sponsor-categories" element={<AdminSponsorCategories />} />
+            <Route path="coupons" element={<AdminCoupons />} />
           </Route>
         </Routes>
       </div>

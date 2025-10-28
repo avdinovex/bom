@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { X, ExternalLink } from 'lucide-react';
+import api from '../services/api';
 
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSponsor1, setShowSponsor1] = useState(true);
-const [showSponsor2, setShowSponsor2] = useState(true);
+  const [showSponsor2, setShowSponsor2] = useState(true);
+  const [featuredSponsors, setFeaturedSponsors] = useState([]);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -19,6 +21,19 @@ const [showSponsor2, setShowSponsor2] = useState(true);
     email: '',
     password: ''
   });
+
+  useEffect(() => {
+    fetchFeaturedSponsors();
+  }, []);
+
+  const fetchFeaturedSponsors = async () => {
+    try {
+      const response = await api.get('/sponsors/featured');
+      setFeaturedSponsors(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching featured sponsors:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +95,7 @@ const [showSponsor2, setShowSponsor2] = useState(true);
       <div style={styles.container}>
         <Navbar />
         <div style={styles.contentWrapper}>
-{showSponsor1 && (
+{showSponsor1 && featuredSponsors[0] && (
           <div style={styles.sponsorCard1} className="sponsor-card">
             <button 
               onClick={() => setShowSponsor1(false)}
@@ -92,15 +107,15 @@ const [showSponsor2, setShowSponsor2] = useState(true);
             <div style={styles.sponsorBadge}>FEATURED</div>
             <div style={styles.sponsorImgWrapper}>
               <img 
-                src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500&h=300&fit=crop" 
-                alt="Premium Rides"
+                src={featuredSponsors[0].logoUrl} 
+                alt={featuredSponsors[0].name}
                 style={styles.sponsorImg}
               />
               <div style={styles.sponsorOverlay}></div>
             </div>
             <div style={styles.sponsorInfo}>
-              <h3 style={styles.sponsorTitle}>Premium Rides</h3>
-              <p style={styles.sponsorDesc}>Luxury travel experiences with exclusive partners</p>
+              <h3 style={styles.sponsorTitle}>{featuredSponsors[0].name}</h3>
+              <p style={styles.sponsorDesc}>{featuredSponsors[0].tagline}</p>
               <button 
                 onClick={navigateToSponsors}
                 style={styles.sponsorBtn}
@@ -203,7 +218,7 @@ const [showSponsor2, setShowSponsor2] = useState(true);
               </p>
             </div>
           </div>
-        {showSponsor2 && (
+        {showSponsor2 && featuredSponsors[1] && (
           <div style={styles.sponsorCard2} className="sponsor-card">
             <button 
               onClick={() => setShowSponsor2(false)}
@@ -215,15 +230,15 @@ const [showSponsor2, setShowSponsor2] = useState(true);
             <div style={{...styles.sponsorBadge, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>PARTNER</div>
             <div style={styles.sponsorImgWrapper}>
               <img 
-                src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&h=300&fit=crop" 
-                alt="Travel Partners"
+                src={featuredSponsors[1].logoUrl} 
+                alt={featuredSponsors[1].name}
                 style={styles.sponsorImg}
               />
               <div style={styles.sponsorOverlay}></div>
             </div>
             <div style={styles.sponsorInfo}>
-              <h3 style={styles.sponsorTitle}>Travel Partners</h3>
-              <p style={styles.sponsorDesc}>Amazing deals from trusted travel sponsors</p>
+              <h3 style={styles.sponsorTitle}>{featuredSponsors[1].name}</h3>
+              <p style={styles.sponsorDesc}>{featuredSponsors[1].tagline}</p>
               <button 
                 onClick={navigateToSponsors}
                 style={{...styles.sponsorBtn, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}

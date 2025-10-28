@@ -15,7 +15,9 @@ import {
   FiLogOut,
   FiUser,
   FiBarChart2,
-  FiCheckCircle
+  FiCheckCircle,
+  FiGift,
+  FiTag
 } from 'react-icons/fi';
 
 const AdminLayout = () => {
@@ -70,6 +72,21 @@ const AdminLayout = () => {
       name: 'Blogs',
       href: '/admin/blogs',
       icon: FiFileText
+    },
+    {
+      name: 'Sponsors',
+      href: '/admin/sponsors',
+      icon: FiGift
+    },
+    {
+      name: 'Sponsor Categories',
+      href: '/admin/sponsor-categories',
+      icon: FiTag
+    },
+    {
+      name: 'Coupons',
+      href: '/admin/coupons',
+      icon: FiTag
     }
   ];
 

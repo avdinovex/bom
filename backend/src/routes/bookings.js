@@ -1,6 +1,7 @@
 import express from 'express';
 import Booking from '../models/Booking.js';
 import UpcomingRide from '../models/UpcomingRide.js';
+import Coupon from '../models/Coupon.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, schemas } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -12,22 +13,98 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
+// @route   POST /api/bookings/validate-coupon
+// @desc    Validate a coupon code
+// @access  Private
+router.post('/validate-coupon', authenticate, validate(schemas.validateCoupon), asyncHandler(async (req, res) => {
+  const { couponCode, rideId, bookingType, groupSize } = req.body;
+
+  if (!couponCode) {
+    throw new ApiError(400, 'Coupon code is required');
+  }
+
+  if (!rideId) {
+    throw new ApiError(400, 'Ride ID is required');
+  }
+
+  if (!bookingType) {
+    throw new ApiError(400, 'Booking type is required');
+  }
+
+  // Find the coupon
+  const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+
+  if (!coupon) {
+    throw new ApiError(404, 'Invalid coupon code');
+  }
+
+  // Find the ride to get the price
+  const ride = await UpcomingRide.findById(rideId);
+  if (!ride) {
+    throw new ApiError(404, 'Ride not found');
+  }
+
+  // Calculate amount based on booking type
+  const memberCount = bookingType === 'group' ? (groupSize || 1) : 1;
+  const totalAmount = ride.price * memberCount;
+
+  // Validate coupon with group size
+  const validation = coupon.validateCoupon(req.user._id, bookingType, totalAmount, memberCount);
+
+  if (!validation.isValid) {
+    throw new ApiError(400, validation.errors.join(', '));
+  }
+
+  // Calculate discount
+  const discountAmount = coupon.calculateDiscount(totalAmount);
+  const finalAmount = totalAmount - discountAmount;
+
+  res.json(new ApiResponse(200, {
+    coupon: {
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minGroupSize: coupon.minGroupSize,
+      maxGroupSize: coupon.maxGroupSize
+    },
+    originalAmount: totalAmount,
+    discountAmount,
+    finalAmount,
+    savings: discountAmount
+  }, 'Coupon applied successfully'));
+}));
+
 // @route   POST /api/bookings/create-order
 // @desc    Create a complete booking order with Razorpay integration
 // @access  Private
 router.post('/create-order', authenticate, validate(schemas.createBookingOrder), asyncHandler(async (req, res) => {
   const { 
     rideId, 
+    bookingType,
+    groupInfo,
     personalInfo, 
     motorcycleInfo, 
     emergencyContact, 
     medicalHistory, 
-    agreements 
+    agreements,
+    couponCode
   } = req.body;
 
   // Validation
   if (!rideId) {
     throw new ApiError(400, 'Ride ID is required');
+  }
+
+  if (!bookingType || !['individual', 'group'].includes(bookingType)) {
+    throw new ApiError(400, 'Valid booking type (individual/group) is required');
+  }
+
+  // Validate group booking
+  if (bookingType === 'group') {
+    if (!groupInfo || !groupInfo.groupName || !groupInfo.members || groupInfo.members.length < 2) {
+      throw new ApiError(400, 'Group bookings require group name and at least 2 members');
+    }
   }
 
   if (!personalInfo || !motorcycleInfo || !emergencyContact || !medicalHistory || !agreements) {
@@ -58,9 +135,12 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
       throw new ApiError(404, 'Ride not found or booking is closed');
     }
 
-    // Check if ride is full
-    if (ride.registeredCount >= ride.maxCapacity) {
-      throw new ApiError(400, 'Ride is fully booked');
+    // Calculate required capacity
+    const requiredCapacity = bookingType === 'group' ? groupInfo.members.length : 1;
+
+    // Check if ride has enough capacity
+    if (ride.registeredCount + requiredCapacity > ride.maxCapacity) {
+      throw new ApiError(400, `Not enough spots available. Only ${ride.maxCapacity - ride.registeredCount} spots left.`);
     }
 
     // Check if user already booked this ride
@@ -74,32 +154,79 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
       throw new ApiError(400, 'You have already booked this ride');
     }
 
+    // Calculate amount
+    let originalAmount = ride.price * requiredCapacity;
+    let finalAmount = originalAmount;
+    let discountAmount = 0;
+    let appliedCoupon = null;
+
+    // Apply coupon if provided
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() }).session(session);
+      
+      if (!coupon) {
+        throw new ApiError(404, 'Invalid coupon code');
+      }
+
+      // Validate coupon with group size
+      const validation = coupon.validateCoupon(req.user._id, bookingType, originalAmount, requiredCapacity);
+      
+      if (!validation.isValid) {
+        throw new ApiError(400, validation.errors.join(', '));
+      }
+
+      // Calculate discount
+      discountAmount = coupon.calculateDiscount(originalAmount);
+      finalAmount = originalAmount - discountAmount;
+      appliedCoupon = coupon;
+    }
+
     // Create booking with complete information (status: created for payment pending)
-    const booking = new Booking({
+    const bookingData = {
       user: req.user._id,
       ride: rideId,
+      bookingType,
       personalInfo,
       motorcycleInfo,
       emergencyContact,
       medicalHistory,
       agreements,
-      amount: ride.price || 0,
+      originalAmount,
+      amount: finalAmount,
+      discountAmount,
       currency: 'INR',
       status: 'created' // Will be updated to 'paid' after payment verification
-    });
+    };
 
+    // Add group info if group booking
+    if (bookingType === 'group') {
+      bookingData.groupInfo = {
+        groupName: groupInfo.groupName,
+        groupSize: groupInfo.members.length,
+        members: groupInfo.members
+      };
+    }
+
+    // Add coupon info if applied
+    if (appliedCoupon) {
+      bookingData.couponCode = appliedCoupon.code;
+      bookingData.coupon = appliedCoupon._id;
+    }
+
+    const booking = new Booking(bookingData);
     await booking.save({ session });
 
     // Create Razorpay order
     const razorpayOrder = await createOrder({
-      amount: ride.price || 0,
+      amount: finalAmount || 0,
       currency: 'INR',
       receipt: booking._id.toString(),
       notes: {
         rideId: ride._id.toString(),
         userId: req.user._id.toString(),
         rideTitle: ride.title,
-        bookingType: 'complete'
+        bookingType: bookingType,
+        groupSize: requiredCapacity
       }
     });
 
@@ -113,9 +240,13 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
       booking: {
         id: booking._id,
         amount: booking.amount,
+        originalAmount: booking.originalAmount,
+        discountAmount: booking.discountAmount,
         currency: booking.currency,
         status: booking.status,
-        bookingNumber: booking.bookingNumber
+        bookingNumber: booking.bookingNumber,
+        bookingType: booking.bookingType,
+        groupSize: requiredCapacity
       },
       razorpayOrder: {
         id: razorpayOrder.id,
@@ -129,7 +260,11 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
         venue: ride.venue,
         startTime: ride.startTime,
         price: ride.price
-      }
+      },
+      coupon: appliedCoupon ? {
+        code: appliedCoupon.code,
+        discountAmount
+      } : null
     }, 'Booking order created successfully'));
 
   } catch (error) {
@@ -360,7 +495,7 @@ router.post('/create', authenticate, asyncHandler(async (req, res) => {
 // @route   POST /api/bookings/verify-payment
 // @desc    Verify Razorpay payment
 // @access  Private
-router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
+router.post('/verify-payment', authenticate, validate(schemas.verifyPayment), asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -409,10 +544,20 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     booking.paidAt = new Date();
     await booking.save({ session });
 
+    // If coupon was used, increment its usage count
+    if (booking.coupon) {
+      const coupon = await Coupon.findById(booking.coupon).session(session);
+      if (coupon) {
+        await coupon.incrementUsage(req.user._id, booking._id);
+      }
+    }
+
     // Update ride - increment registered count and add user to riders
     const ride = await UpcomingRide.findById(booking.ride).session(session);
     if (ride) {
-      ride.registeredCount += 1;
+      // For group bookings, increment by group size
+      const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
+      ride.registeredCount += increment;
       if (!ride.riders.includes(req.user._id)) {
         ride.riders.push(req.user._id);
       }

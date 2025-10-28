@@ -9,3 +9,5 @@ export { default as Events } from './Events';
 export { default as Blogs } from './Blogs';
 export { default as Bookings } from './Bookings';
 export { default as EventBookings } from './EventBookings';
+export { default as Sponsors } from './Sponsors';
+export { default as SponsorCategories } from './SponsorCategories';

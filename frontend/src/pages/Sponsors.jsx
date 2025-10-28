@@ -1,93 +1,61 @@
-import React, { useState } from 'react';
-import { FiStar, FiTrendingUp, FiAward, FiZap, FiGift, FiCheckCircle, FiArrowRight, FiMail, FiPhone } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import * as FiIcons from 'react-icons/fi';
+import { FiGift, FiCheckCircle, FiArrowRight, FiMail, FiPhone, FiTrendingUp } from 'react-icons/fi';
 import Navbar from '../components/Navbar';
 import Footer from './Footer';
+import api from '../services/api';
+
 const Sponsors = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sponsorDeals, setSponsorDeals] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const sponsorDeals = [
-    {
-      id: 1,
-      name: 'FuelPro Gas Stations',
-      logo: '⛽',
-      tagline: 'Fuel Your Journey',
-      discount: '15% OFF',
-      description: 'Get exclusive discounts on fuel at any FuelPro station nationwide. Premium quality fuel with premium savings.',
-      benefits: ['15% off on all fuel types', 'Free car wash weekly', 'Priority service lanes'],
-      category: 'fuel',
-      validUntil: 'Dec 31, 2025',
-      color: '#dc2626'
-    },
-    {
-      id: 2,
-      name: 'AutoCare Pro',
-      logo: '🔧',
-      tagline: 'Your Car Deserves the Best',
-      discount: '25% OFF',
-      description: 'Professional car maintenance and repair services. From oil changes to major repairs, we keep you moving.',
-      benefits: ['25% off all services', 'Free inspection', '24/7 roadside assistance'],
-      category: 'maintenance',
-      validUntil: 'Dec 31, 2025',
-      color: '#b91c1c'
-    },
-    {
-      id: 3,
-      name: 'SafeDrive Insurance',
-      logo: '🛡️',
-      tagline: 'Drive Protected, Drive Confident',
-      discount: '30% OFF',
-      description: 'Comprehensive vehicle insurance plans designed for ride-share drivers. Best coverage at unbeatable prices.',
-      benefits: ['30% off first year premium', 'Zero deductible claims', 'Instant claim processing'],
-      category: 'insurance',
-      validUntil: 'Dec 31, 2025',
-      color: '#991b1b'
-    },
-    {
-      id: 4,
-      name: 'QuickBite Restaurants',
-      logo: '🍔',
-      tagline: 'Great Food, Greater Savings',
-      discount: '20% OFF',
-      description: 'Enjoy delicious meals at 500+ partner restaurants. Perfect for drivers on the go.',
-      benefits: ['20% off all menu items', 'Free delivery on app orders', 'Exclusive driver menu'],
-      category: 'food',
-      validUntil: 'Dec 31, 2025',
-      color: '#dc2626'
-    },
-    {
-      id: 5,
-      name: 'EcoWash Car Spa',
-      logo: '🚗',
-      tagline: 'Shine Bright, Drive Proud',
-      discount: 'BUY 1 GET 1',
-      description: 'Premium eco-friendly car washing and detailing services. Keep your ride looking brand new.',
-      benefits: ['Buy 1 Get 1 Free wash', 'Interior detailing discounts', 'Monthly membership plans'],
-      category: 'maintenance',
-      validUntil: 'Dec 31, 2025',
-      color: '#b91c1c'
-    },
-    {
-      id: 6,
-      name: 'TireMaster',
-      logo: '🎯',
-      tagline: 'Grip the Road, Own the Journey',
-      discount: '40% OFF',
-      description: 'Premium tires from top brands at incredible prices. Safety and performance guaranteed.',
-      benefits: ['40% off select brands', 'Free tire rotation lifetime', 'Road hazard warranty'],
-      category: 'accessories',
-      validUntil: 'Dec 31, 2025',
-      color: '#991b1b'
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchSponsors();
+  }, [selectedCategory]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/sponsor-categories');
+      const fetchedCategories = response.data.data;
+      setCategories([
+        { value: 'all', label: 'All Offers', icon: 'FiGift' },
+        ...fetchedCategories.map(cat => ({
+          value: cat.value,
+          label: cat.name,
+          icon: cat.icon
+        }))
+      ]);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Fallback to default categories
+      setCategories([
+        { value: 'all', label: 'All Offers', icon: 'FiGift' }
+      ]);
     }
-  ];
+  };
 
-  const categories = [
-    { value: 'all', label: 'All Offers', icon: FiGift },
-    { value: 'fuel', label: 'Fuel', icon: FiZap },
-    { value: 'maintenance', label: 'Maintenance', icon: FiCheckCircle },
-    { value: 'insurance', label: 'Insurance', icon: FiAward },
-    { value: 'food', label: 'Food & Dining', icon: FiStar },
-    { value: 'accessories', label: 'Accessories', icon: FiTrendingUp }
-  ];
+  const fetchSponsors = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory;
+      }
+      
+      const response = await api.get('/sponsors', { params });
+      setSponsorDeals(response.data.data);
+    } catch (error) {
+      console.error('Error fetching sponsors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredDeals = selectedCategory === 'all' 
     ? sponsorDeals 
@@ -131,7 +99,7 @@ const Sponsors = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap justify-center gap-3">
           {categories.map((cat) => {
-            const Icon = cat.icon;
+            const IconComponent = FiIcons[cat.icon] || FiGift;
             return (
               <button
                 key={cat.value}
@@ -142,7 +110,7 @@ const Sponsors = () => {
                     : 'bg-gray-900 text-gray-300 hover:bg-gray-800 border border-gray-800'
                 }`}
               >
-                <Icon className="text-lg" />
+                <IconComponent className="text-lg" />
                 {cat.label}
               </button>
             );
@@ -152,54 +120,70 @@ const Sponsors = () => {
 
       {/* Deals Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredDeals.map((deal) => (
-            <div
-              key={deal.id}
-              className="bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-red-500 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2"
-            >
-              {/* Card Header with Logo */}
-              <div 
-                className="relative h-40 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-500"></div>
+          </div>
+        ) : filteredDeals.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-400 text-xl">No sponsors available at the moment.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredDeals.map((deal) => (
+              <div
+                key={deal._id}
+                className="bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-red-500 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2"
               >
-                <div className="absolute inset-0 opacity-10" style={{ background: `linear-gradient(135deg, ${deal.color}, transparent)` }}></div>
-                <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                  {deal.discount}
+                {/* Card Header with Logo */}
+                <div 
+                  className="relative h-40 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+                >
+                  <div className="absolute inset-0 opacity-10" style={{ background: `linear-gradient(135deg, ${deal.color}, transparent)` }}></div>
+                  <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                    {deal.discount}
+                  </div>
+                  <div className="relative z-10 w-32 h-32 flex items-center justify-center">
+                    <img 
+                      src={deal.logoUrl} 
+                      alt={deal.name} 
+                      className="max-w-full max-h-full object-contain rounded-lg" 
+                    />
+                  </div>
                 </div>
-                <div className="text-8xl relative z-10">{deal.logo}</div>
+
+                {/* Card Content */}
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold mb-2 text-white">{deal.name}</h3>
+                  <p className="text-red-500 font-semibold mb-4 text-sm">{deal.tagline}</p>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-6">{deal.description}</p>
+
+                  {/* Benefits */}
+                  <div className="space-y-2 mb-6">
+                    {deal.benefits.map((benefit, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <FiCheckCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-gray-300">{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Validity */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
+                    <span className="text-xs text-gray-500">Valid until</span>
+                    <span className="text-sm font-semibold text-red-500">{deal.validUntil}</span>
+                  </div>
+
+                  {/* CTA Button */}
+                  <button className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:from-red-700 hover:to-red-800 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all">
+                    Claim Offer
+                    <FiArrowRight className="text-lg" />
+                  </button>
+                </div>
               </div>
-
-              {/* Card Content */}
-              <div className="p-6">
-                <h3 className="text-2xl font-bold mb-2 text-white">{deal.name}</h3>
-                <p className="text-red-500 font-semibold mb-4 text-sm">{deal.tagline}</p>
-                <p className="text-gray-400 text-sm leading-relaxed mb-6">{deal.description}</p>
-
-                {/* Benefits */}
-                <div className="space-y-2 mb-6">
-                  {deal.benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <FiCheckCircle className="text-red-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-300">{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Validity */}
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
-                  <span className="text-xs text-gray-500">Valid until</span>
-                  <span className="text-sm font-semibold text-red-500">{deal.validUntil}</span>
-                </div>
-
-                {/* CTA Button */}
-                <button className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:from-red-700 hover:to-red-800 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 transition-all">
-                  Claim Offer
-                  <FiArrowRight className="text-lg" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Become a Sponsor CTA */}

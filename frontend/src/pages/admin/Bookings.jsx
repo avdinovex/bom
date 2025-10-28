@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiDownload, FiCreditCard, FiUser, FiMapPin, FiCalendar } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDownload, FiCreditCard, FiUser, FiMapPin, FiCalendar, FiUsers } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import DataTable from '../../components/admin/DataTable';
 import Modal from '../../components/admin/Modal';
@@ -59,8 +59,16 @@ const Bookings = () => {
       key: 'bookingNumber',
       title: 'Booking ID',
       render: (booking) => (
-        <div className="font-mono text-sm text-blue-600">
-          #{booking?.bookingNumber || 'N/A'}
+        <div>
+          <div className="font-mono text-sm text-blue-600">
+            #{booking?.bookingNumber || 'N/A'}
+          </div>
+          {booking?.bookingType === 'group' && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+              <FiUsers className="h-3 w-3 mr-1" />
+              Group ({booking?.groupInfo?.groupSize || 0})
+            </span>
+          )}
         </div>
       )
     },
@@ -118,6 +126,16 @@ const Bookings = () => {
       render: (booking) => (
         <div className="text-sm">
           <div className="font-semibold text-gray-900">₹{booking?.amount || 0}</div>
+          {booking?.discountAmount > 0 && (
+            <div className="text-xs text-green-600">
+              Saved: ₹{booking.discountAmount}
+            </div>
+          )}
+          {booking?.couponCode && (
+            <div className="text-xs text-purple-600 font-mono">
+              {booking.couponCode}
+            </div>
+          )}
           <div className="text-xs text-gray-500">
             {booking?.currency || 'INR'}
           </div>
@@ -436,11 +454,70 @@ const Bookings = () => {
               </div>
             </div>
 
-            {/* Personal Information */}
+            {/* Booking Type Badge */}
+            {selectedBooking.bookingType === 'group' && (
+              <div className="bg-purple-100 border-l-4 border-purple-500 p-4 rounded">
+                <div className="flex items-center">
+                  <FiUsers className="h-5 w-5 text-purple-600 mr-2" />
+                  <span className="font-semibold text-purple-900">
+                    Group Booking - {selectedBooking.groupInfo?.groupSize || 0} Members
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Group Information - Show if group booking */}
+            {selectedBooking.bookingType === 'group' && selectedBooking.groupInfo && (
+              <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                  <FiUsers className="mr-2 text-purple-600" />
+                  Group Information
+                </h4>
+                <div className="mb-4">
+                  <span className="text-gray-600 font-medium">Group Name:</span>
+                  <span className="ml-2 text-lg font-semibold text-purple-900">
+                    {selectedBooking.groupInfo.groupName || 'N/A'}
+                  </span>
+                </div>
+                
+                <h5 className="font-semibold text-gray-800 mb-3 mt-4">
+                  Group Members ({selectedBooking.groupInfo.members?.length || 0}):
+                </h5>
+                <div className="space-y-3">
+                  {selectedBooking.groupInfo.members?.map((member, index) => (
+                    <div key={member._id || index} className="bg-white p-4 rounded-lg border border-purple-200 shadow-sm">
+                      <div className="flex items-center mb-3">
+                        <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold mr-3">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">{member.name || 'N/A'}</div>
+                          <div className="text-sm text-gray-600">{member.contactNumber || 'N/A'}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm ml-13">
+                        <div>
+                          <span className="text-gray-600">Bike Model:</span>
+                          <span className="ml-2 font-medium">{member.motorcycleModel || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Bike Number:</span>
+                          <span className="ml-2 font-mono bg-yellow-100 px-2 py-1 rounded">
+                            {member.motorcycleNumber || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Personal Information - Leader Info for Group or Individual Info */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
                 <FiUser className="mr-2" />
-                Personal Information
+                {selectedBooking.bookingType === 'group' ? 'Group Leader Information' : 'Personal Information'}
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -480,7 +557,7 @@ const Bookings = () => {
             {/* Motorcycle Information */}
             <div className="bg-green-50 p-4 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                🏍️ Motorcycle Information
+                🏍️ {selectedBooking.bookingType === 'group' ? 'Leader\'s Motorcycle Information' : 'Motorcycle Information'}
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -592,10 +669,28 @@ const Bookings = () => {
                 Payment Information
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Total Amount:</span>
-                  <span className="ml-2 font-semibold text-green-600 text-lg">₹{selectedBooking.amount || 0}</span>
-                </div>
+                {selectedBooking.originalAmount > 0 && selectedBooking.originalAmount !== selectedBooking.amount && (
+                  <div className="col-span-2 bg-purple-100 p-3 rounded border border-purple-300">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-600">Original Amount:</span>
+                      <span className="ml-2 text-gray-500 line-through">₹{selectedBooking.originalAmount}</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-600">Discount ({selectedBooking.couponCode}):</span>
+                      <span className="ml-2 font-semibold text-green-600">-₹{selectedBooking.discountAmount || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-purple-300">
+                      <span className="text-gray-900 font-semibold">Final Amount:</span>
+                      <span className="ml-2 font-bold text-green-600 text-lg">₹{selectedBooking.amount || 0}</span>
+                    </div>
+                  </div>
+                )}
+                {(!selectedBooking.originalAmount || selectedBooking.originalAmount === selectedBooking.amount) && (
+                  <div>
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="ml-2 font-semibold text-green-600 text-lg">₹{selectedBooking.amount || 0}</span>
+                  </div>
+                )}
                 <div>
                   <span className="text-gray-600">Refund Amount:</span>
                   <span className="ml-2 font-semibold text-red-600">₹{selectedBooking.refundAmount || 0}</span>
