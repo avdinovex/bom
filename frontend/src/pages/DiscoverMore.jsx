@@ -7,17 +7,22 @@ import img3 from '../assets/discover2.jpg'
 import img2 from '../assets/discover3.jpg'
 import img4 from '../assets/discover4.jpg'
 import img5 from '../assets/discover.jpg'
-
-
+import img11 from '../assets/img11.jpg'
+import img13 from '../assets/img13.jpg'
+import img12 from '../assets/img12.jpg'
+import img14 from '../assets/img14.jpg'
+import img15 from '../assets/img15.jpg'
+import img16 from '../assets/img16.jpg'
+import img17 from '../assets/img17.jpg'
 const GalleryPage = () => {
   const galleryImages = [
-    "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&h=600&fit=crop",
-    img1,
-    img3,
-    img5,
-    img4,
-    "https://images.unsplash.com/photo-1558980664-769d59546b3d?w=800&h=600&fit=crop",
-    img2
+    img11,
+    img16,
+    img17,
+    img12,
+    img14,
+    img13,
+    img15
   ];
 
   return (

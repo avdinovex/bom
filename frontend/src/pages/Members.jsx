@@ -27,7 +27,7 @@ const coreMembers = [
     id: 2,
     name: "Poonam Sanas",
     role: "Secretary",
-    instagram: "https://instagram.com/poonamsanas",
+    instagram: "https://www.instagram.com/_pooh_sanas_?igsh=MW5sMGw1aXR1ZTc3Nw==",
     image: Poonam,
     isLeadership: true
   },
@@ -35,7 +35,7 @@ const coreMembers = [
     id: 3,
     name: "Jigar Thakkar",
     role: "Treasurer",
-    instagram: "https://instagram.com/jigarthakkar",
+    instagram: "https://www.instagram.com/jigsi_4091?igsh=MXU3OTBtbXNvdDlkMg==",
     youtube: "https://youtube.com/@jigarthakkar",
     image: Jigar,
     isLeadership: true
@@ -60,7 +60,7 @@ const coreMembers = [
     id: 6,
     name: "Aditya Gajare",
     role: "Core Member",
-    instagram: "https://instagram.com/adityagajare",
+    instagram: "https://www.instagram.com/aditya_gajare05?igsh=ZHE4aHBuNjBlbm90",
     image: Aditya,
     isLeadership: false
   },
@@ -85,7 +85,7 @@ const coreMembers = [
     id: 9,
     name: "Soumen Roy",
     role: "Core Member",
-    instagram: "https://instagram.com/soumenroy",
+    instagram: "https://www.instagram.com/roy.sid?igsh=bXA4YmdlM3pwZXY4",
     image: Soumen,
     isLeadership: false
   },
@@ -183,7 +183,7 @@ export default function CoreMembers() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
           gap: '2rem',
           marginBottom: '6rem'
-        }}>
+        }}>  
           {leadershipMembers.map((member) => (
             <div
               key={member.id}

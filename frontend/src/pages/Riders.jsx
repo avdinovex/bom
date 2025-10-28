@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Instagram, Youtube } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -7,13 +6,13 @@ import Navbar from '../components/Navbar';
 const members = [
   { id: 1, name: "Amit Gala", instagram: "https://www.instagram.com/dr_amitgala_urologist?igsh=MXVoOW1jbnJpbGJlMg==", image: () => import("../assets/Amit Gala.jpg") },
   { id: 2, name: "Chand", instagram: "https://instagram.com/chand", image: () => import("../assets/Chand.jpg") },
-  { id: 3, name: "Deep Shah", instagram: "https://www.instgaram.com/kamehameha612", image: () => import("../assets/Deep Shah.jpg") },
+  { id: 3, name: "Deep Shah", instagram: "https://www.instagram.com/kamehameha612?igsh=MWl6anl1MWp4Ym1obA==", image: () => import("../assets/Deep Shah.jpg") },
   { id: 4, name: "Dipesh Lale", instagram: "https://www.instagram.com/dipeshlale?igsh=MXQ5cm12MWJ4OG9nMg==", image: () => import("../assets/Dipesh lale.jpg") },
   { id: 5, name: "Ketan", instagram: "https://www.instagram.com/k2_snaps?igsh=MW0wbWlnZTYyaXQ5bg==", image: () => import("../assets/Ketan.jpg") },
   { id: 6, name: "Krutali Naik", instagram: "https://instagram.com/krutalinaik", image: () => import("../assets/Krutali naik.jpg") },
   { id: 7, name: "Kuldeep Singh", instagram: "https://www.instagram.com/kuldeepsingh.sohal?igsh=MWljZ3VnMjYyNTRtcg==", image: () => import("../assets/Kuldeep Singh.jpg") },
   { id: 8, name: "Kunal Jadhav", instagram: "https://www.instagram.com/ride_along_kunal?igsh=MWw0ZDJkaWNwZjQzNA==", youtube: "https://www.youtube.com/@RideAlongKunal", image: () => import("../assets/Kunal jadhav.jpg") },
-  { id: 9, name: "Mandar Rane", instagram: "https://instagram.com/mandarrane", image: () => import("../assets/Mandar Rane.jpg") },
+  { id: 9, name: "Mandar Rane", instagram: "https://www.instagram.com/mandar_rane?igsh=M25oZnAydmFkZzE1", image: () => import("../assets/Mandar Rane.jpg") },
   { id: 10, name: "Manthan Vichare", instagram: "https://www.instagram.com/_manthan_99?igsh=cnJwZG12dHphc2Jj", image: () => import("../assets/Manthan Vichare.jpg") },
   { id: 11, name: "Narinder Singh", instagram: "https://instagram.com/narindersinghkalsi", image: () => import("../assets/Narinder singh kalsi.png") },
   { id: 12, name: "Nikhil Naik", instagram: "https://instagram.com/nikhilnaik", image: () => import("../assets/Nikhil Naik.jpg") },
@@ -26,7 +25,7 @@ const members = [
   { id: 19, name: "Samruddhi Rane", instagram: "https://www.instagram.com/samu.sawant?igsh=MXNqM21lMWZxb21mdA==", image: () => import("../assets/Samruddhi Rane.jpg") },
   { id: 20, name: "Sarvesh Dewalkar", instagram: "https://www.instagram.com/mh02deva?igsh=MXAwdXpmZnYxczBrMA==", image: () => import("../assets/Sarvesh Dewalkar.jpg") },
   { id: 21, name: "Shantanu Vartak", instagram: "https://www.instagram.com/shon___06?igsh=MnBjNWJkN3Znd3Fy&utm_source=qr", image: () => import("../assets/Shantanu vartak.jpg") },
-  { id: 22, name: "Swarup Patil", instagram: "https://instagram.com/swaruppatil", youtube: "https://youtube.com/@swaruppatil7117?si=_9j3q_3hVGBjFfHF", image: () => import("../assets/Swarup patil.jpg") },
+  { id: 22, name: "Swarup Patil", instagram: "https://www.instagram.com/swap_patil_09_?igsh=dThxZ3djanQ5Z2Zz", youtube: "https://youtube.com/@swaruppatil7117?si=_9j3q_3hVGBjFfHF", image: () => import("../assets/Swarup patil.jpg") },
   { id: 23, name: "Sameet Raut", instagram: "https://www.instagram.com/samsameetsam?igsh=MTQxaDN2aHo2aHF4eQ==", image: () => import('../assets/Sameet.jpeg') }
 ];
 
@@ -139,7 +138,7 @@ export default function Riders() {
           }}></div>
         </div>
 
-        {/* Featured Member Circle */}
+        {/* Featured Member Square */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -154,7 +153,7 @@ export default function Riders() {
             <div style={{
               width: '100%',
               height: '100%',
-              borderRadius: '50%',
+              borderRadius: '12px',
               overflow: 'hidden',
               border: '4px solid #ef4444',
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
@@ -280,14 +279,14 @@ export default function Riders() {
               </div>
             </div>
 
-            {/* Decorative Ring */}
+            {/* Decorative Border */}
             <div style={{
               position: 'absolute',
               top: '-15px',
               left: '-15px',
               right: '-15px',
               bottom: '-15px',
-              borderRadius: '50%',
+              borderRadius: '16px',
               border: '2px dashed rgba(239, 68, 68, 0.2)',
               animation: 'rotate 30s linear infinite',
               pointerEvents: 'none'
@@ -295,7 +294,7 @@ export default function Riders() {
           </div>
         </div>
 
-        {/* All Riders Grid - Circles */}
+        {/* All Riders Grid - Squares */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
@@ -319,7 +318,7 @@ export default function Riders() {
               <div style={{
                 width: '100px',
                 height: '100px',
-                borderRadius: '50%',
+                borderRadius: '8px',
                 overflow: 'hidden',
                 border: activeIndex === index 
                   ? '3px solid #ef4444' 
@@ -391,7 +390,7 @@ export default function Riders() {
                 )}
               </div>
 
-              {/* Active Ring Animation */}
+              {/* Active Border Animation */}
               {activeIndex === index && (
                 <div style={{
                   position: 'absolute',
@@ -399,7 +398,7 @@ export default function Riders() {
                   left: '-8px',
                   right: '-8px',
                   bottom: '-8px',
-                  borderRadius: '50%',
+                  borderRadius: '12px',
                   border: '2px solid rgba(239, 68, 68, 0.4)',
                   animation: 'pulse 2s ease-in-out infinite',
                   pointerEvents: 'none'
@@ -432,7 +431,7 @@ export default function Riders() {
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 boxShadow: activeIndex === index ? '0 2px 8px rgba(239, 68, 68, 0.4)' : 'none'
-              }}
+              }}  
               onMouseEnter={(e) => {
                 if (activeIndex !== index) {
                   e.currentTarget.style.background = 'rgba(239, 68, 68, 0.5)';
