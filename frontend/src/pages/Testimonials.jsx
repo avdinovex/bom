@@ -1,47 +1,70 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import api from "../services/api";
 
-import user1 from "../assets/user-1.jpeg";
-import user2 from "../assets/user-2.jpeg";
-import user3 from "../assets/user-3.jpg"
 import bgImage from "../assets/testimonial.png";
 
 const Testimonials = () => {
-  const testimonials = [
-    {
-      name: "Shreya Chaturvedi",
-      review:
-        "It was my first group ride and honestly I enjoyed alot. Amazing ride and riders. I made some new friends overall it was a great experience with BOM!!! Thankyou for taking efforts and arranging such ride.. waiting for next😁",
-      image: user1,
-      rating: 5,
-    },
-    {
-      name: "Rahul Prakash Thakur ",
-      review:
-        "I really enjoyed the ride even in the absence of our founder, whose bike unfortunately broke down. All the marshals were very helpful throughout the journey. Thanks to the entire team for such a wonderful experience! Looking forward to joining you guys again on the next one-day ride.",
-      image: user2,
-      rating: 5,
-    },
-     {
-      name: "Ganesh Achary  ",
-      review:
-        "Had an amazing ride with the Brotherhood of Mumbai to Kasmal Plateau and the beautiful waterfall. This time, the lead bike faced a breakdown, but the marshals handled everything really well and ensured the ride stayed safe and smooth for everyone. The entire experience was full of energy, fun, and stunning scenery. It was also a great opportunity to meet and make new friends, which made the ride even more memorable. Overall, a wonderful and well-managed ride. Looking forward to the next one!",
-      image: user3,
-      rating: 5,
-    },
-  ];
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/testimonials');
+      setTestimonials(response.data.data);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+      setTestimonials([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const settings = {
     dots: true,
-    infinite: true,
-    autoplay: true,
+    infinite: testimonials.length > 1,
+    autoplay: testimonials.length > 1,
     autoplaySpeed: 4000,
     arrows: false,
     slidesToShow: 1,
     slidesToScroll: 1,
   };
+
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: "#fff" }}>
+        <section style={styles.section} className="testimonials-section">
+          <h5 style={styles.subheading}>❮❮ PARTICIPANTS ❯❯</h5>
+          <h2 style={styles.heading}>REVIEWS FROM OUR PARTICIPANTS</h2>
+          <div style={{ textAlign: 'center', padding: '50px 0' }}>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+            <p style={{ color: '#fff', marginTop: '20px' }}>Loading testimonials...</p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (testimonials.length === 0) {
+    return (
+      <div style={{ backgroundColor: "#fff" }}>
+        <section style={styles.section} className="testimonials-section">
+          <h5 style={styles.subheading}>❮❮ PARTICIPANTS ❯❯</h5>
+          <h2 style={styles.heading}>REVIEWS FROM OUR PARTICIPANTS</h2>
+          <p style={{ color: '#fff', marginTop: '30px', textAlign: 'center' }}>
+            No testimonials available at the moment.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: "#fff" }}>
@@ -51,7 +74,7 @@ const Testimonials = () => {
 
         <Slider {...settings} style={{ marginTop: "50px" }}>
           {testimonials.map((t, index) => (
-            <div key={index} style={styles.slide}>
+            <div key={t._id || index} style={styles.slide}>
               <div style={styles.testimonial} className="testimonial-content">
                 <img src={t.image} alt={t.name} style={styles.avatar} className="testimonial-avatar" />
                 <div className="testimonial-text">
@@ -60,7 +83,7 @@ const Testimonials = () => {
                   </div>
                   <p style={styles.review}>{t.review}</p>
                   <h3 style={styles.name}>{t.name}</h3>
-                  <p style={styles.role}>{t.role}</p>
+                  {t.role && <p style={styles.role}>{t.role}</p>}
                 </div>
               </div>
             </div>

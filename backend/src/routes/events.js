@@ -125,7 +125,6 @@ router.get('/type/:eventType', optionalAuth, validate(schemas.eventQuery, 'query
   const defaultSortBy = eventType === 'upcoming' ? 'startDate' : '-startDate';
   const sort = getSortOptions(sortBy || defaultSortBy, sortOrder);
 
-  console.log('Event filter:', JSON.stringify(filter, null, 2));
 
   // Execute queries
   const [events, totalCount] = await Promise.all([

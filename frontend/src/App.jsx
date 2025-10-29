@@ -40,6 +40,8 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
+import TeamMembers from './pages/admin/TeamMembers';
+import TeamMemberForm from './pages/admin/TeamMemberForm';
 import Rides from './pages/admin/Rides';
 import AdminUpcomingRides from './pages/admin/UpcomingRides';
 import AdminCompletedRides from './pages/admin/CompletedRides';
@@ -49,6 +51,8 @@ import Bookings from './pages/admin/Bookings';
 import AdminSponsors from './pages/admin/Sponsors';
 import AdminSponsorCategories from './pages/admin/SponsorCategories';
 import AdminCoupons from './pages/admin/Coupons';
+import AdminTestimonials from './pages/admin/Testimonials';
+import AdminEventBookings from './pages/admin/EventBookings';
 import BlogDetails from "./pages/BlogDetails.jsx";
 
 // Event Detail Wrapper Component
@@ -155,15 +159,20 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="users" element={<Users />} />
+            <Route path="team" element={<TeamMembers />} />
+            <Route path="team/new" element={<TeamMemberForm />} />
+            <Route path="team/edit/:id" element={<TeamMemberForm />} />
             <Route path="rides" element={<Rides />} />
             <Route path="upcoming-rides" element={<AdminUpcomingRides />} />
             <Route path="completed-rides" element={<AdminCompletedRides />} />
             <Route path="events" element={<AdminEvents />} />
             <Route path="blogs" element={<AdminBlogs />} />
             <Route path="bookings" element={<Bookings />} />
+            <Route path="event-bookings" element={<AdminEventBookings />} />
             <Route path="sponsors" element={<AdminSponsors />} />
             <Route path="sponsor-categories" element={<AdminSponsorCategories />} />
             <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="testimonials" element={<AdminTestimonials />} />
           </Route>
         </Routes>
       </div>

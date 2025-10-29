@@ -9,7 +9,8 @@
     "dev": "nodemon src/server.js",
     "test": "jest --watchAll --no-cache",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "seed:team": "node src/seeds/teamSeed.js"
   },
   "keywords": [
     "ride-booking",

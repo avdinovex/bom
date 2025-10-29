@@ -24,109 +24,89 @@ const Events = () => {
 
   useEffect(() => {
     fetchEvents();
-    
-    // Also call debug endpoint directly
-    const debugDB = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/events/debug/all');
-        const data = await response.json();
-        console.log('Direct debug API call result:', data);
-      } catch (error) {
-        console.log('Direct debug API call failed:', error);
-      }
-    };
-    
-    debugDB();
   }, []);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       
-      // Debug: First check what's in the database
-      try {
-        const debugResponse = await publicEventsAPI.getDebugAll();
-        console.log('Debug - All events in DB:', debugResponse.data);
-        
-        // Try to fix existing events categories and publish status
-        if (debugResponse.data?.events && debugResponse.data.events.length > 0) {
-          console.log('Fixing event categories and publish status...');
-          try {
-            const fixResponse = await publicEventsAPI.fixEventCategories();
-            console.log('Events fixed:', fixResponse);
-          } catch (fixError) {
-            console.log('Failed to fix events:', fixError);
-          }
-        } else {
-          console.log('No events found, creating test event...');
-          try {
-            const testEventResponse = await publicEventsAPI.createTestEvent();
-            console.log('Test event created:', testEventResponse);
-          } catch (testError) {
-            console.log('Failed to create test event:', testError);
-          }
-        }
-      } catch (debugError) {
-        console.log('Debug endpoint failed:', debugError);
+      // Fetch upcoming and past events using the proper type-based API
+      const [upcomingResponse, pastResponse] = await Promise.all([
+        publicEventsAPI.getByType('upcoming', { 
+          category: 'mumbai-bikers-mania',
+          limit: 20 
+        }),
+        publicEventsAPI.getByType('past', { 
+          category: 'mumbai-bikers-mania',
+          limit: 20 
+        })
+      ]);
+      
+      
+      // Extract events from the paginated response structure
+      // Try multiple levels to handle different response formats
+      let upcomingEvents = [];
+      let pastEvents = [];
+      
+      // Check if data.data.data exists (pagination structure)
+      if (Array.isArray(upcomingResponse.data?.data?.data)) {
+        upcomingEvents = upcomingResponse.data.data.data;
+        console.log('✓ Found upcoming events at data.data.data');
+      } 
+      // Check if data.data is array (direct array)
+      else if (Array.isArray(upcomingResponse.data?.data)) {
+        upcomingEvents = upcomingResponse.data.data;
+        console.log('✓ Found upcoming events at data.data');
+      }
+      // Check if data is array
+      else if (Array.isArray(upcomingResponse.data)) {
+        upcomingEvents = upcomingResponse.data;
+        console.log('✓ Found upcoming events at data');
       }
       
-      // Get all events and filter for Mumbai Bikers Mania manually
-      const allEventsResponse = await publicEventsAPI.getAll({ limit: 20 });
-      console.log('All events response:', allEventsResponse);
+      if (Array.isArray(pastResponse.data?.data?.data)) {
+        pastEvents = pastResponse.data.data.data;
+        console.log('✓ Found past events at data.data.data');
+      } 
+      else if (Array.isArray(pastResponse.data?.data)) {
+        pastEvents = pastResponse.data.data;
+        console.log('✓ Found past events at data.data');
+      }
+      else if (Array.isArray(pastResponse.data)) {
+        pastEvents = pastResponse.data;
+        console.log('✓ Found past events at data');
+      }
       
-      const allDbEvents = allEventsResponse.data?.events || allEventsResponse.data?.data?.events || [];
-      console.log('All events from DB:', allDbEvents);
-      
-      // Filter for Mumbai Bikers Mania events by title since category might be wrong
-      const allEvents = allDbEvents.filter(event => 
-        event.category === 'mumbai-bikers-mania' || 
-        event.title?.toLowerCase().includes('mumbai bikers mania') ||
-        event.title?.toLowerCase().includes('mumbai bikers') ||
-        event.title?.toLowerCase().includes('mbm')
-      );
-      
-      console.log('Filtered Mumbai Bikers Mania events:', allEvents);
-      
-      // Manually categorize events based on dates
-      const now = new Date();
-      const upcomingEvents = allEvents.filter(event => {
-        if (!event.startDate) return false;
-        const startDate = new Date(event.startDate);
-        const endDate = event.endDate ? new Date(event.endDate) : null;
-        
-        // Event is upcoming if it hasn't started yet or is currently ongoing
-        return startDate >= now || (endDate && endDate >= now);
-      });
-      
-      const pastEvents = allEvents.filter(event => {
-        if (!event.startDate) return false;
-        const startDate = new Date(event.startDate);
-        const endDate = event.endDate ? new Date(event.endDate) : null;
-        
-        // Event is past if it has ended or started more than 24 hours ago without an end date
-        if (endDate) {
-          return endDate < now;
-        } else {
-          return startDate < new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        }
-      });
-
-      setEvents({
-        upcoming: upcomingEvents.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)),
-        past: pastEvents.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
-      });
-      
-      console.log('Final categorized events:', {
-        upcoming: upcomingEvents.length,
-        past: pastEvents.length,
+      console.log('📊 Extracted Mumbai Bikers Mania events:', {
+        upcomingCount: upcomingEvents.length,
+        pastCount: pastEvents.length,
         upcomingEvents,
         pastEvents
       });
+
+      setEvents({
+        upcoming: upcomingEvents,
+        past: pastEvents
+      });
+
+      // Show success message
+      if (upcomingEvents.length > 0 || pastEvents.length > 0) {
+        console.log(`✅ Loaded ${upcomingEvents.length} upcoming and ${pastEvents.length} past events`);
+        toast.success(`Loaded ${upcomingEvents.length + pastEvents.length} event(s)`);
+      } else {
+        console.log('⚠️ No Mumbai Bikers Mania events found');
+        toast.info('No events found. Create one in the admin panel!');
+      }
       
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('❌ Error fetching events:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       toast.error('Failed to load events');
-      // Keep fallback content if API fails
+      setEvents({ upcoming: [], past: [] });
     } finally {
       setLoading(false);
     }
@@ -145,8 +125,10 @@ const Events = () => {
     setShowBookingForm(true);
   };
 
-  const renderContentSection = (section, index, isReverse = false) => {
-    const currentSectionStyle = isReverse ? sectionReverseStyle : sectionStyle;
+  const renderContentSection = (section, index) => {
+    // Use section.layout to determine image position, default to alternating pattern
+    const isImageRight = section.layout === 'image-right' || (!section.layout && index % 2 === 1);
+    const currentSectionStyle = isImageRight ? sectionReverseStyle : sectionStyle;
     
     return (
       <div key={section._id || index} style={currentSectionStyle} className="event-section">
@@ -188,13 +170,11 @@ const Events = () => {
     if (eventList.length === 0) {
       return (
         <div className="text-center py-10">
-          {/* Show fallback content as preview for both tabs when no real events */}
-          <div className="mt-12">
-            <h3 className="text-xl font-semibold text-red-500 mb-6">
-              {activeTab === 'upcoming' ? 'What to Expect from Mumbai Bikers Mania' : 'Experience Mumbai Bikers Mania'}
-            </h3>
-            {renderFallbackContent()}
-          </div>
+          <p className="text-white text-lg mb-4">
+            {activeTab === 'upcoming' 
+              ? 'No upcoming Mumbai Bikers Mania events at the moment. Check back soon!' 
+              : 'No past Mumbai Bikers Mania events to display.'}
+          </p>
         </div>
       );
     }
@@ -220,19 +200,14 @@ const Events = () => {
               </div>
             )}
 
-            {/* Render dynamic content sections */}
-            {event.contentSections && event.contentSections.length > 0 ? (
+            {/* Render dynamic content sections from backend */}
+            {event.contentSections && event.contentSections.length > 0 && (
               event.contentSections
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((section, index) => 
-                  renderContentSection(section, index, section.layout === 'image-right' || index % 2 === 1)
-                )
-            ) : (
-              // Show fallback content only for the first event if no content sections
-              eventIndex === 0 && renderFallbackContent()
+                .map((section, index) => renderContentSection(section, index))
             )}
             
-            {/* Add booking/info section for each event */}
+            {/* Event details and booking section */}
             <div style={sectionStyle} className="event-section">
               <div style={imageContainerStyle} className="event-image-container">
                 <img
@@ -254,12 +229,13 @@ const Events = () => {
                     {event.description}
                   </p>
                 )}
-                <p style={finalParagraphStyle}>
-                  {event.subtitle || (activeTab === 'upcoming' 
-                    ? "Be part of this incredible experience!" 
-                    : "Relive the amazing memories from this event!")}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                {event.subtitle && (
+                  <p style={finalParagraphStyle}>
+                    {event.subtitle}
+                  </p>
+                )}
+                <div className="flex flex-col sm:flex-row gap-6 items-start mt-6">
+                  {/* Only show register button for upcoming events with booking enabled */}
                   {activeTab === 'upcoming' && event.isBookingEnabled && (
                     <button 
                       style={buttonStyle} 
@@ -289,17 +265,17 @@ const Events = () => {
                         </p>
                       </div>
                     )}
-                    {event.pricing && !event.pricing.isFree && (
+                    {event.pricing && !event.pricing.isFree && event.pricing.basePrice > 0 && (
                       <div className="text-white">
                         <p className="text-sm opacity-75">Price:</p>
-                        <p className="font-semibold">₹{event.pricing.basePrice || event.price}</p>
+                        <p className="font-semibold">₹{event.pricing.basePrice}</p>
                       </div>
                     )}
-                    {event.capacity && (
+                    {event.capacity && event.capacity.maxParticipants > 0 && (
                       <div className="text-white">
                         <p className="text-sm opacity-75">Capacity:</p>
                         <p className="font-semibold">
-                          {event.capacity.currentParticipants || 0}/{event.capacity.maxParticipants || 100}
+                          {event.capacity.currentParticipants || 0}/{event.capacity.maxParticipants}
                         </p>
                       </div>
                     )}
@@ -309,109 +285,6 @@ const Events = () => {
             </div>
           </div>
         ))}
-      </>
-    );
-  };
-
-  const renderFallbackContent = () => {
-    return (
-      <>
-        {/* Fallback content sections using static data */}
-        <div style={sectionStyle} className="event-section">
-          <div style={imageContainerStyle} className="event-image-container">
-            <img
-              src={mbm3}
-              alt="Mumbai Bikers Mania"
-              style={imageStyle}
-              className="event-image"
-            />
-          </div>
-          <div style={textContainerStyle}>
-            <p style={subheadingStyle} className="event-subheading">
-              INTRODUCING
-            </p>
-            <h1 style={headingStyle} className="event-heading">
-              MUMBAI BIKERS<br />MANIA
-            </h1>
-            <p style={paragraphStyle} className="event-paragraph">
-              Mumbai Bikers Mania is a premium biking festival conceptualised by the Brotherhood of Mumbai exclusively for the city's passionate riding community. It is not a meetup, not a casual group ride—but a full-scale motorsport-inspired event.
-            </p>
-          </div>
-        </div>
-
-        {/* Additional fallback sections... */}
-        <div style={sectionReverseStyle} className="event-section">
-          <div style={imageContainerStyle} className="event-image-container">
-            <img
-              src={mbm2}
-              alt="Professional Platform"
-              style={imageStyle}
-              className="event-image"
-            />
-          </div>
-          <div style={textContainerStyle}>
-            <p style={subheadingStyle} className="event-subheading">
-              OUR VISION
-            </p>
-            <h1 style={headingStyle} className="event-heading">
-              PROFESSIONAL<br />BIKING PLATFORM
-            </h1>
-            <p style={paragraphStyle} className="event-paragraph">
-              The vision behind Mumbai Bikers Mania is to create a professional platform dedicated to real biking culture. Riders don't just attend—they experience. A space where the community feels seen, valued, and represented.
-            </p>
-          </div>
-        </div>
-
-        <div style={sectionStyle} className="event-section">
-          <div style={imageContainerStyle} className="event-image-container">
-            <img
-              src={mbm7}
-              alt="Off-Road Tracks"
-              style={imageStyle}
-              className="event-image"
-            />
-          </div>
-          <div style={textContainerStyle}>
-            <p style={subheadingStyle} className="event-subheading">
-              EXPERIENCE
-            </p>
-            <h1 style={headingStyle} className="event-heading">
-              OFF-ROAD &<br />TRAIL ZONES
-            </h1>
-            <p style={paragraphStyle} className="event-paragraph">
-              The event features purpose-built off-road and trail zones designed for thrill seekers. Motocross-style tracks are introduced to challenge skill, control, and precision.
-            </p>
-          </div>
-        </div>
-
-        {/* Final section with register button */}
-        <div style={sectionReverseStyle} className="event-section">
-          <div style={imageContainerStyle} className="event-image-container">
-            <img
-              src={mbm3}
-              alt="Mumbai Biking Legacy"
-              style={imageStyle}
-              className="event-image"
-            />
-          </div>
-          <div style={textContainerStyle}>
-            <p style={subheadingStyle} className="event-subheading">
-              THE MOVEMENT
-            </p>
-            <h1 style={headingStyle} className="event-heading">
-              WHERE THROTTLE<br />MEETS AMBITION
-            </h1>
-            <p style={paragraphStyle} className="event-paragraph">
-              Mumbai Bikers Mania is a step towards building a recognised biking identity for Mumbai. An identity that speaks of passion, power, and professional-level biking events.
-            </p>
-            <p style={finalParagraphStyle}>
-              This is more than an event—it's the beginning of a movement.
-            </p>
-            <button style={buttonStyle} className="event-button">
-              JOIN THE MANIA
-            </button>
-          </div>
-        </div>
       </>
     );
   };

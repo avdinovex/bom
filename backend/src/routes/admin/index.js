@@ -14,6 +14,7 @@ import dashboardRoutes from './dashboard.js';
 import sponsorRoutes from './sponsors.js';
 import sponsorCategoryRoutes from './sponsorCategories.js';
 import couponRoutes from './coupons.js';
+import testimonialRoutes from './testimonials.js';
 
 const router = express.Router();
 
@@ -33,5 +34,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/sponsors', sponsorRoutes);
 router.use('/sponsor-categories', sponsorCategoryRoutes);
 router.use('/coupons', couponRoutes);
+router.use('/testimonials', testimonialRoutes);
 
 export default router;

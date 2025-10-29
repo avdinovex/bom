@@ -9,11 +9,16 @@ const teamMemberSchema = new Schema({
     trim: true,
     maxlength: [100, 'Name cannot exceed 100 characters']
   },
-  position: {
+  role: {
     type: String,
-    required: [true, 'Position is required'],
     trim: true,
-    maxlength: [100, 'Position cannot exceed 100 characters']
+    maxlength: [100, 'Role cannot exceed 100 characters']
+  },
+  memberType: {
+    type: String,
+    enum: ['core', 'rider'],
+    required: [true, 'Member type is required'],
+    default: 'rider'
   },
   imgUrl: {
     type: String,
@@ -35,11 +40,15 @@ const teamMemberSchema = new Schema({
     trim: true
   },
   social: {
-    facebook: {
+    instagram: {
       type: String,
       trim: true
     },
-    instagram: {
+    youtube: {
+      type: String,
+      trim: true
+    },
+    facebook: {
       type: String,
       trim: true
     },
@@ -50,20 +59,7 @@ const teamMemberSchema = new Schema({
     linkedin: {
       type: String,
       trim: true
-    },
-    website: {
-      type: String,
-      trim: true
     }
-  },
-  skills: [String],
-  experience: {
-    type: String,
-    trim: true
-  },
-  joinedDate: {
-    type: Date,
-    default: Date.now
   },
   isActive: {
     type: Boolean,
@@ -73,12 +69,7 @@ const teamMemberSchema = new Schema({
     type: Number,
     default: 0
   },
-  department: {
-    type: String,
-    enum: ['leadership', 'technical', 'marketing', 'operations', 'other'],
-    default: 'other'
-  },
-  isFounder: {
+  isLeadership: {
     type: Boolean,
     default: false
   }
@@ -88,7 +79,7 @@ const teamMemberSchema = new Schema({
 
 // Indexes for better query performance
 teamMemberSchema.index({ isActive: 1, displayOrder: 1 });
-teamMemberSchema.index({ department: 1 });
-teamMemberSchema.index({ isFounder: 1 });
+teamMemberSchema.index({ memberType: 1 });
+teamMemberSchema.index({ isLeadership: 1 });
 
 export default model('TeamMember', teamMemberSchema);

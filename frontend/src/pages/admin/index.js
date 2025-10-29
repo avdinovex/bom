@@ -2,6 +2,8 @@
 export { default as AdminLogin } from './AdminLogin';
 export { default as Dashboard } from './Dashboard';
 export { default as Users } from './Users';
+export { default as TeamMembers } from './TeamMembers';
+export { default as TeamMemberForm } from './TeamMemberForm';
 export { default as Rides } from './Rides';
 export { default as UpcomingRides } from './UpcomingRides';
 export { default as CompletedRides } from './CompletedRides';
@@ -11,3 +13,4 @@ export { default as Bookings } from './Bookings';
 export { default as EventBookings } from './EventBookings';
 export { default as Sponsors } from './Sponsors';
 export { default as SponsorCategories } from './SponsorCategories';
+export { default as Testimonials } from './Testimonials';

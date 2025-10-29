@@ -1,79 +1,140 @@
 import React, { useState, useEffect } from 'react';
 import { Instagram, Youtube } from 'lucide-react';
 import Navbar from '../components/Navbar';
-
-// Lazy load images - they will only be fetched when this component is rendered
-const members = [
-  { id: 1, name: "Amit Gala", instagram: "https://www.instagram.com/dr_amitgala_urologist?igsh=MXVoOW1jbnJpbGJlMg==", image: () => import("../assets/Amit Gala.jpg") },
-  { id: 2, name: "Chand", instagram: "https://instagram.com/chand", image: () => import("../assets/Chand.jpg") },
-  { id: 3, name: "Deep Shah", instagram: "https://www.instagram.com/kamehameha612?igsh=MWl6anl1MWp4Ym1obA==", image: () => import("../assets/Deep Shah.jpg") },
-  { id: 4, name: "Dipesh Lale", instagram: "https://www.instagram.com/dipeshlale?igsh=MXQ5cm12MWJ4OG9nMg==", image: () => import("../assets/Dipesh lale.jpg") },
-  { id: 5, name: "Ketan", instagram: "https://www.instagram.com/k2_snaps?igsh=MW0wbWlnZTYyaXQ5bg==", image: () => import("../assets/Ketan.jpg") },
-  { id: 6, name: "Krutali Naik", instagram: "https://instagram.com/krutalinaik", image: () => import("../assets/Krutali naik.jpg") },
-  { id: 7, name: "Kuldeep Singh", instagram: "https://www.instagram.com/kuldeepsingh.sohal?igsh=MWljZ3VnMjYyNTRtcg==", image: () => import("../assets/Kuldeep Singh.jpg") },
-  { id: 8, name: "Kunal Jadhav", instagram: "https://www.instagram.com/ride_along_kunal?igsh=MWw0ZDJkaWNwZjQzNA==", youtube: "https://www.youtube.com/@RideAlongKunal", image: () => import("../assets/Kunal jadhav.jpg") },
-  { id: 9, name: "Mandar Rane", instagram: "https://www.instagram.com/mandar_rane?igsh=M25oZnAydmFkZzE1", image: () => import("../assets/Mandar Rane.jpg") },
-  { id: 10, name: "Manthan Vichare", instagram: "https://www.instagram.com/_manthan_99?igsh=cnJwZG12dHphc2Jj", image: () => import("../assets/Manthan Vichare.jpg") },
-  { id: 11, name: "Narinder Singh", instagram: "https://instagram.com/narindersinghkalsi", image: () => import("../assets/Narinder singh kalsi.png") },
-  { id: 12, name: "Nikhil Naik", instagram: "https://instagram.com/nikhilnaik", image: () => import("../assets/Nikhil Naik.jpg") },
-  { id: 13, name: "Parth Patil", instagram: "https://www.instagram.com/parthpatil__24?igsh=MTJ1dWljdmJveDB1Nw==", image: () => import("../assets/Parth Patil.jpg") },
-  { id: 14, name: "Prasad Sanas", instagram: "https://www.instagram.com/sanasganesh.sanasd9?igsh=dmVmZDZ5cmVpc2ky", image: () => import("../assets/Prasad sanas.jpg") },
-  { id: 15, name: "Prashant Chalke", instagram: "https://www.instagram.com/cruising_rider?igsh=MW10Y2ZpZ2xqbDlwaA==", youtube: "https://youtube.com/@cruising_rider?si=vpN9bgekH_v6ljqu", image: () => import("../assets/Prashant Chalke.jpg") },
-  { id: 16, name: "Priyanka Parab", instagram: "https://www.instagram.com/pri_chops?igsh=MmE0ZTk0emVma3J3", image: () => import("../assets/Priyanka Parab.jpg") },
-  { id: 17, name: "Rohit Kulkarni", instagram: "https://www.instagram.com/_.rohitkulkarni._?igsh=c3lrOTJxY2Zxa2Fz", image: () => import("../assets/Rohit Kulkarni.jpg") },
-  { id: 18, name: "Sagar Sharma", instagram: "https://www.instagram.com/jimlaurac_ss?igsh=NHdsZG1mdDgzY3hm", image: () => import("../assets/Sagar Sharma.jpg") },
-  { id: 19, name: "Samruddhi Rane", instagram: "https://www.instagram.com/samu.sawant?igsh=MXNqM21lMWZxb21mdA==", image: () => import("../assets/Samruddhi Rane.jpg") },
-  { id: 20, name: "Sarvesh Dewalkar", instagram: "https://www.instagram.com/mh02deva?igsh=MXAwdXpmZnYxczBrMA==", image: () => import("../assets/Sarvesh Dewalkar.jpg") },
-  { id: 21, name: "Shantanu Vartak", instagram: "https://www.instagram.com/shon___06?igsh=MnBjNWJkN3Znd3Fy&utm_source=qr", image: () => import("../assets/Shantanu vartak.jpg") },
-  { id: 22, name: "Swarup Patil", instagram: "https://www.instagram.com/swap_patil_09_?igsh=dThxZ3djanQ5Z2Zz", youtube: "https://youtube.com/@swaruppatil7117?si=_9j3q_3hVGBjFfHF", image: () => import("../assets/Swarup patil.jpg") },
-  { id: 23, name: "Sameet Raut", instagram: "https://www.instagram.com/samsameetsam?igsh=MTQxaDN2aHo2aHF4eQ==", image: () => import('../assets/Sameet.jpeg') }
-];
+import api from '../services/api';
 
 export default function Riders() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredId, setHoveredId] = useState(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [loadedImages, setLoadedImages] = useState({});
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load images dynamically
+  // Fetch riders from API
   useEffect(() => {
-    const loadImages = async () => {
-      const imagePromises = members.map(async (member, index) => {
-        try {
-          const imageModule = await member.image();
-          return { index, src: imageModule.default };
-        } catch (error) {
-          console.error(`Failed to load image for ${member.name}:`, error);
-          return { index, src: null };
-        }
-      });
-
-      const results = await Promise.all(imagePromises);
-      const imagesMap = {};
-      results.forEach(({ index, src }) => {
-        imagesMap[index] = src;
-      });
-      setLoadedImages(imagesMap);
+    const fetchRiders = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/team/riders/list');
+        const ridersData = response.data.data.riders || [];
+        setMembers(ridersData);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching riders:', error);
+        setError('Failed to load riders. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadImages();
+    fetchRiders();
   }, []);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || members.length === 0) return;
     
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % members.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, members.length]);
 
   const handleMemberClick = (index) => {
     setActiveIndex(index);
     setIsAutoPlaying(false);
     setTimeout(() => setIsAutoPlaying(true), 8000);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        width: '100%',
+        minHeight: '100vh',
+        background: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column'
+      }}>
+        <Navbar />
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #ef4444',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#666', fontSize: '1.1rem' }}>Loading riders...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div style={{
+        width: '100%',
+        minHeight: '100vh',
+        background: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column'
+      }}>
+        <Navbar />
+        <div style={{ textAlign: 'center', marginTop: '2rem', padding: '2rem' }}>
+          <p style={{ color: '#ef4444', fontSize: '1.2rem', marginBottom: '1rem' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '0.8rem 2rem',
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No members state
+  if (members.length === 0) {
+    return (
+      <div style={{
+        width: '100%',
+        minHeight: '100vh',
+        background: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column'
+      }}>
+        <Navbar />
+        <div style={{ textAlign: 'center', marginTop: '2rem', padding: '2rem' }}>
+          <p style={{ color: '#666', fontSize: '1.2rem' }}>No riders available at the moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -156,33 +217,31 @@ export default function Riders() {
               borderRadius: '12px',
               overflow: 'hidden',
               border: '4px solid #ef4444',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-              position: 'relative'
-            }}>
-              {loadedImages[activeIndex] ? (
-                <img 
-                  src={loadedImages[activeIndex]}
-                  alt={members[activeIndex].name}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              ) : (
-                <div style={{
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+            position: 'relative'
+          }}>
+            {members[activeIndex]?.imgUrl ? (
+              <img 
+                src={members[activeIndex].imgUrl}
+                alt={members[activeIndex].name}
+                style={{
                   width: '100%',
                   height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
-                }}>
-                  <span style={{ color: '#999', fontSize: '0.9rem' }}>Loading...</span>
-                </div>
-              )}
-              
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
               <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
+              }}>
+                <span style={{ color: '#999', fontSize: '0.9rem' }}>No Image</span>
+              </div>
+            )}              <div style={{
                 position: 'absolute',
                 inset: 0,
                 background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent 50%)'
@@ -211,9 +270,9 @@ export default function Riders() {
                   justifyContent: 'center',
                   gap: '0.8rem'
                 }}>
-                  {members[activeIndex].instagram && (
+                  {members[activeIndex]?.social?.instagram && (
                     <a
-                      href={members[activeIndex].instagram}
+                      href={members[activeIndex].social.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -243,9 +302,9 @@ export default function Riders() {
                       <Instagram size={18} />
                     </a>
                   )}
-                  {members[activeIndex].youtube && (
+                  {members[activeIndex]?.social?.youtube && (
                     <a
-                      href={members[activeIndex].youtube}
+                      href={members[activeIndex].social.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -305,9 +364,9 @@ export default function Riders() {
         }}>
           {members.map((member, index) => (
             <div
-              key={member.id}
+              key={member._id || member.id}
               onClick={() => handleMemberClick(index)}
-              onMouseEnter={() => setHoveredId(member.id)}
+              onMouseEnter={() => setHoveredId(member._id || member.id)}
               onMouseLeave={() => setHoveredId(null)}
               style={{
                 position: 'relative',
@@ -330,15 +389,15 @@ export default function Riders() {
                     : '0 4px 12px rgba(0, 0, 0, 0.08)',
                 transform: activeIndex === index 
                   ? 'scale(1.15)' 
-                  : hoveredId === member.id 
+                  : hoveredId === (member._id || member.id)
                     ? 'scale(1.08)' 
                     : 'scale(1)',
                 transition: 'all 0.3s ease',
                 position: 'relative'
               }}>
-                {loadedImages[index] ? (
+                {member.imgUrl ? (
                   <img 
-                    src={loadedImages[index]}
+                    src={member.imgUrl}
                     alt={member.name}
                     style={{
                       width: '100%',
@@ -352,12 +411,19 @@ export default function Riders() {
                   <div style={{
                     width: '100%',
                     height: '100%',
-                    background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
-                  }}></div>
+                    background: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.7rem',
+                    color: '#999'
+                  }}>
+                    {member.name.charAt(0)}
+                  </div>
                 )}
                 
                 {/* Name Tooltip on Hover */}
-                {(hoveredId === member.id || activeIndex === index) && (
+                {(hoveredId === (member._id || member.id) || activeIndex === index) && (
                   <div style={{
                     position: 'absolute',
                     bottom: '-35px',

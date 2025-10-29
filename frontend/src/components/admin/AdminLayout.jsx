@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import ProtectedRoute from '../ProtectedRoute';
 import {
   FiHome,
   FiUsers,
@@ -17,7 +16,9 @@ import {
   FiBarChart2,
   FiCheckCircle,
   FiGift,
-  FiTag
+  FiTag,
+  FiUserCheck,
+  FiStar
 } from 'react-icons/fi';
 
 const AdminLayout = () => {
@@ -42,6 +43,11 @@ const AdminLayout = () => {
       name: 'Users',
       href: '/admin/users',
       icon: FiUsers
+    },
+    {
+      name: 'Team Members',
+      href: '/admin/team',
+      icon: FiUserCheck
     },
     {
       name: 'Bookings',
@@ -87,6 +93,11 @@ const AdminLayout = () => {
       name: 'Coupons',
       href: '/admin/coupons',
       icon: FiTag
+    },
+    {
+      name: 'Testimonials',
+      href: '/admin/testimonials',
+      icon: FiStar
     }
   ];
 
@@ -97,10 +108,10 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <div className={`${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+      } fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
         
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-4 bg-blue-600">
+        <div className="flex items-center justify-between h-16 px-4 bg-blue-600 flex-shrink-0">
           <div className="flex items-center">
             <FiBarChart2 className="h-8 w-8 text-white" />
             <span className="ml-2 text-lg font-semibold text-white">BOM Admin</span>
@@ -113,8 +124,8 @@ const AdminLayout = () => {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <Link
               key={item.name}
@@ -128,30 +139,30 @@ const AdminLayout = () => {
             >
               <item.icon className={`${
                 isActive(item.href) ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'
-              } mr-3 h-5 w-5 transition-colors duration-200`} />
+              } mr-3 h-5 w-5 transition-colors duration-200 flex-shrink-0`} />
               {item.name}
             </Link>
           ))}
         </nav>
 
-        {/* User Info & Logout */}
-        <div className="border-t border-gray-200 p-4">
+        {/* User Info & Logout - Fixed at bottom */}
+        <div className="border-t border-gray-200 p-4 flex-shrink-0">
           <div className="flex items-center mb-4">
             <div className="flex-shrink-0">
               <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <FiUser className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+            <div className="ml-3 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{user?.fullName}</p>
+              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
             className="w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
           >
-            <FiLogOut className="mr-3 h-5 w-5" />
+            <FiLogOut className="mr-3 h-5 w-5 flex-shrink-0" />
             Logout
           </button>
         </div>

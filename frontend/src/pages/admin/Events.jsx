@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiSearch, FiFilter, FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiFilter, FiCalendar, FiMapPin, FiUsers, FiUpload } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import DataTable from '../../components/admin/DataTable';
 import Modal from '../../components/admin/Modal';
@@ -68,12 +68,15 @@ const Events = () => {
     heading: '',
     content: '',
     imageAlt: '',
+    imageUrl: '',
     order: 0,
     layout: 'image-left'
   });
   
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [sectionImageFile, setSectionImageFile] = useState(null);
+  const [sectionImagePreview, setSectionImagePreview] = useState('');
 
   // Fetch events
   const fetchEvents = async () => {
@@ -252,6 +255,14 @@ const Events = () => {
     setFormLoading(true);
 
     try {
+      // Handle sections with image files - upload them separately
+      const sectionsWithImages = contentSections.filter(section => 
+        section._imageFile && section._imageFile instanceof File
+      );
+      const sectionsWithoutImages = contentSections.filter(section => 
+        !section._imageFile || !(section._imageFile instanceof File)
+      );
+      
       const submitData = new FormData();
       
       // Append basic fields
@@ -264,38 +275,98 @@ const Events = () => {
         }
       });
       
-      // Append content sections
-      if (contentSections.length > 0) {
-        submitData.append('contentSections', JSON.stringify(contentSections));
+      // Only append sections WITHOUT image files to the main event
+      // Sections WITH image files will be added separately via the sections endpoint
+      if (sectionsWithoutImages.length > 0) {
+        const cleanedSections = sectionsWithoutImages.map(section => {
+          const { _imageFile, ...cleanSection } = section;
+          return cleanSection;
+        });
+        submitData.append('contentSections', JSON.stringify(cleanedSections));
       }
       
-      // Append file if selected
+      // Append main event image if selected
       if (selectedFile) {
         submitData.append('eventImage', selectedFile);
       }
 
+      let savedEvent;
+      
       if (editingEvent) {
         // Update event
-        await api.put(`/admin/events/${editingEvent._id}`, submitData, {
+        const response = await api.put(`/admin/events/${editingEvent._id}`, submitData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-        toast.success('Event updated successfully');
+        savedEvent = response.data.data.event;
+        
+        // Show success message based on whether there are section images to upload
+        if (sectionsWithImages.length === 0) {
+          toast.success('Event updated successfully');
+        }
       } else {
         // Create event
-        await api.post('/admin/events', submitData, {
+        const response = await api.post('/admin/events', submitData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-        toast.success('Event created successfully');
+        savedEvent = response.data.data.event;
+        
+        // Show success message based on whether there are section images to upload
+        if (sectionsWithImages.length === 0) {
+          toast.success('Event created successfully');
+        }
+      }
+      
+      // Now upload section images using the dedicated endpoint
+      if (sectionsWithImages.length > 0 && savedEvent?._id) {
+        for (const section of sectionsWithImages) {
+          try {
+            const sectionData = new FormData();
+            sectionData.append('sectionImage', section._imageFile);
+            sectionData.append('sectionTitle', section.sectionTitle);
+            sectionData.append('subheading', section.subheading || '');
+            sectionData.append('heading', section.heading);
+            sectionData.append('content', section.content);
+            sectionData.append('imageAlt', section.imageAlt || '');
+            sectionData.append('order', section.order || 0);
+            sectionData.append('layout', section.layout || 'image-left');
+            
+            // Check if this is an existing section (has non-temp _id) or new section
+            const isExistingSection = section._id && !section._id.toString().startsWith('temp-');
+            
+            if (isExistingSection && editingEvent) {
+              // Update existing section with image
+              await api.put(`/admin/events/${savedEvent._id}/content-sections/${section._id}`, sectionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+            } else {
+              // Add new section with image
+              await api.post(`/admin/events/${savedEvent._id}/content-sections`, sectionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+            }
+          } catch (imgError) {
+            console.error('Error uploading section image:', imgError);
+            toast.error(`Failed to upload image for: ${section.sectionTitle}`);
+          }
+        }
+        
+        // Show final success message with section count
+        if (editingEvent) {
+          toast.success(`Event updated with ${sectionsWithImages.length} section image(s) successfully!`);
+        } else {
+          toast.success(`Event created with ${sectionsWithImages.length} section image(s) successfully!`);
+        }
       }
       
       setIsModalOpen(false);
       resetForm();
       fetchEvents();
     } catch (error) {
+      console.error('Event submission error:', error);
       toast.error(error.response?.data?.message || 'Operation failed');
     } finally {
       setFormLoading(false);
@@ -376,6 +447,22 @@ const Events = () => {
         setSelectedFile(file);
         const reader = new FileReader();
         reader.onload = (e) => setImagePreview(e.target.result);
+        reader.readAsDataURL(file);
+      } else {
+        toast.error('Please select an image file');
+        e.target.value = '';
+      }
+    }
+  };
+
+  // Handle section image file selection
+  const handleSectionImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setSectionImageFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => setSectionImagePreview(e.target.result);
         reader.readAsDataURL(file);
       } else {
         toast.error('Please select an image file');
@@ -1043,9 +1130,21 @@ const Events = () => {
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {contentSections.map((section, index) => (
                 <div key={section._id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{section.heading}</div>
-                    <div className="text-xs text-gray-500">{section.sectionTitle} • {section.layout}</div>
+                  <div className="flex items-center flex-1 gap-3">
+                    {/* Section Image Thumbnail */}
+                    {section.imageUrl && (
+                      <img 
+                        src={section.imageUrl} 
+                        alt={section.imageAlt || section.heading}
+                        className="h-12 w-12 object-cover rounded border border-gray-300"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{section.heading}</div>
+                      <div className="text-xs text-gray-500">
+                        {section.sectionTitle} • {section.layout} • Order: {section.order}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -1053,6 +1152,10 @@ const Events = () => {
                       onClick={() => {
                         setEditingSection(section);
                         setSectionFormData(section);
+                        // Set image preview if section has an image URL
+                        if (section.imageUrl) {
+                          setSectionImagePreview(section.imageUrl);
+                        }
                         setShowSectionForm(true);
                       }}
                       className="text-blue-600 hover:text-blue-800 text-sm"
@@ -1105,12 +1208,15 @@ const Events = () => {
         onClose={() => {
           setShowSectionForm(false);
           setEditingSection(null);
+          setSectionImageFile(null);
+          setSectionImagePreview('');
           setSectionFormData({
             sectionTitle: '',
             subheading: '',
             heading: '',
             content: '',
             imageAlt: '',
+            imageUrl: '',
             order: contentSections.length,
             layout: 'image-left'
           });
@@ -1121,30 +1227,45 @@ const Events = () => {
         <form onSubmit={(e) => {
           e.preventDefault();
           
+          // Prepare section data
+          const sectionData = {
+            ...sectionFormData
+          };
+          
+          // Only add _imageFile if a file was actually uploaded
+          if (sectionImageFile) {
+            sectionData._imageFile = sectionImageFile;
+          }
+          
           if (editingSection) {
             // Update existing section
             const updatedSections = contentSections.map((section, index) => 
-              section === editingSection ? { ...sectionFormData, _id: section._id || `temp-${index}` } : section
+              section === editingSection ? { ...sectionData, _id: section._id || `temp-${index}` } : section
             );
             setContentSections(updatedSections);
+            toast.success('Section updated successfully');
           } else {
             // Add new section
             setContentSections(prev => [...prev, { 
-              ...sectionFormData, 
+              ...sectionData, 
               _id: `temp-${Date.now()}`,
               order: prev.length 
             }]);
+            toast.success('Section added successfully');
           }
           
           // Reset and close
           setShowSectionForm(false);
           setEditingSection(null);
+          setSectionImageFile(null);
+          setSectionImagePreview('');
           setSectionFormData({
             sectionTitle: '',
             subheading: '',
             heading: '',
             content: '',
             imageAlt: '',
+            imageUrl: '',
             order: 0,
             layout: 'image-left'
           });
@@ -1207,6 +1328,53 @@ const Events = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Section content/description"
             />
+          </div>
+
+          {/* Section Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Section Image
+            </label>
+            <div className="space-y-2">
+              {/* Image URL Input */}
+              <input
+                type="url"
+                value={sectionFormData.imageUrl || ''}
+                onChange={(e) => setSectionFormData({...sectionFormData, imageUrl: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter image URL or upload below"
+              />
+              
+              {/* File Upload */}
+              <div className="flex items-center space-x-4">
+                <label className="flex-1">
+                  <div className="flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                    <FiUpload className="mr-2" />
+                    <span className="text-sm text-gray-600">
+                      {sectionImageFile ? sectionImageFile.name : 'Upload Image'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleSectionImageSelect}
+                    className="hidden"
+                  />
+                </label>
+                
+                {/* Image Preview */}
+                {(sectionImagePreview || sectionFormData.imageUrl) && (
+                  <img
+                    src={sectionImagePreview || sectionFormData.imageUrl}
+                    alt="Section preview"
+                    className="h-20 w-20 object-cover rounded-lg border border-gray-300"
+                  />
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                This image will appear in the section. Upload a new image or provide a URL.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

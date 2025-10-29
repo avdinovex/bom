@@ -59,44 +59,47 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       'emergencyContactPersonName', 'emergencyContactNumber', 'medicalHistory'
     ];
     
-    const agreements = ['foodAndRefreshments', 'informationAccuracy', 'noContrabands', 'rulesAndRegulations'];
-    
     for (const field of requiredFields) {
       if (!formData[field] || formData[field].toString().trim() === '') {
-        return `Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+        toast.error(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+        return false;
       }
     }
     
+    const agreements = ['foodAndRefreshments', 'informationAccuracy', 'noContrabands', 'rulesAndRegulations'];
+    
     for (const agreement of agreements) {
       if (!formData[agreement]) {
-        return `Please accept all required agreements`;
+        toast.error('Please accept all required agreements');
+        return false;
       }
     }
     
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return 'Please enter a valid email address';
+      toast.error('Please enter a valid email address');
+      return false;
     }
     
     // Validate contact numbers (basic validation for 10 digits)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.contactNumber.replace(/[^0-9]/g, ''))) {
-      return 'Please enter a valid 10-digit contact number';
+      toast.error('Please enter a valid 10-digit contact number');
+      return false;
     }
     
     if (!phoneRegex.test(formData.emergencyContactNumber.replace(/[^0-9]/g, ''))) {
-      return 'Please enter a valid 10-digit emergency contact number';
+      toast.error('Please enter a valid 10-digit emergency contact number');
+      return false;
     }
     
-    return null;
+    return true;
   };
 
   const handleNext = () => {
     if (currentStep === 1) {
-      const validationError = validateStep1();
-      if (validationError) {
-        toast.error(validationError);
+      if (!validateStep1()) {
         return;
       }
     }
@@ -105,6 +108,18 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
 
   const handlePrevious = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const calculateTotal = () => {
+    const groupSize = bookingType === 'group' ? formData.groupMembers.length : 1;
+    const basePrice = event?.pricing?.basePrice || event?.price || 0;
+    const subtotal = basePrice * groupSize;
+    const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+    return {
+      subtotal,
+      discount,
+      total: subtotal - discount
+    };
   };
 
   const handlePayment = async () => {
@@ -116,7 +131,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     setLoading(true);
     
     try {
-      // Prepare booking data
+      // Prepare booking data - send only what backend expects
       const bookingData = {
         eventId: event._id,
         personalInfo: {
@@ -144,6 +159,9 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           rulesAndRegulations: formData.rulesAndRegulations
         }
       };
+
+      // Note: Backend doesn't support group bookings and coupons for events yet
+      // These features are only available for rides
 
       // Create booking order
       const response = await api.post('/event-bookings/create-order', bookingData);
@@ -282,9 +300,131 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {currentStep === 1 && (
             <div className="space-y-6">
+              {/* Booking Type Selector */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Booking Type</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => handleBookingTypeChange('individual')}
+                    className={`p-6 border-2 rounded-lg transition-all ${
+                      bookingType === 'individual'
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-300 hover:border-red-300'
+                    }`}
+                  >
+                    <FiUser className="mx-auto text-3xl mb-2" style={{ color: bookingType === 'individual' ? '#ff4757' : '#666' }} />
+                    <p className="font-semibold text-gray-800">Individual</p>
+                    <p className="text-sm text-gray-600">Solo participant</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBookingTypeChange('group')}
+                    className={`p-6 border-2 rounded-lg transition-all ${
+                      bookingType === 'group'
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-300 hover:border-red-300'
+                    }`}
+                  >
+                    <FiUsers className="mx-auto text-3xl mb-2" style={{ color: bookingType === 'group' ? '#ff4757' : '#666' }} />
+                    <p className="font-semibold text-gray-800">Group</p>
+                    <p className="text-sm text-gray-600">2+ members</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Group Members Section */}
+              {bookingType === 'group' && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Group Information</h3>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Group Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="groupName"
+                      value={formData.groupName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      placeholder="Enter group name"
+                    />
+                  </div>
+
+                  <h4 className="text-md font-semibold mb-3 text-gray-800">Group Members ({formData.groupMembers.length})</h4>
+                  {formData.groupMembers.map((member, index) => (
+                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 mb-3">
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="font-medium text-gray-800">Member {index + 1}</h5>
+                        {formData.groupMembers.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeGroupMember(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <FiX size={20} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                          <input
+                            type="text"
+                            value={member.name}
+                            onChange={(e) => handleGroupMemberChange(index, 'name', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                            placeholder="Full name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
+                          <input
+                            type="tel"
+                            value={member.contactNumber}
+                            onChange={(e) => handleGroupMemberChange(index, 'contactNumber', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                            placeholder="Phone number"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Bike Number *</label>
+                          <input
+                            type="text"
+                            value={member.motorcycleNumber}
+                            onChange={(e) => handleGroupMemberChange(index, 'motorcycleNumber', e.target.value.toUpperCase())}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                            placeholder="MH01AB1234"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Bike Model *</label>
+                          <input
+                            type="text"
+                            value={member.motorcycleModel}
+                            onChange={(e) => handleGroupMemberChange(index, 'motorcycleModel', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                            placeholder="Royal Enfield Classic 350"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addGroupMember}
+                    className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-red-500 hover:border-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiPlus /> Add Member
+                  </button>
+                </div>
+              )}
+
               {/* Personal Information */}
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Personal Information</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                  {bookingType === 'group' ? 'Group Leader Information' : 'Personal Information'}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -536,37 +676,126 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           )}
 
           {currentStep === 2 && (
-            <div className="text-center py-8">
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-4">Payment Summary</h3>
-                <div className="text-left max-w-md mx-auto space-y-2">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Payment Summary</h3>
+              
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span>Event:</span>
-                    <span className="font-medium">{event?.title}</span>
+                    <span className="text-gray-600">Event:</span>
+                    <span className="font-medium text-gray-800">{event?.title}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{new Date(event?.startDate).toLocaleDateString()}</span>
+                    <span className="text-gray-600">Date:</span>
+                    <span className="text-gray-800">{new Date(event?.startDate).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Location:</span>
-                    <span>{event?.location}</span>
+                    <span className="text-gray-600">Location:</span>
+                    <span className="text-gray-800">{event?.location}</span>
                   </div>
-                  <div className="border-t pt-2 mt-4">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total Amount:</span>
-                      <span>₹{event?.price}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Booking Type:</span>
+                    <span className="text-gray-800 font-medium">
+                      {bookingType === 'group' ? `Group (${formData.groupMembers.length} members)` : 'Individual'}
+                    </span>
+                  </div>
+                  
+                  <div className="border-t border-gray-300 pt-3 mt-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Price per person:</span>
+                      <span className="text-gray-800">₹{event?.pricing?.basePrice || event?.price || 0}</span>
+                    </div>
+                    
+                    {bookingType === 'group' && (
+                      <div className="flex justify-between mt-2">
+                        <span className="text-gray-600">Group size:</span>
+                        <span className="text-gray-800">{formData.groupMembers.length} participants</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between mt-2">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-800 font-medium">₹{calculateTotal().subtotal}</span>
+                    </div>
+                    
+                    {appliedCoupon && (
+                      <div className="flex justify-between mt-2 text-green-600">
+                        <span>Discount ({appliedCoupon.coupon?.code || couponCode}):</span>
+                        <span className="font-medium">-₹{calculateTotal().discount}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="border-t-2 border-gray-300 pt-3 mt-3">
+                    <div className="flex justify-between text-xl">
+                      <span className="font-bold text-gray-800">Total Amount:</span>
+                      <span className="font-bold text-red-500">₹{calculateTotal().total}</span>
                     </div>
                   </div>
                 </div>
               </div>
-              <button
-                onClick={handlePayment}
-                disabled={loading}
-                className="bg-red-500 text-white px-8 py-3 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                {loading ? 'Processing...' : `Pay ₹${event?.price}`}
-              </button>
+
+              {/* Coupon Section */}
+              {!appliedCoupon ? (
+                <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                  <h4 className="font-semibold mb-3 text-gray-800">Have a Coupon Code?</h4>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      placeholder="Enter coupon code"
+                      disabled={validatingCoupon}
+                    />
+                    <button
+                      onClick={validateCoupon}
+                      disabled={validatingCoupon || !couponCode.trim()}
+                      className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {validatingCoupon ? 'Validating...' : 'Apply'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-green-800">Coupon Applied!</p>
+                      <p className="text-sm text-green-600">You saved ₹{calculateTotal().discount}</p>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="px-4 py-2 text-red-500 hover:text-red-700 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Note */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> You will be redirected to Razorpay payment gateway to complete your payment securely.
+                </p>
+              </div>
+
+              {/* Payment Button */}
+              <div className="text-center">
+                <button
+                  onClick={handlePayment}
+                  disabled={loading}
+                  className="w-full md:w-auto px-8 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-lg transition-all"
+                >
+                  {loading ? 'Processing...' : `Pay ₹${calculateTotal().total}`}
+                </button>
+              </div>
             </div>
           )}
 
@@ -576,8 +805,16 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
                 <FiCheck className="mx-auto" />
               </div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h3>
+              <p className="text-gray-600 mb-2">
+                Your {bookingType === 'group' ? 'group ' : ''}booking for <strong>{event?.title}</strong> has been confirmed.
+              </p>
+              {bookingType === 'group' && (
+                <p className="text-gray-600 mb-4">
+                  Total participants: <strong>{formData.groupMembers.length}</strong>
+                </p>
+              )}
               <p className="text-gray-600 mb-6">
-                Your event booking has been successfully confirmed. You will receive a confirmation email shortly.
+                A confirmation email has been sent to <strong>{formData.email}</strong>
               </p>
               <button
                 onClick={onClose}

@@ -12,12 +12,12 @@ const router = express.Router();
 // @desc    Get all team members (public)
 // @access  Public
 router.get('/', optionalAuth, validate(schemas.pagination, 'query'), asyncHandler(async (req, res) => {
-  const { page, limit, sortBy, sortOrder, department } = req.query;
+  const { page, limit, sortBy, sortOrder, memberType } = req.query;
   const { skip, limit: limitNumber, page: pageNumber } = getPagination(page, limit);
   
   // Build filter
   const filter = { isActive: true };
-  if (department) filter.department = department;
+  if (memberType) filter.memberType = memberType;
 
   // Get sort options (default sort by display order, then by name)
   const sort = getSortOptions(sortBy || 'displayOrder', sortOrder || 'asc');
@@ -56,25 +56,38 @@ router.get('/:id', optionalAuth, asyncHandler(async (req, res) => {
 }));
 
 // @route   GET /api/team/departments/list
-// @desc    Get all departments
+// @desc    Get all member types
 // @access  Public
-router.get('/departments/list', asyncHandler(async (req, res) => {
-  const departments = await TeamMember.distinct('department', { isActive: true });
+router.get('/types/list', asyncHandler(async (req, res) => {
+  const types = await TeamMember.distinct('memberType', { isActive: true });
   
-  res.json(new ApiResponse(200, { departments }, 'Departments retrieved successfully'));
+  res.json(new ApiResponse(200, { types }, 'Member types retrieved successfully'));
 }));
 
-// @route   GET /api/team/founders/list
-// @desc    Get founders/leadership team
+// @route   GET /api/team/core/list
+// @desc    Get core team members
 // @access  Public
-router.get('/founders/list', asyncHandler(async (req, res) => {
-  const founders = await TeamMember.find({ 
+router.get('/core/list', asyncHandler(async (req, res) => {
+  const coreMembers = await TeamMember.find({ 
     isActive: true,
-    isFounder: true
+    memberType: 'core'
   })
     .sort({ displayOrder: 1 });
 
-  res.json(new ApiResponse(200, { founders }, 'Founders retrieved successfully'));
+  res.json(new ApiResponse(200, { coreMembers }, 'Core team members retrieved successfully'));
+}));
+
+// @route   GET /api/team/riders/list
+// @desc    Get riders
+// @access  Public
+router.get('/riders/list', asyncHandler(async (req, res) => {
+  const riders = await TeamMember.find({ 
+    isActive: true,
+    memberType: 'rider'
+  })
+    .sort({ displayOrder: 1 });
+
+  res.json(new ApiResponse(200, { riders }, 'Riders retrieved successfully'));
 }));
 
 // @route   GET /api/team/leadership/list
@@ -83,7 +96,7 @@ router.get('/founders/list', asyncHandler(async (req, res) => {
 router.get('/leadership/list', asyncHandler(async (req, res) => {
   const leadership = await TeamMember.find({ 
     isActive: true,
-    department: 'leadership'
+    isLeadership: true
   })
     .sort({ displayOrder: 1 });
 

@@ -80,8 +80,30 @@ export const uploadRemoteToCloudinary = async (url, options = {}) => {
 };
 
 // Delete from Cloudinary
-export const deleteFromCloudinary = async (publicId) => {
+export const deleteFromCloudinary = async (publicIdOrUrl) => {
   try {
+    // Extract public ID from URL if a full URL is provided
+    let publicId = publicIdOrUrl;
+    
+    if (publicIdOrUrl && publicIdOrUrl.includes('cloudinary.com')) {
+      // Extract public ID from Cloudinary URL
+      // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
+      const urlParts = publicIdOrUrl.split('/');
+      const uploadIndex = urlParts.indexOf('upload');
+      
+      if (uploadIndex !== -1 && uploadIndex < urlParts.length - 1) {
+        // Get everything after 'upload' and the version (v123456)
+        const afterUpload = urlParts.slice(uploadIndex + 1);
+        // Remove version if present (starts with 'v' followed by numbers)
+        const withoutVersion = afterUpload[0].startsWith('v') && !isNaN(afterUpload[0].substring(1))
+          ? afterUpload.slice(1)
+          : afterUpload;
+        
+        // Join the parts and remove file extension
+        publicId = withoutVersion.join('/').replace(/\.[^/.]+$/, '');
+      }
+    }
+    
     const result = await cloudinary.uploader.destroy(publicId);
     logger.info('File deleted from Cloudinary:', publicId);
     return result;

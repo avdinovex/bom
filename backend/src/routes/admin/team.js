@@ -13,16 +13,17 @@ const router = express.Router();
 // @desc    Get all team members (admin)
 // @access  Admin
 router.get('/', validate(schemas.pagination, 'query'), asyncHandler(async (req, res) => {
-  const { page, limit, sortBy, sortOrder, department, isActive, search } = req.query;
+  const { page, limit, sortBy, sortOrder, memberType, isActive, search, isLeadership } = req.query;
   const { skip, limit: limitNumber, page: pageNumber } = getPagination(page, limit);
   
   const filter = {};
-  if (department) filter.department = department;
+  if (memberType) filter.memberType = memberType;
   if (isActive !== undefined) filter.isActive = isActive === 'true';
+  if (isLeadership !== undefined) filter.isLeadership = isLeadership === 'true';
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: 'i' } },
-      { position: { $regex: search, $options: 'i' } }
+      { role: { $regex: search, $options: 'i' } }
     ];
   }
 
@@ -42,22 +43,25 @@ router.get('/', validate(schemas.pagination, 'query'), asyncHandler(async (req, 
 router.post('/', uploadSingle('memberImage'), asyncHandler(async (req, res) => {
   const memberData = {
     name: req.body.name,
-    position: req.body.position,
+    role: req.body.role,
+    memberType: req.body.memberType || 'rider',
     bio: req.body.bio,
     email: req.body.email,
     phone: req.body.phone,
-    department: req.body.department,
     displayOrder: parseInt(req.body.displayOrder) || 0,
-    isActive: req.body.isActive === 'true'
+    isActive: req.body.isActive !== undefined ? req.body.isActive === 'true' : true,
+    isLeadership: req.body.isLeadership === 'true'
   };
   
-  // Handle skills array
-  if (req.body.skills) {
-    if (Array.isArray(req.body.skills)) {
-      memberData.skills = req.body.skills;
-    } else {
-      memberData.skills = [req.body.skills];
-    }
+  // Handle social media links
+  if (req.body.instagram || req.body.youtube || req.body.facebook || req.body.twitter || req.body.linkedin) {
+    memberData.social = {
+      instagram: req.body.instagram,
+      youtube: req.body.youtube,
+      facebook: req.body.facebook,
+      twitter: req.body.twitter,
+      linkedin: req.body.linkedin
+    };
   }
   
   // Add image URL if file was uploaded
@@ -87,22 +91,25 @@ router.put('/:id', uploadSingle('memberImage'), asyncHandler(async (req, res) =>
   
   const updateData = {
     name: req.body.name,
-    position: req.body.position,
+    role: req.body.role,
+    memberType: req.body.memberType,
     bio: req.body.bio,
     email: req.body.email,
     phone: req.body.phone,
-    department: req.body.department,
     displayOrder: parseInt(req.body.displayOrder) || 0,
-    isActive: req.body.isActive === 'true'
+    isActive: req.body.isActive !== undefined ? req.body.isActive === 'true' : existingMember.isActive,
+    isLeadership: req.body.isLeadership === 'true'
   };
   
-  // Handle skills array
-  if (req.body.skills) {
-    if (Array.isArray(req.body.skills)) {
-      updateData.skills = req.body.skills;
-    } else {
-      updateData.skills = [req.body.skills];
-    }
+  // Handle social media links
+  if (req.body.instagram || req.body.youtube || req.body.facebook || req.body.twitter || req.body.linkedin) {
+    updateData.social = {
+      instagram: req.body.instagram,
+      youtube: req.body.youtube,
+      facebook: req.body.facebook,
+      twitter: req.body.twitter,
+      linkedin: req.body.linkedin
+    };
   }
   
   // Handle image update
@@ -144,6 +151,19 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   
   await teamMember.deleteOne();
   res.json(new ApiResponse(200, null, 'Team member deleted successfully'));
+}));
+
+// @route   PATCH /api/admin/team/:id/toggle
+// @desc    Toggle team member active status (admin)
+// @access  Admin
+router.patch('/:id/toggle', asyncHandler(async (req, res) => {
+  const teamMember = await TeamMember.findById(req.params.id);
+  if (!teamMember) throw new ApiError(404, 'Team member not found');
+  
+  teamMember.isActive = !teamMember.isActive;
+  await teamMember.save();
+  
+  res.json(new ApiResponse(200, { teamMember }, `Team member ${teamMember.isActive ? 'activated' : 'deactivated'} successfully`));
 }));
 
 export default router;
