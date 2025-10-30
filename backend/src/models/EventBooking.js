@@ -14,7 +14,51 @@ const eventBookingSchema = new Schema({
     required: [true, 'Event is required']
   },
   
-  // Personal Information
+  // Booking Type
+  bookingType: {
+    type: String,
+    enum: ['individual', 'group'],
+    default: 'individual',
+    required: [true, 'Booking type is required']
+  },
+
+  // Group Information (only for group bookings)
+  groupInfo: {
+    groupName: {
+      type: String,
+      trim: true
+    },
+    groupSize: {
+      type: Number,
+      min: [2, 'Group must have at least 2 members'],
+      max: [20, 'Group cannot exceed 20 members']
+    },
+    members: [{
+      name: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      contactNumber: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      motorcycleNumber: {
+        type: String,
+        required: true,
+        trim: true,
+        uppercase: true
+      },
+      motorcycleModel: {
+        type: String,
+        required: true,
+        trim: true
+      }
+    }]
+  },
+  
+  // Personal Information (Group Leader info for group bookings)
   personalInfo: {
     email: {
       type: String,
@@ -95,10 +139,32 @@ const eventBookingSchema = new Schema({
     required: [true, 'Amount is required'],
     min: [0, 'Amount cannot be negative']
   },
+  originalAmount: {
+    type: Number,
+    required: [true, 'Original amount is required'],
+    min: [0, 'Original amount cannot be negative']
+  },
   currency: {
     type: String,
     default: 'INR'
   },
+  
+  // Coupon Information
+  couponCode: {
+    type: String,
+    trim: true,
+    uppercase: true
+  },
+  coupon: {
+    type: Schema.Types.ObjectId,
+    ref: 'Coupon'
+  },
+  discountAmount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Discount amount cannot be negative']
+  },
+  
   paymentUtr: {
     type: String,
     trim: true
@@ -201,7 +267,13 @@ eventBookingSchema.pre('save', async function(next) {
     // Generate a unique booking number for events
     const timestamp = Date.now().toString();
     const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    this.bookingNumber = `EV${timestamp}${randomNum}`;
+    const prefix = this.bookingType === 'group' ? 'EVGRP' : 'EV';
+    this.bookingNumber = `${prefix}${timestamp}${randomNum}`;
+  }
+  
+  // Set originalAmount if not set
+  if (!this.originalAmount) {
+    this.originalAmount = this.amount + (this.discountAmount || 0);
   }
   
   // Set timestamps based on status changes
@@ -222,7 +294,9 @@ eventBookingSchema.pre('save', async function(next) {
   next();
 });
 
-// Compound index to ensure one booking per user per event
-eventBookingSchema.index({ user: 1, event: 1 }, { unique: true });
+// Compound index for faster queries (removed unique constraint to allow cancelled bookings)
+// Uniqueness is now enforced in application logic for active bookings only
+eventBookingSchema.index({ user: 1, event: 1 });
+eventBookingSchema.index({ user: 1, event: 1, status: 1 });
 
 export default model('EventBooking', eventBookingSchema);

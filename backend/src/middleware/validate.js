@@ -247,6 +247,7 @@ export const schemas = {
   // Event booking schemas
   createEventBookingOrder: Joi.object({
     eventId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
+    bookingType: Joi.string().valid('individual', 'group').default('individual'),
     personalInfo: Joi.object({
       email: Joi.string().email().required(),
       fullName: Joi.string().trim().min(2).max(100).required(),
@@ -270,13 +271,38 @@ export const schemas = {
       informationAccuracy: Joi.boolean().valid(true).required(),
       noContrabands: Joi.boolean().valid(true).required(),
       rulesAndRegulations: Joi.boolean().valid(true).required()
-    }).required()
+    }).required(),
+    groupInfo: Joi.object({
+      groupName: Joi.string().trim().min(2).max(100).required(),
+      members: Joi.array().items(
+        Joi.object({
+          name: Joi.string().trim().min(2).max(100).required(),
+          contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
+          motorcycleNumber: Joi.string().trim().min(4).max(20).required(),
+          motorcycleModel: Joi.string().trim().min(2).max(100).required()
+        })
+      ).min(2).required()
+    }).when('bookingType', {
+      is: 'group',
+      then: Joi.required(),
+      otherwise: Joi.optional()
+    }),
+    couponCode: Joi.string().trim().uppercase().optional(),
+    paymentUtr: Joi.string().trim().optional() // Optional for Razorpay orders
   }),
 
   // Coupon validation schema
   validateCoupon: Joi.object({
     couponCode: Joi.string().trim().uppercase().required(),
     rideId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
+    bookingType: Joi.string().valid('individual', 'group').default('individual'),
+    groupSize: Joi.number().integer().min(1).optional()
+  }),
+
+  // Event coupon validation schema
+  validateEventCoupon: Joi.object({
+    couponCode: Joi.string().trim().uppercase().required(),
+    eventId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
     bookingType: Joi.string().valid('individual', 'group').default('individual'),
     groupSize: Joi.number().integer().min(1).optional()
   }),

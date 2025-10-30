@@ -115,7 +115,31 @@ function App() {
   return (
     <AuthProvider>
       <div className="App">
-        <Toaster position="top-right" />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            style: {
+              zIndex: 99999,
+            },
+            success: {
+              duration: 4000,
+              style: {
+                background: '#10B981',
+                color: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              style: {
+                background: '#EF4444',
+                color: '#fff',
+              },
+            },
+          }}
+          containerStyle={{
+            zIndex: 99999,
+          }}
+        />
         <ScrollToTop />
         <Routes>
           {/* Main Website Routes */}

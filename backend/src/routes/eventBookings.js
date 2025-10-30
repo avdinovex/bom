@@ -1,6 +1,7 @@
 import express from 'express';
 import EventBooking from '../models/EventBooking.js';
 import Event from '../models/Event.js';
+import Coupon from '../models/Coupon.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, schemas } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -12,22 +13,98 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
+// @route   POST /api/event-bookings/validate-coupon
+// @desc    Validate a coupon code
+// @access  Private
+router.post('/validate-coupon', authenticate, validate(schemas.validateEventCoupon), asyncHandler(async (req, res) => {
+  const { couponCode, eventId, bookingType, groupSize } = req.body;
+
+  if (!couponCode) {
+    throw new ApiError(400, 'Coupon code is required');
+  }
+
+  if (!eventId) {
+    throw new ApiError(400, 'Event ID is required');
+  }
+
+  if (!bookingType) {
+    throw new ApiError(400, 'Booking type is required');
+  }
+
+  // Find the coupon
+  const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+
+  if (!coupon) {
+    throw new ApiError(404, 'Invalid coupon code');
+  }
+
+  // Find the event to get the price
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw new ApiError(404, 'Event not found');
+  }
+
+  // Calculate amount based on booking type
+  const memberCount = bookingType === 'group' ? (groupSize || 1) : 1;
+  const totalAmount = event.price * memberCount;
+
+  // Validate coupon with group size
+  const validation = coupon.validateCoupon(req.user._id, bookingType, totalAmount, memberCount);
+
+  if (!validation.isValid) {
+    throw new ApiError(400, validation.errors.join(', '));
+  }
+
+  // Calculate discount
+  const discountAmount = coupon.calculateDiscount(totalAmount);
+  const finalAmount = totalAmount - discountAmount;
+
+  res.json(new ApiResponse(200, {
+    coupon: {
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minGroupSize: coupon.minGroupSize,
+      maxGroupSize: coupon.maxGroupSize
+    },
+    originalAmount: totalAmount,
+    discountAmount,
+    finalAmount,
+    savings: discountAmount
+  }, 'Coupon applied successfully'));
+}));
+
 // @route   POST /api/event-bookings/create-order
 // @desc    Create a complete event booking order with Razorpay integration
 // @access  Private
 router.post('/create-order', authenticate, validate(schemas.createEventBookingOrder), asyncHandler(async (req, res) => {
   const { 
     eventId, 
+    bookingType,
+    groupInfo,
     personalInfo, 
     motorcycleInfo, 
     emergencyContact, 
     medicalHistory, 
-    agreements 
+    agreements,
+    couponCode
   } = req.body;
 
   // Validation
   if (!eventId) {
     throw new ApiError(400, 'Event ID is required');
+  }
+
+  if (!bookingType || !['individual', 'group'].includes(bookingType)) {
+    throw new ApiError(400, 'Valid booking type (individual/group) is required');
+  }
+
+  // Validate group booking
+  if (bookingType === 'group') {
+    if (!groupInfo || !groupInfo.groupName || !groupInfo.members || groupInfo.members.length < 2) {
+      throw new ApiError(400, 'Group bookings require group name and at least 2 members');
+    }
   }
 
   if (!personalInfo || !motorcycleInfo || !emergencyContact || !medicalHistory || !agreements) {
@@ -68,9 +145,12 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
       throw new ApiError(400, 'Registration deadline has passed');
     }
 
-    // Check if event is full
-    if (event.currentParticipants >= event.maxParticipants) {
-      throw new ApiError(400, 'Event is full. No more bookings available');
+    // Calculate required capacity
+    const requiredCapacity = bookingType === 'group' ? groupInfo.members.length : 1;
+
+    // Check if event has enough capacity
+    if (event.currentParticipants + requiredCapacity > event.maxParticipants) {
+      throw new ApiError(400, `Not enough spots available. Only ${event.maxParticipants - event.currentParticipants} spots left.`);
     }
 
     // Check if user has already booked this event
@@ -81,63 +161,132 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
     }).session(session);
 
     if (existingBooking) {
-      throw new ApiError(400, 'You have already booked this event');
+      // If there's an existing 'paid' booking, don't allow duplicate
+      if (existingBooking.status === 'paid') {
+        throw new ApiError(400, 'You have already booked this event');
+      }
+      
+      // If there's a pending 'created' booking (payment not completed), cancel it
+      if (existingBooking.status === 'created') {
+        existingBooking.status = 'cancelled';
+        existingBooking.cancelledAt = new Date();
+        existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+        await existingBooking.save({ session });
+      }
     }
 
-    // Create Razorpay order
-    const orderData = {
-      amount: event.price * 100, // Convert to paise
-      currency: 'INR',
-      receipt: `event_${eventId}_${req.user._id}_${Date.now()}`
-    };
+    // Calculate amount
+    let originalAmount = event.price * requiredCapacity;
+    let finalAmount = originalAmount;
+    let discountAmount = 0;
+    let appliedCoupon = null;
 
-    const razorpayOrder = await createOrder(orderData);
+    // Apply coupon if provided
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() }).session(session);
+      
+      if (!coupon) {
+        throw new ApiError(404, 'Invalid coupon code');
+      }
 
-    // Create booking record
-    const booking = new EventBooking({
+      // Validate coupon with group size
+      const validation = coupon.validateCoupon(req.user._id, bookingType, originalAmount, requiredCapacity);
+      
+      if (!validation.isValid) {
+        throw new ApiError(400, validation.errors.join(', '));
+      }
+
+      // Calculate discount
+      discountAmount = coupon.calculateDiscount(originalAmount);
+      finalAmount = originalAmount - discountAmount;
+      appliedCoupon = coupon;
+    }
+
+    // Create booking with complete information (status: created for payment pending)
+    const bookingData = {
       user: req.user._id,
       event: eventId,
+      bookingType,
       personalInfo,
       motorcycleInfo,
       emergencyContact,
       medicalHistory,
       agreements,
-      amount: event.price,
-      razorpayOrderId: razorpayOrder.id,
-      status: 'created'
-    });
+      originalAmount,
+      amount: finalAmount,
+      discountAmount,
+      currency: 'INR',
+      status: 'created' // Will be updated to 'paid' after payment verification
+    };
 
+    // Add group info if group booking
+    if (bookingType === 'group') {
+      bookingData.groupInfo = {
+        groupName: groupInfo.groupName,
+        groupSize: groupInfo.members.length,
+        members: groupInfo.members
+      };
+    }
+
+    // Add coupon info if applied
+    if (appliedCoupon) {
+      bookingData.couponCode = appliedCoupon.code;
+      bookingData.coupon = appliedCoupon._id;
+    }
+
+    const booking = new EventBooking(bookingData);
     await booking.save({ session });
 
-    // Increment current participants count
-    await Event.findByIdAndUpdate(
-      eventId,
-      { $inc: { currentParticipants: 1 } },
-      { session }
-    );
+    // Create Razorpay order
+    const razorpayOrder = await createOrder({
+      amount: finalAmount || 0,
+      currency: 'INR',
+      receipt: booking._id.toString(),
+      notes: {
+        eventId: event._id.toString(),
+        userId: req.user._id.toString(),
+        eventTitle: event.title,
+        bookingType: bookingType,
+        groupSize: requiredCapacity
+      }
+    });
+
+    // Update booking with Razorpay order ID
+    booking.razorpayOrderId = razorpayOrder.id;
+    await booking.save({ session });
 
     await session.commitTransaction();
 
     res.status(201).json(
       new ApiResponse(201, {
         booking: {
-          _id: booking._id,
-          bookingNumber: booking.bookingNumber,
+          id: booking._id,
           amount: booking.amount,
+          originalAmount: booking.originalAmount,
+          discountAmount: booking.discountAmount,
           currency: booking.currency,
-          status: booking.status
+          status: booking.status,
+          bookingNumber: booking.bookingNumber,
+          bookingType: booking.bookingType,
+          groupSize: requiredCapacity
         },
         razorpayOrder: {
           id: razorpayOrder.id,
           amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency
+          currency: razorpayOrder.currency,
+          keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_1234567890'
         },
         event: {
-          _id: event._id,
+          id: event._id,
           title: event.title,
+          location: event.location,
           startDate: event.startDate,
-          location: event.location
-        }
+          price: event.price
+        },
+        coupon: appliedCoupon ? {
+          code: appliedCoupon.code,
+          discountAmount
+        } : null
       }, 'Event booking order created successfully')
     );
 
@@ -159,50 +308,88 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Missing payment verification data');
   }
 
+  // Start a session for transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Verify payment with Razorpay
     const isValid = verifyPayment({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
+      order_id: razorpay_order_id,
+      payment_id: razorpay_payment_id,
+      signature: razorpay_signature
     });
 
     if (!isValid) {
       throw new ApiError(400, 'Payment verification failed');
     }
 
-    // Find and update booking
+    // Find the booking
     const booking = await EventBooking.findOne({
       razorpayOrderId: razorpay_order_id,
       user: req.user._id
-    }).populate('event', 'title startDate location imgUrl');
+    })
+    .populate('event', 'title startDate location imgUrl price')
+    .session(session);
 
     if (!booking) {
       throw new ApiError(404, 'Booking not found');
     }
 
-    // Update booking with payment details
+    if (booking.status === 'paid') {
+      throw new ApiError(400, 'Payment already verified');
+    }
+
+    // Update booking
+    booking.status = 'paid';
     booking.razorpayPaymentId = razorpay_payment_id;
     booking.razorpaySignature = razorpay_signature;
-    booking.status = 'paid';
     booking.paidAt = new Date();
+    await booking.save({ session });
 
-    await booking.save();
+    // If coupon was used, increment its usage count
+    if (booking.coupon) {
+      const coupon = await Coupon.findById(booking.coupon).session(session);
+      if (coupon) {
+        await coupon.incrementUsage(req.user._id, booking._id);
+      }
+    }
+
+    // Update event - increment current participants
+    const event = await Event.findById(booking.event).session(session);
+    if (event) {
+      // For group bookings, increment by group size
+      const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
+      event.currentParticipants += increment;
+      await event.save({ session });
+    }
+
+    await session.commitTransaction();
 
     res.status(200).json(
       new ApiResponse(200, {
         booking: {
-          _id: booking._id,
+          id: booking._id,
           bookingNumber: booking.bookingNumber,
           status: booking.status,
           amount: booking.amount,
-          paidAt: booking.paidAt
+          paidAt: booking.paidAt,
+          personalInfo: booking.personalInfo,
+          motorcycleInfo: booking.motorcycleInfo,
+          emergencyContact: booking.emergencyContact
         },
-        event: booking.event
+        event: {
+          id: booking.event._id,
+          title: booking.event.title,
+          location: booking.event.location,
+          startDate: booking.event.startDate
+        }
       }, 'Payment verified and booking confirmed successfully')
     );
 
   } catch (error) {
+    await session.abortTransaction();
+    
     // If payment verification fails, update booking status
     await EventBooking.findOneAndUpdate(
       { razorpayOrderId: razorpay_order_id, user: req.user._id },
@@ -213,7 +400,9 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
       }
     );
 
-    throw new ApiError(400, 'Payment verification failed. Please try again or contact support.');
+    throw error;
+  } finally {
+    session.endSession();
   }
 }));
 
@@ -311,12 +500,15 @@ router.put('/:id/cancel', authenticate, asyncHandler(async (req, res) => {
 
     await booking.save({ session });
 
-    // Decrement current participants count
-    await Event.findByIdAndUpdate(
-      booking.event._id,
-      { $inc: { currentParticipants: -1 } },
-      { session }
-    );
+    // Decrement current participants count based on booking type
+    if (booking.status === 'paid') {
+      const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
+      await Event.findByIdAndUpdate(
+        booking.event._id,
+        { $inc: { currentParticipants: -decrement } },
+        { session }
+      );
+    }
 
     await session.commitTransaction();
 
