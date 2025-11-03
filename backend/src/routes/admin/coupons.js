@@ -112,6 +112,8 @@ router.post('/', asyncHandler(async (req, res) => {
     expiryDate,
     usageLimit,
     applicableFor,
+    minGroupSize,
+    maxGroupSize,
     isActive
   } = req.body;
 
@@ -140,6 +142,17 @@ router.post('/', asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Expiry date must be in the future');
   }
 
+  // Validate group size constraints
+  if (minGroupSize !== undefined && minGroupSize !== null && minGroupSize < 2) {
+    throw new ApiError(400, 'Minimum group size must be at least 2');
+  }
+
+  if (maxGroupSize !== undefined && maxGroupSize !== null && minGroupSize !== undefined && minGroupSize !== null) {
+    if (maxGroupSize < minGroupSize) {
+      throw new ApiError(400, 'Maximum group size must be greater than or equal to minimum group size');
+    }
+  }
+
   // Create coupon
   const coupon = await Coupon.create({
     code: code.toUpperCase(),
@@ -151,6 +164,8 @@ router.post('/', asyncHandler(async (req, res) => {
     expiryDate,
     usageLimit,
     applicableFor: applicableFor || 'all',
+    minGroupSize: minGroupSize !== undefined ? minGroupSize : null,
+    maxGroupSize: maxGroupSize !== undefined ? maxGroupSize : null,
     isActive: isActive !== undefined ? isActive : true,
     createdBy: req.user._id
   });
@@ -180,6 +195,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
     expiryDate,
     usageLimit,
     applicableFor,
+    minGroupSize,
+    maxGroupSize,
     isActive
   } = req.body;
 
@@ -214,6 +231,17 @@ router.put('/:id', asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Expiry date must be in the future');
   }
 
+  // Validate group size constraints
+  if (minGroupSize !== undefined && minGroupSize !== null && minGroupSize < 2) {
+    throw new ApiError(400, 'Minimum group size must be at least 2');
+  }
+
+  if (maxGroupSize !== undefined && maxGroupSize !== null && minGroupSize !== undefined && minGroupSize !== null) {
+    if (maxGroupSize < minGroupSize) {
+      throw new ApiError(400, 'Maximum group size must be greater than or equal to minimum group size');
+    }
+  }
+
   // Update fields
   if (description !== undefined) coupon.description = description;
   if (discountType) coupon.discountType = discountType;
@@ -222,6 +250,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   if (expiryDate) coupon.expiryDate = expiryDate;
   if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
   if (applicableFor) coupon.applicableFor = applicableFor;
+  if (minGroupSize !== undefined) coupon.minGroupSize = minGroupSize;
+  if (maxGroupSize !== undefined) coupon.maxGroupSize = maxGroupSize;
   if (isActive !== undefined) coupon.isActive = isActive;
 
   await coupon.save();

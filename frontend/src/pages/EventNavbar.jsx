@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import mbm1 from '../assets/mbm1.jpg'
 import mbm2 from '../assets/mbm2.jpg'
 import mbm3 from '../assets/mbm3.jpg'
@@ -13,6 +15,8 @@ import { publicEventsAPI } from '../services/api';
 import { toast } from 'react-hot-toast';
 
 const Events = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [events, setEvents] = useState({ upcoming: [], past: [] });
   const [loading, setLoading] = useState(true);
@@ -77,6 +81,11 @@ const Events = () => {
         console.log('✓ Found past events at data');
       }
       
+      // Filter events by eventType to ensure correct categorization
+      // This is a safety check in case backend returns mixed results
+      upcomingEvents = upcomingEvents.filter(event => event.eventType === 'upcoming');
+      pastEvents = pastEvents.filter(event => event.eventType === 'past');
+      
       console.log('📊 Extracted Mumbai Bikers Mania events:', {
         upcomingCount: upcomingEvents.length,
         pastCount: pastEvents.length,
@@ -121,6 +130,13 @@ const Events = () => {
   };
 
   const openBookingForm = (event) => {
+    // Check if user is authenticated before opening the form
+    if (!user) {
+      toast.error('Please sign in to book this event');
+      navigate('/login');
+      return;
+    }
+
     setSelectedEvent(event);
     setShowBookingForm(true);
   };
@@ -129,6 +145,11 @@ const Events = () => {
     // Use section.layout to determine image position, default to alternating pattern
     const isImageRight = section.layout === 'image-right' || (!section.layout && index % 2 === 1);
     const currentSectionStyle = isImageRight ? sectionReverseStyle : sectionStyle;
+    
+    // Check if subheading should be displayed (not empty, not "TEST", not "test")
+    const shouldShowSubheading = section.subheading && 
+                                  section.subheading.trim() !== '' && 
+                                  section.subheading.trim().toUpperCase() !== 'TEST';
     
     return (
       <div key={section._id || index} style={currentSectionStyle} className="event-section">
@@ -141,7 +162,7 @@ const Events = () => {
           />
         </div>
         <div style={textContainerStyle}>
-          {section.subheading && (
+          {shouldShowSubheading && (
             <p style={subheadingStyle} className="event-subheading">
               {section.subheading}
             </p>
@@ -182,13 +203,13 @@ const Events = () => {
     return (
       <>
         {eventList.map((event, eventIndex) => (
-          <div key={event._id} className="mb-12">
-            {/* Event header with title */}
+          <div key={event._id} className="mb-16">
+            {/* Event header with title - Show for multiple events */}
             {eventList.length > 1 && (
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">{event.title}</h2>
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-white mb-3">{event.title}</h2>
                 {event.startDate && (
-                  <p className="text-red-500 text-lg font-medium">
+                  <p className="text-red-500 text-xl font-medium">
                     {new Date(event.startDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -197,17 +218,13 @@ const Events = () => {
                     })}
                   </p>
                 )}
+                {event.subtitle && (
+                  <p className="text-gray-300 text-lg mt-2 italic">{event.subtitle}</p>
+                )}
               </div>
             )}
 
-            {/* Render dynamic content sections from backend */}
-            {event.contentSections && event.contentSections.length > 0 && (
-              event.contentSections
-                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((section, index) => renderContentSection(section, index))
-            )}
-            
-            {/* Event details and booking section */}
+            {/* Main Event details and booking section - FIRST */}
             <div style={sectionStyle} className="event-section">
               <div style={imageContainerStyle} className="event-image-container">
                 <img
@@ -245,7 +262,7 @@ const Events = () => {
                       REGISTER NOW
                     </button>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                     {event.location && (
                       <div className="text-white">
                         <p className="text-sm opacity-75">Location:</p>
@@ -283,6 +300,24 @@ const Events = () => {
                 </div>
               </div>
             </div>
+
+            {/* Divider between main section and content sections */}
+            {event.contentSections && event.contentSections.length > 0 && (
+              <div className="my-16 border-t border-gray-800"></div>
+            )}
+            
+            {/* Render dynamic content sections from backend - AFTER main section */}
+            {event.contentSections && event.contentSections.length > 0 && (
+              <>
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-white mb-2">Event Highlights</h2>
+                  <div className="w-20 h-1 bg-red-500 mx-auto"></div>
+                </div>
+                {event.contentSections
+                  .sort((a, b) => (a.order || 0) - (b.order || 0))
+                  .map((section, index) => renderContentSection(section, index))}
+              </>
+            )}
           </div>
         ))}
       </>
@@ -525,24 +560,28 @@ const Events = () => {
             }
 
             .hero-image {
-              height: 450px !important;
+              height: 500px !important;
             }
 
             .hero-title {
               font-size: 2.5rem !important;
+              margin-bottom: 25px !important;
             }
 
             .hero-subtitle {
               font-size: 1.5rem !important;
+              margin-bottom: 20px !important;
             }
 
             .hero-text {
               font-size: 1rem !important;
               padding: 0 20px !important;
+              line-height: 1.6 !important;
             }
 
             .hero-overlay {
-              padding: 40px 20px !important;
+              padding: 50px 20px !important;
+              justify-content: center !important;
             }
 
             .event-section {
@@ -572,15 +611,25 @@ const Events = () => {
           @media (max-width: 768px) {
             .hero-title {
               font-size: 2rem !important;
+              margin-bottom: 20px !important;
             }
 
             .hero-subtitle {
               font-size: 1.3rem !important;
-              margin-bottom: 20px !important;
+              margin-bottom: 15px !important;
             }
 
             .hero-image {
-              height: 400px !important;
+              height: 450px !important;
+            }
+
+            .hero-text {
+              font-size: 0.95rem !important;
+              line-height: 1.5 !important;
+            }
+
+            .hero-overlay {
+              padding: 40px 15px !important;
             }
 
             .event-heading {
@@ -594,19 +643,26 @@ const Events = () => {
           @media (max-width: 480px) {
             .hero-title {
               font-size: 1.5rem !important;
-              margin-bottom: 20px !important;
+              margin-bottom: 15px !important;
             }
 
             .hero-subtitle {
-              font-size: 1.1rem !important;
+              font-size: 1rem !important;
+              margin-bottom: 10px !important;
             }
 
             .hero-text {
-              font-size: 0.9rem !important;
+              font-size: 0.85rem !important;
+              line-height: 1.4 !important;
+              padding: 0 15px !important;
             }
 
             .hero-image {
-              height: 350px !important;
+              height: 400px !important;
+            }
+
+            .hero-overlay {
+              padding: 30px 10px !important;
             }
 
             .event-heading {
@@ -646,7 +702,7 @@ const Events = () => {
           {/* Hero Section */}
           <div style={heroSectionStyle} className="hero-section">
             <img
-              src={events[activeTab]?.[0]?.imgUrl || mbm1}
+              src={mbm1}
               alt="Mumbai Bikers Mania Community"
               style={heroImageStyle}
               className="hero-image"
@@ -656,33 +712,12 @@ const Events = () => {
                 Mumbai Bikers Mania
               </h1>
               <h2 style={heroSubtitleStyle} className="hero-subtitle">
-                {events[activeTab]?.[0]?.subtitle || "Riding the Pulse of Mumbai's Motorcycle Culture"}
+                Riding the Pulse of Mumbai's Motorcycle Culture
               </h2>
-              {events[activeTab]?.[0] ? (
-                <div className="text-center">
-                  <p style={heroTextStyle} className="hero-text">
-                    {events[activeTab][0].description || "Experience the ultimate biking festival in Mumbai"}
-                  </p>
-                  {activeTab === 'upcoming' && events[activeTab][0].startDate && (
-                    <div className="mt-6 bg-red-500 bg-opacity-20 backdrop-blur-sm rounded-lg p-4 inline-block">
-                      <p className="text-white text-lg font-semibold">Next Event:</p>
-                      <p className="text-red-300 text-xl font-bold">
-                        {new Date(events[activeTab][0].startDate).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p style={heroTextStyle} className="hero-text">
-                  <strong>A Thriving Community on Two Wheels</strong><br/><br/>
-                  In the bustling streets of Mumbai, where the city never sleeps, a unique community of motorcycle enthusiasts has carved out its own space – fast, loud, and full of life. Mumbai Bikers Mania is not just an event; it is a living, breathing hub for riders who seek adventure, camaraderie, and the sheer joy of the open road.
-                </p>
-              )}
+              <p style={heroTextStyle} className="hero-text">
+                <strong>A Thriving Community on Two Wheels</strong><br/><br/>
+                In the bustling streets of Mumbai, where the city never sleeps, a unique community of motorcycle enthusiasts has carved out its own space – fast, loud, and full of life. Mumbai Bikers Mania is not just an event; it is a living, breathing hub for riders who seek adventure, camaraderie, and the sheer joy of the open road.
+              </p>
             </div>
           </div>
 
