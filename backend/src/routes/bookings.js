@@ -9,6 +9,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { createOrder, verifyPayment } from '../services/razorpayService.js';
 import { getPagination, getPaginationResult, getSortOptions } from '../utils/pagination.js';
+import emailService from '../services/emailService.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -523,7 +524,8 @@ router.post('/verify-payment', authenticate, validate(schemas.verifyPayment), as
       razorpayOrderId: razorpay_order_id,
       user: req.user._id 
     })
-    .populate('ride', 'title venue startTime price')
+    .populate('ride', 'title venue startTime endTime price')
+    .populate('user', 'fullName email')
     .session(session);
 
     if (!booking) {
@@ -576,6 +578,26 @@ router.post('/verify-payment', authenticate, validate(schemas.verifyPayment), as
     }
 
     await session.commitTransaction();
+
+    // Send booking confirmation email (async, don't wait)
+    emailService.sendRideBookingConfirmation(booking.user.email, {
+      fullName: booking.user.fullName,
+      bookingNumber: booking.bookingNumber,
+      rideTitle: booking.ride.title,
+      venue: booking.ride.venue,
+      startTime: booking.ride.startTime,
+      endTime: booking.ride.endTime,
+      amount: booking.amount,
+      originalAmount: booking.originalAmount,
+      discountAmount: booking.discountAmount,
+      bookingType: booking.bookingType,
+      groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+      personalInfo: booking.personalInfo,
+      motorcycleInfo: booking.motorcycleInfo,
+      couponCode: booking.couponCode,
+      paymentId: razorpay_payment_id,
+      paidAt: booking.paidAt
+    }).catch(err => console.error('Failed to send booking confirmation email:', err));
 
     res.json(new ApiResponse(200, {
       booking: {

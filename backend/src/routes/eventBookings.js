@@ -9,6 +9,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { createOrder, verifyPayment } from '../services/razorpayService.js';
 import { getPagination, getPaginationResult, getSortOptions } from '../utils/pagination.js';
+import emailService from '../services/emailService.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -329,7 +330,8 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
       razorpayOrderId: razorpay_order_id,
       user: req.user._id
     })
-    .populate('event', 'title startDate location imgUrl price')
+    .populate('event', 'title startDate endDate location imgUrl price')
+    .populate('user', 'fullName email')
     .session(session);
 
     if (!booking) {
@@ -365,6 +367,26 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     }
 
     await session.commitTransaction();
+
+    // Send event booking confirmation email (async, don't wait)
+    emailService.sendEventBookingConfirmation(booking.user.email, {
+      fullName: booking.user.fullName,
+      bookingNumber: booking.bookingNumber,
+      eventTitle: booking.event.title,
+      location: booking.event.location,
+      startDate: booking.event.startDate,
+      endDate: booking.event.endDate,
+      amount: booking.amount,
+      originalAmount: booking.originalAmount,
+      discountAmount: booking.discountAmount,
+      bookingType: booking.bookingType,
+      groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+      personalInfo: booking.personalInfo,
+      motorcycleInfo: booking.motorcycleInfo,
+      couponCode: booking.couponCode,
+      paymentId: razorpay_payment_id,
+      paidAt: booking.paidAt
+    }).catch(err => console.error('Failed to send event booking confirmation email:', err));
 
     res.status(200).json(
       new ApiResponse(200, {

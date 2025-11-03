@@ -262,6 +262,475 @@ class EmailService {
       console.log('Warning: Welcome email failed to send, but registration was successful');
     }
   }
+
+  // Send ride booking confirmation email
+  async sendRideBookingConfirmation(email, bookingData) {
+    this.ensureInitialized();
+    try {
+      const { 
+        fullName, 
+        bookingNumber, 
+        rideTitle, 
+        venue, 
+        startTime,
+        endTime, 
+        amount, 
+        originalAmount,
+        discountAmount,
+        bookingType, 
+        groupSize,
+        personalInfo,
+        motorcycleInfo,
+        couponCode,
+        paymentId,
+        paidAt
+      } = bookingData;
+
+      const formattedDate = new Date(startTime).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const formattedEndDate = endTime ? new Date(endTime).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : null;
+
+      const mailOptions = {
+        from: {
+          name: 'Brotherhood Of Mumbai',
+          address: process.env.EMAIL_USER
+        },
+        to: email,
+        subject: `Ride Booking Confirmed - ${rideTitle} (${bookingNumber})`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+              .container { max-width: 650px; margin: 0 auto; background-color: white; }
+              .header { background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%); color: white; text-align: center; padding: 30px 20px; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .success-badge { background-color: #2ecc71; color: white; padding: 8px 20px; border-radius: 20px; display: inline-block; margin-top: 10px; font-weight: bold; }
+              .content { padding: 30px; }
+              .booking-details { background-color: #f8f9fa; border-left: 4px solid #ff4757; padding: 20px; margin: 20px 0; border-radius: 5px; }
+              .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+              .detail-row:last-child { border-bottom: none; }
+              .detail-label { font-weight: 600; color: #555; }
+              .detail-value { color: #333; text-align: right; }
+              .price-section { background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              .total-amount { font-size: 24px; font-weight: bold; color: #ff4757; text-align: center; }
+              .info-box { background-color: #e8f5e9; border: 1px solid #4caf50; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .warning-box { background-color: #fff3e0; border: 1px solid #ff9800; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .footer { background-color: #333; color: white; text-align: center; padding: 20px; font-size: 12px; }
+              .button { display: inline-block; background-color: #ff4757; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+              table { width: 100%; border-collapse: collapse; }
+              .discount-text { color: #2ecc71; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🏍️ Booking Confirmed!</h1>
+                <div class="success-badge">✓ PAYMENT SUCCESSFUL</div>
+              </div>
+              
+              <div class="content">
+                <h2>Hello ${fullName}!</h2>
+                <p>Your ride booking has been confirmed! Get ready for an amazing riding experience with Brotherhood Of Mumbai.</p>
+                
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">📋 Booking Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Booking Number:</span>
+                    <span class="detail-value"><strong>${bookingNumber}</strong></span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Payment ID:</span>
+                    <span class="detail-value">${paymentId || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Booking Type:</span>
+                    <span class="detail-value">${bookingType === 'group' ? `Group (${groupSize} riders)` : 'Individual'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Payment Date:</span>
+                    <span class="detail-value">${new Date(paidAt).toLocaleDateString('en-IN', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}</span>
+                  </div>
+                </div>
+
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">🏍️ Ride Details</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Ride:</span>
+                    <span class="detail-value"><strong>${rideTitle}</strong></span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Venue:</span>
+                    <span class="detail-value">${venue}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Start Date & Time:</span>
+                    <span class="detail-value">${formattedDate}</span>
+                  </div>
+                  ${formattedEndDate ? `
+                  <div class="detail-row">
+                    <span class="detail-label">End Date & Time:</span>
+                    <span class="detail-value">${formattedEndDate}</span>
+                  </div>
+                  ` : ''}
+                </div>
+
+                ${personalInfo ? `
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">👤 Rider Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">${personalInfo.firstName} ${personalInfo.lastName}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${personalInfo.phone}</span>
+                  </div>
+                  ${personalInfo.address ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Address:</span>
+                    <span class="detail-value">${personalInfo.address}</span>
+                  </div>
+                  ` : ''}
+                </div>
+                ` : ''}
+
+                ${motorcycleInfo ? `
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">🏍️ Motorcycle Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Make & Model:</span>
+                    <span class="detail-value">${motorcycleInfo.make} ${motorcycleInfo.model}</span>
+                  </div>
+                  ${motorcycleInfo.registrationNumber ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Registration No:</span>
+                    <span class="detail-value">${motorcycleInfo.registrationNumber}</span>
+                  </div>
+                  ` : ''}
+                </div>
+                ` : ''}
+
+                <div class="price-section">
+                  <h3 style="margin-top: 0; color: #333; text-align: center;">💰 Payment Summary</h3>
+                  ${discountAmount > 0 ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Original Amount:</span>
+                    <span class="detail-value">₹${originalAmount}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Discount ${couponCode ? `(${couponCode})` : ''}:</span>
+                    <span class="detail-value discount-text">- ₹${discountAmount}</span>
+                  </div>
+                  <hr style="border: none; border-top: 2px solid #ddd; margin: 10px 0;">
+                  ` : ''}
+                  <div class="total-amount">
+                    Total Paid: ₹${amount}
+                  </div>
+                </div>
+
+                <div class="info-box">
+                  <strong>📌 Important Instructions:</strong>
+                  <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Please arrive at the venue 30 minutes before the scheduled start time</li>
+                    <li>Carry a valid ID proof and this booking confirmation</li>
+                    <li>Ensure your motorcycle is in good condition with valid documents</li>
+                    <li>Wear proper riding gear including helmet, gloves, and protective clothing</li>
+                    <li>Follow all safety guidelines and instructions from ride marshals</li>
+                  </ul>
+                </div>
+
+                <div class="warning-box">
+                  <strong>⚠️ Cancellation Policy:</strong>
+                  <p style="margin: 10px 0;">Cancellations are allowed up to 24 hours before the ride. For assistance, contact our support team.</p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL}/profile/bookings" class="button">View My Bookings</a>
+                </div>
+
+                <p>If you have any questions or need assistance, feel free to reach out to us.</p>
+                
+                <p>See you on the road! 🏍️💨</p>
+                
+                <p>Best regards,<br>
+                <strong>Brotherhood Of Mumbai Team</strong></p>
+              </div>
+              
+              <div class="footer">
+                <p><strong>Brotherhood Of Mumbai</strong></p>
+                <p>Email: ${process.env.EMAIL_USER} | Website: ${process.env.FRONTEND_URL || 'https://brotherhoodofmumbai.com'}</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('Ride booking confirmation email sent successfully to:', email);
+    } catch (error) {
+      console.error('Error sending ride booking confirmation email:', error);
+      // Don't throw error as booking is already confirmed
+      console.log('Warning: Booking confirmation email failed to send, but booking is confirmed');
+    }
+  }
+
+  // Send event booking confirmation email
+  async sendEventBookingConfirmation(email, bookingData) {
+    this.ensureInitialized();
+    try {
+      const { 
+        fullName, 
+        bookingNumber, 
+        eventTitle, 
+        location, 
+        startDate,
+        endDate,
+        amount,
+        originalAmount,
+        discountAmount,
+        bookingType, 
+        groupSize,
+        personalInfo,
+        motorcycleInfo,
+        couponCode,
+        paymentId,
+        paidAt
+      } = bookingData;
+
+      const formattedStartDate = new Date(startDate).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : null;
+
+      const mailOptions = {
+        from: {
+          name: 'Brotherhood Of Mumbai',
+          address: process.env.EMAIL_USER
+        },
+        to: email,
+        subject: `Event Registration Confirmed - ${eventTitle} (${bookingNumber})`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+              .container { max-width: 650px; margin: 0 auto; background-color: white; }
+              .header { background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%); color: white; text-align: center; padding: 30px 20px; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .success-badge { background-color: #2ecc71; color: white; padding: 8px 20px; border-radius: 20px; display: inline-block; margin-top: 10px; font-weight: bold; }
+              .content { padding: 30px; }
+              .booking-details { background-color: #f8f9fa; border-left: 4px solid #ff4757; padding: 20px; margin: 20px 0; border-radius: 5px; }
+              .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+              .detail-row:last-child { border-bottom: none; }
+              .detail-label { font-weight: 600; color: #555; }
+              .detail-value { color: #333; text-align: right; }
+              .price-section { background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              .total-amount { font-size: 24px; font-weight: bold; color: #ff4757; text-align: center; }
+              .info-box { background-color: #e8f5e9; border: 1px solid #4caf50; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .warning-box { background-color: #fff3e0; border: 1px solid #ff9800; padding: 15px; border-radius: 5px; margin: 20px 0; }
+              .footer { background-color: #333; color: white; text-align: center; padding: 20px; font-size: 12px; }
+              .button { display: inline-block; background-color: #ff4757; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+              .discount-text { color: #2ecc71; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Event Registration Confirmed!</h1>
+                <div class="success-badge">✓ PAYMENT SUCCESSFUL</div>
+              </div>
+              
+              <div class="content">
+                <h2>Hello ${fullName}!</h2>
+                <p>Your event registration has been confirmed! We're excited to have you join us for this amazing event.</p>
+                
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">📋 Registration Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Booking Number:</span>
+                    <span class="detail-value"><strong>${bookingNumber}</strong></span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Payment ID:</span>
+                    <span class="detail-value">${paymentId || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Registration Type:</span>
+                    <span class="detail-value">${bookingType === 'group' ? `Group (${groupSize} participants)` : 'Individual'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Payment Date:</span>
+                    <span class="detail-value">${new Date(paidAt).toLocaleDateString('en-IN', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}</span>
+                  </div>
+                </div>
+
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">📅 Event Details</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Event:</span>
+                    <span class="detail-value"><strong>${eventTitle}</strong></span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Location:</span>
+                    <span class="detail-value">${location}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Start Date & Time:</span>
+                    <span class="detail-value">${formattedStartDate}</span>
+                  </div>
+                  ${formattedEndDate ? `
+                  <div class="detail-row">
+                    <span class="detail-label">End Date & Time:</span>
+                    <span class="detail-value">${formattedEndDate}</span>
+                  </div>
+                  ` : ''}
+                </div>
+
+                ${personalInfo ? `
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">👤 Participant Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">${personalInfo.firstName} ${personalInfo.lastName}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${personalInfo.phone}</span>
+                  </div>
+                  ${personalInfo.address ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Address:</span>
+                    <span class="detail-value">${personalInfo.address}</span>
+                  </div>
+                  ` : ''}
+                </div>
+                ` : ''}
+
+                ${motorcycleInfo ? `
+                <div class="booking-details">
+                  <h3 style="margin-top: 0; color: #ff4757;">🏍️ Motorcycle Information</h3>
+                  <div class="detail-row">
+                    <span class="detail-label">Make & Model:</span>
+                    <span class="detail-value">${motorcycleInfo.make} ${motorcycleInfo.model}</span>
+                  </div>
+                  ${motorcycleInfo.registrationNumber ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Registration No:</span>
+                    <span class="detail-value">${motorcycleInfo.registrationNumber}</span>
+                  </div>
+                  ` : ''}
+                </div>
+                ` : ''}
+
+                <div class="price-section">
+                  <h3 style="margin-top: 0; color: #333; text-align: center;">💰 Payment Summary</h3>
+                  ${discountAmount > 0 ? `
+                  <div class="detail-row">
+                    <span class="detail-label">Original Amount:</span>
+                    <span class="detail-value">₹${originalAmount}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Discount ${couponCode ? `(${couponCode})` : ''}:</span>
+                    <span class="detail-value discount-text">- ₹${discountAmount}</span>
+                  </div>
+                  <hr style="border: none; border-top: 2px solid #ddd; margin: 10px 0;">
+                  ` : ''}
+                  <div class="total-amount">
+                    Total Paid: ₹${amount}
+                  </div>
+                </div>
+
+                <div class="info-box">
+                  <strong>📌 Important Instructions:</strong>
+                  <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Please arrive at the venue 30 minutes before the event starts</li>
+                    <li>Carry a valid ID proof and this registration confirmation</li>
+                    <li>Check your email regularly for any event updates</li>
+                    <li>Follow the event schedule and guidelines</li>
+                    <li>For motorcycle events, ensure your bike is in good condition with valid documents</li>
+                  </ul>
+                </div>
+
+                <div class="warning-box">
+                  <strong>⚠️ Cancellation Policy:</strong>
+                  <p style="margin: 10px 0;">Cancellations are not allowed once the event has started. For assistance before the event, contact our support team.</p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL}/profile/event-bookings" class="button">View My Event Bookings</a>
+                </div>
+
+                <p>If you have any questions or need assistance, feel free to reach out to us.</p>
+                
+                <p>See you at the event! 🎉🏍️</p>
+                
+                <p>Best regards,<br>
+                <strong>Brotherhood Of Mumbai Team</strong></p>
+              </div>
+              
+              <div class="footer">
+                <p><strong>Brotherhood Of Mumbai</strong></p>
+                <p>Email: ${process.env.EMAIL_USER} | Website: ${process.env.FRONTEND_URL || 'https://brotherhoodofmumbai.com'}</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('Event booking confirmation email sent successfully to:', email);
+    } catch (error) {
+      console.error('Error sending event booking confirmation email:', error);
+      // Don't throw error as booking is already confirmed
+      console.log('Warning: Event booking confirmation email failed to send, but booking is confirmed');
+    }
+  }
 }
 
 export default new EmailService();
