@@ -278,6 +278,8 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
         bookingData.couponCode = couponCodeToSend;
       }
 
+      console.log('Sending ride booking data:', bookingData);
+
       const orderResponse = await api.post('/bookings/create-order', bookingData);
       const { booking, razorpayOrder, ride: rideData } = orderResponse.data.data;
 
@@ -291,7 +293,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
         key: razorpayOrder.keyId,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        name: 'BOM - Bikers Of Mumbai',
+        name: 'BOM - Brotherhood Of Mumbai',
         description: `${bookingType === 'group' ? 'Group ' : ''}Booking for ${rideData.title}`,
         order_id: razorpayOrder.id,
         handler: async (response) => {
@@ -342,8 +344,20 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create booking');
-      console.error('Booking error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create booking';
+      const errorDetails = error.response?.data?.errors || [];
+      
+      console.error('Ride Booking error:', error);
+      console.error('Error details:', errorDetails);
+      
+      // Show detailed validation errors if available
+      if (errorDetails.length > 0) {
+        errorDetails.forEach(err => {
+          toast.error(`${err.field}: ${err.message}`);
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

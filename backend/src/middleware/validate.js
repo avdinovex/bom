@@ -11,6 +11,13 @@ export const validate = (schema, source = 'body') => {
         message: detail.message
       }));
       
+      // Log validation errors for debugging
+      console.log('❌ Validation failed:', {
+        source,
+        errors,
+        receivedData: req[source]
+      });
+      
       throw new ApiError(400, 'Validation error', errors);
     }
     
@@ -174,7 +181,7 @@ export const schemas = {
     personalInfo: Joi.object({
       email: Joi.string().email().required(),
       fullName: Joi.string().trim().min(2).max(100).required(),
-      address: Joi.string().trim().min(5).max(500).required(),
+      address: Joi.string().trim().min(3).max(500).required(),
       contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
@@ -182,7 +189,7 @@ export const schemas = {
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
-      motorcycleNumber: Joi.string().trim().min(4).max(20).required()
+      motorcycleNumber: Joi.string().trim().min(4).max(20).uppercase().required()
     }).required(),
     emergencyContact: Joi.object({
       personName: Joi.string().trim().min(2).max(100).required(),
@@ -251,7 +258,7 @@ export const schemas = {
     personalInfo: Joi.object({
       email: Joi.string().email().required(),
       fullName: Joi.string().trim().min(2).max(100).required(),
-      address: Joi.string().trim().min(5).max(500).required(),
+      address: Joi.string().trim().min(3).max(500).required(),
       contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
@@ -259,7 +266,7 @@ export const schemas = {
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
-      motorcycleNumber: Joi.string().trim().min(4).max(20).required()
+      motorcycleNumber: Joi.string().trim().min(4).max(20).uppercase().required()
     }).required(),
     emergencyContact: Joi.object({
       personName: Joi.string().trim().min(2).max(100).required(),

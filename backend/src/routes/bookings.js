@@ -10,6 +10,9 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { createOrder, verifyPayment } from '../services/razorpayService.js';
 import { getPagination, getPaginationResult, getSortOptions } from '../utils/pagination.js';
 import emailService from '../services/emailService.js';
+import whatsappService from '../services/whatsappService.js';
+import { generateRideTicket } from '../services/ticketService.js';
+import logger from '../config/logger.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -599,6 +602,50 @@ router.post('/verify-payment', authenticate, validate(schemas.verifyPayment), as
       paidAt: booking.paidAt
     }).catch(err => console.error('Failed to send booking confirmation email:', err));
 
+    // Generate and send ticket via WhatsApp (async, don't wait)
+    (async () => {
+      try {
+        // Generate ticket image
+        const ticketBuffer = await generateRideTicket({
+          bookingNumber: booking.bookingNumber,
+          userName: booking.personalInfo.fullName,
+          rideName: booking.ride.title,
+          venue: booking.ride.venue,
+          startTime: booking.ride.startTime,
+          amount: booking.amount,
+          bookingType: booking.bookingType,
+          groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+          motorcycleInfo: booking.motorcycleInfo,
+          qrData: JSON.stringify({
+            bookingNumber: booking.bookingNumber,
+            bookingId: booking._id.toString(),
+            userName: booking.personalInfo.fullName,
+            rideName: booking.ride.title,
+            startTime: booking.ride.startTime,
+            bookingType: booking.bookingType,
+            verificationUrl: `${process.env.FRONTEND_URL}/verify-ticket/${booking.bookingNumber}`
+          })
+        });
+
+        // Send ticket via WhatsApp
+        await whatsappService.sendTicket(
+          booking.personalInfo.contactNumber,
+          ticketBuffer,
+          {
+            userName: booking.personalInfo.fullName,
+            bookingNumber: booking.bookingNumber,
+            rideName: booking.ride.title,
+            amount: booking.amount
+          }
+        );
+
+        logger.info(`Ticket sent via WhatsApp for booking ${booking.bookingNumber}`);
+      } catch (error) {
+        logger.error('Failed to send ticket via WhatsApp:', error.message);
+        // Don't throw error - ticket generation/sending is not critical for payment verification
+      }
+    })();
+
     res.json(new ApiResponse(200, {
       booking: {
         id: booking._id,
@@ -738,6 +785,73 @@ router.post('/:id/cancel', authenticate, asyncHandler(async (req, res) => {
     throw error;
   } finally {
     session.endSession();
+  }
+}));
+
+// @route   POST /api/bookings/:id/resend-ticket
+// @desc    Resend ticket to user via WhatsApp
+// @access  Private
+router.post('/:id/resend-ticket', authenticate, asyncHandler(async (req, res) => {
+  const booking = await Booking.findOne({ 
+    _id: req.params.id, 
+    user: req.user._id 
+  })
+    .populate('ride', 'title venue startTime endTime')
+    .populate('user', 'fullName email');
+
+  if (!booking) {
+    throw new ApiError(404, 'Booking not found');
+  }
+
+  if (booking.status !== 'paid') {
+    throw new ApiError(400, 'Ticket can only be resent for confirmed bookings');
+  }
+
+  try {
+    // Generate ticket image
+    const ticketBuffer = await generateRideTicket({
+      bookingNumber: booking.bookingNumber,
+      userName: booking.personalInfo.fullName,
+      rideName: booking.ride.title,
+      venue: booking.ride.venue,
+      startTime: booking.ride.startTime,
+      amount: booking.amount,
+      bookingType: booking.bookingType,
+      groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+      motorcycleInfo: booking.motorcycleInfo,
+      qrData: JSON.stringify({
+        bookingNumber: booking.bookingNumber,
+        bookingId: booking._id.toString(),
+        userName: booking.personalInfo.fullName,
+        rideName: booking.ride.title,
+        startTime: booking.ride.startTime,
+        bookingType: booking.bookingType,
+        verificationUrl: `${process.env.FRONTEND_URL}/verify-ticket/${booking.bookingNumber}`
+      })
+    });
+
+    // Send ticket via WhatsApp
+    await whatsappService.sendTicket(
+      booking.personalInfo.contactNumber,
+      ticketBuffer,
+      {
+        userName: booking.personalInfo.fullName,
+        bookingNumber: booking.bookingNumber,
+        rideName: booking.ride.title,
+        amount: booking.amount
+      }
+    );
+
+    logger.info(`Ticket resent via WhatsApp for booking ${booking.bookingNumber}`);
+
+    res.json(new ApiResponse(200, {
+      message: 'Ticket sent successfully to your WhatsApp',
+      phoneNumber: booking.personalInfo.contactNumber
+    }, 'Ticket resent successfully'));
+
+  } catch (error) {
+    logger.error('Failed to resend ticket:', error.message);
+    throw new ApiError(500, `Failed to send ticket: ${error.message}`);
   }
 }));
 

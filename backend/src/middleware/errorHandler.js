@@ -49,9 +49,10 @@ export const errorHandler = (err, req, res, next) => {
     error = { message, statusCode: 400 };
   }
 
-  res.status(error.statusCode || 500).json({
+  res.status(error.statusCode || err.statusCode || 500).json({
     status: 'error',
     message: error.message || 'Server Error',
+    ...(err.errors && { errors: err.errors }), // Include validation errors
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 };

@@ -10,6 +10,9 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { createOrder, verifyPayment } from '../services/razorpayService.js';
 import { getPagination, getPaginationResult, getSortOptions } from '../utils/pagination.js';
 import emailService from '../services/emailService.js';
+import whatsappService from '../services/whatsappService.js';
+import { generateEventTicket } from '../services/ticketService.js';
+import logger from '../config/logger.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -388,6 +391,51 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
       paidAt: booking.paidAt
     }).catch(err => console.error('Failed to send event booking confirmation email:', err));
 
+    // Generate and send ticket via WhatsApp (async, don't wait)
+    (async () => {
+      try {
+        // Generate ticket image
+        const ticketBuffer = await generateEventTicket({
+          bookingNumber: booking.bookingNumber,
+          userName: booking.personalInfo.fullName,
+          eventName: booking.event.title,
+          location: booking.event.location,
+          startDate: booking.event.startDate,
+          endDate: booking.event.endDate,
+          amount: booking.amount,
+          bookingType: booking.bookingType,
+          groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+          motorcycleInfo: booking.motorcycleInfo,
+          qrData: JSON.stringify({
+            bookingNumber: booking.bookingNumber,
+            bookingId: booking._id.toString(),
+            userName: booking.personalInfo.fullName,
+            eventName: booking.event.title,
+            startDate: booking.event.startDate,
+            bookingType: booking.bookingType,
+            verificationUrl: `${process.env.FRONTEND_URL}/verify-ticket/${booking.bookingNumber}`
+          })
+        });
+
+        // Send ticket via WhatsApp
+        await whatsappService.sendTicket(
+          booking.personalInfo.contactNumber,
+          ticketBuffer,
+          {
+            userName: booking.personalInfo.fullName,
+            bookingNumber: booking.bookingNumber,
+            eventName: booking.event.title,
+            amount: booking.amount
+          }
+        );
+
+        logger.info(`Event ticket sent via WhatsApp for booking ${booking.bookingNumber}`);
+      } catch (error) {
+        logger.error('Failed to send event ticket via WhatsApp:', error.message);
+        // Don't throw error - ticket generation/sending is not critical for payment verification
+      }
+    })();
+
     res.status(200).json(
       new ApiResponse(200, {
         booking: {
@@ -543,6 +591,78 @@ router.put('/:id/cancel', authenticate, asyncHandler(async (req, res) => {
     throw error;
   } finally {
     session.endSession();
+  }
+}));
+
+// @route   POST /api/event-bookings/:id/resend-ticket
+// @desc    Resend event ticket to user via WhatsApp
+// @access  Private
+router.post('/:id/resend-ticket', authenticate, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const booking = await EventBooking.findOne({
+    _id: id,
+    user: req.user._id
+  })
+    .populate('event', 'title startDate endDate location')
+    .populate('user', 'fullName email');
+
+  if (!booking) {
+    throw new ApiError(404, 'Event booking not found');
+  }
+
+  if (booking.status !== 'paid') {
+    throw new ApiError(400, 'Ticket can only be resent for confirmed bookings');
+  }
+
+  try {
+    // Generate ticket image
+    const ticketBuffer = await generateEventTicket({
+      bookingNumber: booking.bookingNumber,
+      userName: booking.personalInfo.fullName,
+      eventName: booking.event.title,
+      location: booking.event.location,
+      startDate: booking.event.startDate,
+      endDate: booking.event.endDate,
+      amount: booking.amount,
+      bookingType: booking.bookingType,
+      groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+      motorcycleInfo: booking.motorcycleInfo,
+      qrData: JSON.stringify({
+        bookingNumber: booking.bookingNumber,
+        bookingId: booking._id.toString(),
+        userName: booking.personalInfo.fullName,
+        eventName: booking.event.title,
+        startDate: booking.event.startDate,
+        bookingType: booking.bookingType,
+        verificationUrl: `${process.env.FRONTEND_URL}/verify-ticket/${booking.bookingNumber}`
+      })
+    });
+
+    // Send ticket via WhatsApp
+    await whatsappService.sendTicket(
+      booking.personalInfo.contactNumber,
+      ticketBuffer,
+      {
+        userName: booking.personalInfo.fullName,
+        bookingNumber: booking.bookingNumber,
+        eventName: booking.event.title,
+        amount: booking.amount
+      }
+    );
+
+    logger.info(`Event ticket resent via WhatsApp for booking ${booking.bookingNumber}`);
+
+    res.status(200).json(
+      new ApiResponse(200, {
+        message: 'Ticket sent successfully to your WhatsApp',
+        phoneNumber: booking.personalInfo.contactNumber
+      }, 'Event ticket resent successfully')
+    );
+
+  } catch (error) {
+    logger.error('Failed to resend event ticket:', error.message);
+    throw new ApiError(500, `Failed to send ticket: ${error.message}`);
   }
 }));
 
