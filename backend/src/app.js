@@ -33,9 +33,9 @@ app.use(morgan('dev'));
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://brotherhoodofmumbai.cloud',
-  'https://www.brotherhoodofmumbai.cloud',
-  'https://api.brotherhoodofmumbai.cloud'  // Add API subdomain
+  'https://brotherhoodofmumbai.com',
+  'https://www.brotherhoodofmumbai.com',
+  'https://api.brotherhoodofmumbai.com'  // Add API subdomain
 ];
 
 app.use((req, res, next) => {
