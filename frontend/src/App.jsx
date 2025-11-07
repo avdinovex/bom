@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Main website components
 import Home from "./pages/Home";  
 import RideCountdown from "./pages/RideCountDown";
+import EventCountdown from "./pages/EventCountDown";
 import EventSchedule from "./pages/EventScheduled";
 import About from "./pages/About";
 import Testimonials from "./pages/Testimonials";
@@ -100,6 +101,8 @@ function MainPage() {
     <div style={{ position: "relative", fontFamily: "Poppins, sans-serif" }}>
       <Home />
       <RideCountdown />
+      <Band/>
+      <EventCountdown />
       <Member/>
       <Testimonials />
       <EventSchedule />

@@ -401,11 +401,11 @@ class EmailService {
                   <h3 style="margin-top: 0; color: #ff4757;">👤 Rider Information</h3>
                   <div class="detail-row">
                     <span class="detail-label">Name:</span>
-                    <span class="detail-value">${personalInfo.firstName} ${personalInfo.lastName}</span>
+                    <span class="detail-value">${personalInfo.fullName || `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim()}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Phone:</span>
-                    <span class="detail-value">${personalInfo.phone}</span>
+                    <span class="detail-value">${personalInfo.contactNumber || personalInfo.phone || 'N/A'}</span>
                   </div>
                   ${personalInfo.address ? `
                   <div class="detail-row">
@@ -421,12 +421,12 @@ class EmailService {
                   <h3 style="margin-top: 0; color: #ff4757;">🏍️ Motorcycle Information</h3>
                   <div class="detail-row">
                     <span class="detail-label">Make & Model:</span>
-                    <span class="detail-value">${motorcycleInfo.make} ${motorcycleInfo.model}</span>
+                    <span class="detail-value">${motorcycleInfo.modelName || `${motorcycleInfo.make || ''} ${motorcycleInfo.model || ''}`.trim() || 'N/A'}</span>
                   </div>
-                  ${motorcycleInfo.registrationNumber ? `
+                  ${motorcycleInfo.motorcycleNumber || motorcycleInfo.registrationNumber ? `
                   <div class="detail-row">
                     <span class="detail-label">Registration No:</span>
-                    <span class="detail-value">${motorcycleInfo.registrationNumber}</span>
+                    <span class="detail-value">${motorcycleInfo.motorcycleNumber || motorcycleInfo.registrationNumber}</span>
                   </div>
                   ` : ''}
                 </div>
@@ -635,11 +635,11 @@ class EmailService {
                   <h3 style="margin-top: 0; color: #ff4757;">👤 Participant Information</h3>
                   <div class="detail-row">
                     <span class="detail-label">Name:</span>
-                    <span class="detail-value">${personalInfo.firstName} ${personalInfo.lastName}</span>
+                    <span class="detail-value">${personalInfo.fullName || `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim()}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Phone:</span>
-                    <span class="detail-value">${personalInfo.phone}</span>
+                    <span class="detail-value">${personalInfo.contactNumber || personalInfo.phone || 'N/A'}</span>
                   </div>
                   ${personalInfo.address ? `
                   <div class="detail-row">
@@ -655,12 +655,12 @@ class EmailService {
                   <h3 style="margin-top: 0; color: #ff4757;">🏍️ Motorcycle Information</h3>
                   <div class="detail-row">
                     <span class="detail-label">Make & Model:</span>
-                    <span class="detail-value">${motorcycleInfo.make} ${motorcycleInfo.model}</span>
+                    <span class="detail-value">${motorcycleInfo.modelName || `${motorcycleInfo.make || ''} ${motorcycleInfo.model || ''}`.trim() || 'N/A'}</span>
                   </div>
-                  ${motorcycleInfo.registrationNumber ? `
+                  ${motorcycleInfo.motorcycleNumber || motorcycleInfo.registrationNumber ? `
                   <div class="detail-row">
                     <span class="detail-label">Registration No:</span>
-                    <span class="detail-value">${motorcycleInfo.registrationNumber}</span>
+                    <span class="detail-value">${motorcycleInfo.motorcycleNumber || motorcycleInfo.registrationNumber}</span>
                   </div>
                   ` : ''}
                 </div>
@@ -700,9 +700,6 @@ class EmailService {
                   <p style="margin: 10px 0;">Cancellations are not allowed once the event has started. For assistance before the event, contact our support team.</p>
                 </div>
 
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.FRONTEND_URL}/profile/event-bookings" class="button">View My Event Bookings</a>
-                </div>
 
                 <p>If you have any questions or need assistance, feel free to reach out to us.</p>
                 

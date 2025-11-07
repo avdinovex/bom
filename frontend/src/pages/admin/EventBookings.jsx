@@ -10,7 +10,10 @@ import {
   FiDownload,
   FiSearch,
   FiFilter,
-  FiRefreshCw
+  FiRefreshCw,
+  FiUser,
+  FiMapPin,
+  FiCreditCard
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import DataTable from '../../components/admin/DataTable';
@@ -63,10 +66,33 @@ const EventBookings = () => {
         eventBookingsAPI.getAll(params),
         eventBookingsAPI.getStats()
       ]);
+      
 
-      setBookings(bookingsResponse.data.bookings);
-      setPagination(prev => ({ ...prev, total: bookingsResponse.data.pagination.total }));
-      setStats(statsResponse.data);
+      const bookingsPayload = bookingsResponse?.data?.data || bookingsResponse?.data;
+      const bookingsData = Array.isArray(bookingsPayload?.data)
+        ? bookingsPayload.data
+        : Array.isArray(bookingsPayload?.bookings)
+          ? bookingsPayload.bookings
+          : Array.isArray(bookingsPayload?.items)
+            ? bookingsPayload.items
+            : Array.isArray(bookingsPayload)
+              ? bookingsPayload
+              : Array.isArray(bookingsResponse?.data?.bookings)
+                ? bookingsResponse.data.bookings
+                : [];
+
+      const paginationData = bookingsPayload?.pagination || bookingsResponse?.data?.pagination || {};
+
+      const statsPayload = statsResponse?.data?.data || statsResponse?.data;
+
+      setBookings(bookingsData);
+      setPagination(prev => ({
+        ...prev,
+        total: paginationData.totalItems || paginationData.total || bookingsData.length,
+        page: paginationData.currentPage || prev.page,
+        limit: paginationData.itemsPerPage || paginationData.limit || prev.limit
+      }));
+      setStats(statsPayload || {});
     } catch (error) {
       console.error('Error fetching event bookings:', error);
       toast.error('Failed to fetch event bookings');
@@ -78,7 +104,19 @@ const EventBookings = () => {
   const fetchEvents = async () => {
     try {
       const response = await eventsAPI.getAll({ limit: 100 });
-      setEvents(response.data.events || response.data.items || []);
+      const payload = response?.data?.data || response?.data;
+      const eventsData = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.events)
+          ? payload.events
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : Array.isArray(response?.data?.events)
+              ? response.data.events
+              : Array.isArray(response?.data)
+                ? response.data
+                : [];
+      setEvents(eventsData);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
@@ -175,7 +213,7 @@ const EventBookings = () => {
   const columns = [
     {
       key: 'bookingNumber',
-      label: 'Booking ID',
+  title: 'Booking ID',
       sortable: true,
       render: (booking) => (
         <div className="font-medium text-gray-900">
@@ -185,7 +223,7 @@ const EventBookings = () => {
     },
     {
       key: 'event.title',
-      label: 'Event',
+  title: 'Event',
       sortable: true,
       render: (booking) => (
         <div>
@@ -198,7 +236,7 @@ const EventBookings = () => {
     },
     {
       key: 'personalInfo.fullName',
-      label: 'Customer',
+  title: 'Customer',
       sortable: true,
       render: (booking) => (
         <div>
@@ -209,23 +247,67 @@ const EventBookings = () => {
     },
     {
       key: 'amount',
-      label: 'Amount',
+  title: 'Amount',
       sortable: true,
       render: (booking) => (
-        <div className="font-medium text-gray-900">
-          ₹{booking.amount}
+        <div className="text-sm">
+          <div className="font-semibold text-gray-900">₹{booking.amount}</div>
+          {booking.discountAmount > 0 && (
+            <div className="text-xs text-green-600">
+              Saved: ₹{booking.discountAmount}
+            </div>
+          )}
+          {booking.couponCode && (
+            <div className="text-xs text-purple-600 font-mono">
+              {booking.couponCode}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'payment',
+      title: 'Payment',
+      sortable: true,
+      render: (booking) => (
+        <div className="text-sm">
+          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            booking.status === 'paid' 
+              ? 'bg-green-100 text-green-800' 
+              : booking.status === 'created'
+              ? 'bg-yellow-100 text-yellow-800'
+              : booking.status === 'failed'
+              ? 'bg-red-100 text-red-800'
+              : booking.status === 'refunded'
+              ? 'bg-purple-100 text-purple-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            {booking.status === 'paid' ? '✓ Paid' : 
+             booking.status === 'created' ? '⏳ Pending' :
+             booking.status === 'failed' ? '✗ Failed' :
+             booking.status === 'refunded' ? '↩ Refunded' :
+             booking.status}
+          </div>
+          {booking.razorpayPaymentId && (
+            <div className="text-xs text-gray-500 mt-1 font-mono truncate" style={{maxWidth: '120px'}} title={booking.razorpayPaymentId}>
+              {booking.razorpayPaymentId}
+            </div>
+          )}
+          <div className="text-xs text-gray-400 mt-0.5">
+            {booking.paymentMethod || 'razorpay'}
+          </div>
         </div>
       )
     },
     {
       key: 'status',
-      label: 'Status',
+  title: 'Status',
       sortable: true,
       render: (booking) => getStatusBadge(booking.status)
     },
     {
       key: 'createdAt',
-      label: 'Booking Date',
+  title: 'Booking Date',
       sortable: true,
       render: (booking) => (
         <div className="text-sm text-gray-900">
@@ -235,7 +317,7 @@ const EventBookings = () => {
     },
     {
       key: 'actions',
-      label: 'Actions',
+  title: 'Actions',
       render: (booking) => (
         <div className="flex space-x-2">
           <button
@@ -438,151 +520,410 @@ const EventBookings = () => {
           isOpen={showDetails}
           onClose={() => setShowDetails(false)}
           title="Event Booking Details"
-          size="lg"
+          size="xl"
         >
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Booking Information</h4>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Booking ID:</span> {selectedBooking.bookingNumber}</p>
-                  <p><span className="font-medium">Status:</span> {getStatusBadge(selectedBooking.status)}</p>
-                  <p><span className="font-medium">Amount:</span> ₹{selectedBooking.amount}</p>
-                  <p><span className="font-medium">Payment Method:</span> {selectedBooking.paymentMethod}</p>
-                  {selectedBooking.paymentUtr && (
-                    <p><span className="font-medium">UTR Number:</span> {selectedBooking.paymentUtr}</p>
-                  )}
-                  <p><span className="font-medium">Booking Date:</span> {new Date(selectedBooking.createdAt).toLocaleString()}</p>
-                  {selectedBooking.paidAt && (
-                    <p><span className="font-medium">Payment Date:</span> {new Date(selectedBooking.paidAt).toLocaleString()}</p>
-                  )}
-                  {selectedBooking.cancelledAt && (
-                    <p><span className="font-medium">Cancelled Date:</span> {new Date(selectedBooking.cancelledAt).toLocaleString()}</p>
-                  )}
-                  {selectedBooking.refundedAt && (
-                    <p><span className="font-medium">Refunded Date:</span> {new Date(selectedBooking.refundedAt).toLocaleString()}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Event Information</h4>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Event:</span> {selectedBooking.event?.title}</p>
-                  <p><span className="font-medium">Location:</span> {selectedBooking.event?.location}</p>
-                  <p><span className="font-medium">Date:</span> {selectedBooking.event?.startDate && new Date(selectedBooking.event.startDate).toLocaleDateString()}</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Personal Information</h4>
+          <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+            {/* Booking Info */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <FiUser className="mr-2" />
+                Booking Information
+              </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2">
-                  <p><span className="font-medium">Name:</span> {selectedBooking.personalInfo.fullName}</p>
-                  <p><span className="font-medium">Email:</span> {selectedBooking.personalInfo.email}</p>
-                  <p><span className="font-medium">Contact:</span> {selectedBooking.personalInfo.contactNumber}</p>
-                  <p><span className="font-medium">Gender:</span> {selectedBooking.personalInfo.gender}</p>
+                <div>
+                  <span className="text-gray-600">Booking ID:</span>
+                  <span className="ml-2 font-mono text-blue-600">#{selectedBooking.bookingNumber}</span>
                 </div>
-                <div className="space-y-2">
-                  <p><span className="font-medium">DOB:</span> {new Date(selectedBooking.personalInfo.dateOfBirth).toLocaleDateString()}</p>
-                  <p><span className="font-medium">Blood Group:</span> {selectedBooking.personalInfo.bloodGroup}</p>
-                  <p><span className="font-medium">Address:</span> {selectedBooking.personalInfo.address}</p>
+                <div>
+                  <span className="text-gray-600">Status:</span>
+                  <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedBooking.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    selectedBooking.status === 'created' ? 'bg-yellow-100 text-yellow-800' :
+                    selectedBooking.status === 'failed' ? 'bg-red-100 text-red-800' :
+                    selectedBooking.status === 'refunded' ? 'bg-blue-100 text-blue-800' :
+                    selectedBooking.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedBooking.status?.charAt(0)?.toUpperCase() + selectedBooking.status?.slice(1)}
+                  </span>
                 </div>
+                <div>
+                  <span className="text-gray-600">Payment Method:</span>
+                  <span className="ml-2 capitalize">{selectedBooking.paymentMethod || 'razorpay'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Currency:</span>
+                  <span className="ml-2">{selectedBooking.currency || 'INR'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Booked On:</span>
+                  <span className="ml-2">{new Date(selectedBooking.createdAt).toLocaleString()}</span>
+                </div>
+                {selectedBooking.paidAt && (
+                  <div>
+                    <span className="text-gray-600">Paid On:</span>
+                    <span className="ml-2">{new Date(selectedBooking.paidAt).toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Motorcycle Information</h4>
-              <div className="text-sm space-y-2">
-                <p><span className="font-medium">Model:</span> {selectedBooking.motorcycleInfo.modelName}</p>
-                <p><span className="font-medium">Number:</span> {selectedBooking.motorcycleInfo.motorcycleNumber}</p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Emergency Contact</h4>
-              <div className="text-sm space-y-2">
-                <p><span className="font-medium">Name:</span> {selectedBooking.emergencyContact.personName}</p>
-                <p><span className="font-medium">Number:</span> {selectedBooking.emergencyContact.number}</p>
-              </div>
-            </div>
-
-            {selectedBooking.medicalHistory && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Medical History</h4>
-                <p className="text-sm bg-gray-50 p-3 rounded">{selectedBooking.medicalHistory}</p>
+            {/* Booking Type Badge */}
+            {selectedBooking.bookingType === 'group' && (
+              <div className="bg-purple-100 border-l-4 border-purple-500 p-4 rounded">
+                <div className="flex items-center">
+                  <FiUsers className="h-5 w-5 text-purple-600 mr-2" />
+                  <span className="font-semibold text-purple-900">
+                    Group Booking - {selectedBooking.groupInfo?.groupSize || 0} Members
+                  </span>
+                </div>
               </div>
             )}
 
-            {/* Payment Details */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Payment Details</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2">
-                  {selectedBooking.razorpayOrderId && (
-                    <p><span className="font-medium">Razorpay Order ID:</span> {selectedBooking.razorpayOrderId}</p>
-                  )}
-                  {selectedBooking.razorpayPaymentId && (
-                    <p><span className="font-medium">Razorpay Payment ID:</span> {selectedBooking.razorpayPaymentId}</p>
-                  )}
-                  {selectedBooking.paymentUtr && (
-                    <p><span className="font-medium">Payment UTR:</span> {selectedBooking.paymentUtr}</p>
-                  )}
+            {/* Group Information - Show if group booking */}
+            {selectedBooking.bookingType === 'group' && selectedBooking.groupInfo && (
+              <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                  <FiUsers className="mr-2 text-purple-600" />
+                  Group Information
+                </h4>
+                <div className="mb-4">
+                  <span className="text-gray-600 font-medium">Group Name:</span>
+                  <span className="ml-2 text-lg font-semibold text-purple-900">
+                    {selectedBooking.groupInfo.groupName || 'N/A'}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  {selectedBooking.refundAmount > 0 && (
-                    <p><span className="font-medium">Refund Amount:</span> ₹{selectedBooking.refundAmount}</p>
-                  )}
-                  {selectedBooking.refundReason && (
-                    <p><span className="font-medium">Refund Reason:</span> {selectedBooking.refundReason}</p>
-                  )}
-                  {selectedBooking.cancellationReason && (
-                    <p><span className="font-medium">Cancellation Reason:</span> {selectedBooking.cancellationReason}</p>
-                  )}
+                
+                <h5 className="font-semibold text-gray-800 mb-3 mt-4">
+                  Group Members ({selectedBooking.groupInfo.members?.length || 0}):
+                </h5>
+                <div className="space-y-3">
+                  {selectedBooking.groupInfo.members?.map((member, index) => (
+                    <div key={member._id || index} className="bg-white p-4 rounded-lg border border-purple-200 shadow-sm">
+                      <div className="flex items-center mb-3">
+                        <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold mr-3">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">{member.name || 'N/A'}</div>
+                          <div className="text-sm text-gray-600">{member.contactNumber || 'N/A'}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm ml-13">
+                        <div>
+                          <span className="text-gray-600">Bike Model:</span>
+                          <span className="ml-2 font-medium">{member.motorcycleModel || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Bike Number:</span>
+                          <span className="ml-2 font-mono bg-yellow-100 px-2 py-1 rounded">
+                            {member.motorcycleNumber || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Personal Information - Leader Info for Group or Individual Info */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <FiUser className="mr-2" />
+                {selectedBooking.bookingType === 'group' ? 'Group Leader Information' : 'Personal Information'}
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Full Name:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.personalInfo?.fullName || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Email:</span>
+                  <span className="ml-2">{selectedBooking.personalInfo?.email || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Contact Number:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.personalInfo?.contactNumber || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Gender:</span>
+                  <span className="ml-2">{selectedBooking.personalInfo?.gender || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Date of Birth:</span>
+                  <span className="ml-2">
+                    {selectedBooking.personalInfo?.dateOfBirth ? 
+                      new Date(selectedBooking.personalInfo.dateOfBirth).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Blood Group:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.personalInfo?.bloodGroup || 'N/A'}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-600">Address:</span>
+                  <span className="ml-2">{selectedBooking.personalInfo?.address || 'N/A'}</span>
                 </div>
               </div>
             </div>
+
+            {/* Motorcycle Information */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                🏍️ {selectedBooking.bookingType === 'group' ? 'Leader\'s Motorcycle Information' : 'Motorcycle Information'}
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Model Name:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.motorcycleInfo?.modelName || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Number Plate:</span>
+                  <span className="ml-2 font-mono bg-yellow-100 px-2 py-1 rounded">
+                    {selectedBooking.motorcycleInfo?.motorcycleNumber || 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                🚨 Emergency Contact
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Contact Person:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.emergencyContact?.personName || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Contact Number:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.emergencyContact?.number || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Medical History */}
+            {selectedBooking.medicalHistory && (
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                  🏥 Medical History
+                </h4>
+                <div className="text-sm">
+                  <p className="text-gray-700 bg-white p-3 rounded border">
+                    {selectedBooking.medicalHistory}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Agreements */}
-            {selectedBooking.agreements && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Agreements & Consents</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Food & Refreshments:</span> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedBooking.agreements.foodAndRefreshments ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {selectedBooking.agreements.foodAndRefreshments ? 'Agreed' : 'Not Agreed'}
-                      </span>
-                    </p>
-                    <p><span className="font-medium">Information Accuracy:</span> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedBooking.agreements.informationAccuracy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {selectedBooking.agreements.informationAccuracy ? 'Agreed' : 'Not Agreed'}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">No Contrabands:</span> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedBooking.agreements.noContrabands ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {selectedBooking.agreements.noContrabands ? 'Agreed' : 'Not Agreed'}
-                      </span>
-                    </p>
-                    <p><span className="font-medium">Rules & Regulations:</span> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedBooking.agreements.rulesAndRegulations ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {selectedBooking.agreements.rulesAndRegulations ? 'Agreed' : 'Not Agreed'}
-                      </span>
-                    </p>
-                  </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                📋 Agreements & Consents
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center">
+                  <span className={`mr-2 ${selectedBooking.agreements?.foodAndRefreshments ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedBooking.agreements?.foodAndRefreshments ? '✅' : '❌'}
+                  </span>
+                  <span className="text-gray-700">Food & Refreshments</span>
                 </div>
+                <div className="flex items-center">
+                  <span className={`mr-2 ${selectedBooking.agreements?.informationAccuracy ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedBooking.agreements?.informationAccuracy ? '✅' : '❌'}
+                  </span>
+                  <span className="text-gray-700">Information Accuracy</span>
+                </div>
+                <div className="flex items-center">
+                  <span className={`mr-2 ${selectedBooking.agreements?.noContrabands ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedBooking.agreements?.noContrabands ? '✅' : '❌'}
+                  </span>
+                  <span className="text-gray-700">No Contrabands</span>
+                </div>
+                <div className="flex items-center">
+                  <span className={`mr-2 ${selectedBooking.agreements?.rulesAndRegulations ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedBooking.agreements?.rulesAndRegulations ? '✅' : '❌'}
+                  </span>
+                  <span className="text-gray-700">Rules & Regulations</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Event Information */}
+            <div className="bg-indigo-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <FiMapPin className="mr-2" />
+                Event Information
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Title:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.event?.title || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Location:</span>
+                  <span className="ml-2">{selectedBooking.event?.location || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Start Date:</span>
+                  <span className="ml-2 font-medium">
+                    {selectedBooking.event?.startDate ? 
+                      new Date(selectedBooking.event.startDate).toLocaleDateString() : 'Not specified'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">End Date:</span>
+                  <span className="ml-2">
+                    {selectedBooking.event?.endDate ? 
+                      new Date(selectedBooking.event.endDate).toLocaleDateString() : 'Not specified'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Information */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <FiCreditCard className="mr-2" />
+                Payment Information
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {selectedBooking.originalAmount > 0 && selectedBooking.originalAmount !== selectedBooking.amount && (
+                  <div className="col-span-2 bg-purple-100 p-3 rounded border border-purple-300">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-600">Original Amount:</span>
+                      <span className="ml-2 text-gray-500 line-through">₹{selectedBooking.originalAmount}</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-600">Discount ({selectedBooking.couponCode}):</span>
+                      <span className="ml-2 font-semibold text-green-600">-₹{selectedBooking.discountAmount || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-purple-300">
+                      <span className="text-gray-900 font-semibold">Final Amount:</span>
+                      <span className="ml-2 font-bold text-green-600 text-lg">₹{selectedBooking.amount || 0}</span>
+                    </div>
+                  </div>
+                )}
+                {(!selectedBooking.originalAmount || selectedBooking.originalAmount === selectedBooking.amount) && (
+                  <div>
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="ml-2 font-semibold text-green-600 text-lg">₹{selectedBooking.amount || 0}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-600">Refund Amount:</span>
+                  <span className="ml-2 font-semibold text-red-600">₹{selectedBooking.refundAmount || 0}</span>
+                </div>
+                {selectedBooking.razorpayPaymentId && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">Razorpay Payment ID:</span>
+                    <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                      {selectedBooking.razorpayPaymentId}
+                    </span>
+                  </div>
+                )}
+                {selectedBooking.razorpayOrderId && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">Razorpay Order ID:</span>
+                    <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                      {selectedBooking.razorpayOrderId}
+                    </span>
+                  </div>
+                )}
+                {selectedBooking.razorpaySignature && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">Payment Signature:</span>
+                    <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded break-all">
+                      {selectedBooking.razorpaySignature}
+                    </span>
+                  </div>
+                )}
+                {selectedBooking.paymentUtr && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">UTR Number:</span>
+                    <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                      {selectedBooking.paymentUtr}
+                    </span>
+                  </div>
+                )}
+                {selectedBooking.refundReason && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">Refund Reason:</span>
+                    <span className="ml-2 italic">{selectedBooking.refundReason}</span>
+                  </div>
+                )}
+                {selectedBooking.cancellationReason && (
+                  <div className="col-span-2">
+                    <span className="text-gray-600">Cancellation Reason:</span>
+                    <span className="ml-2 italic">{selectedBooking.cancellationReason}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Account Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <FiUser className="mr-2" />
+                Associated User Account
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Account Name:</span>
+                  <span className="ml-2">{selectedBooking.user?.fullName || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Account Email:</span>
+                  <span className="ml-2">{selectedBooking.user?.email || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Notes */}
+            {selectedBooking.notes && (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                  📝 Admin Notes
+                </h4>
+                <p className="text-sm text-gray-700">{selectedBooking.notes}</p>
               </div>
             )}
 
-            {selectedBooking.notes && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Notes</h4>
-                <p className="text-sm bg-gray-50 p-3 rounded">{selectedBooking.notes}</p>
-              </div>
-            )}
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <button
+                onClick={() => {
+                  setShowDetails(false);
+                  setSelectedBooking(selectedBooking);
+                  setShowStatusModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <FiEdit className="h-4 w-4" />
+                Update Status
+              </button>
+              {selectedBooking.status !== 'cancelled' && selectedBooking.status !== 'refunded' && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this booking?')) {
+                      handleDelete(selectedBooking._id);
+                      setShowDetails(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Delete Booking
+                </button>
+              )}
+              <button
+                onClick={() => setShowDetails(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </Modal>
       )}

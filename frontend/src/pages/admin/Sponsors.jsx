@@ -352,9 +352,13 @@ const Sponsors = () => {
       key: 'discount',
       title: 'Discount',
       render: (sponsor) => (
-        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-          {sponsor?.discount || 'N/A'}
-        </span>
+        sponsor?.discount ? (
+          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+            {sponsor.discount}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )
       ),
     },
     {
@@ -623,16 +627,18 @@ const Sponsors = () => {
           {/* Discount & Category */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Discount *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Discount <span className="text-gray-400 text-xs">(Optional)</span>
+              </label>
               <input
                 type="text"
                 name="discount"
                 value={formData.discount}
                 onChange={handleInputChange}
-                required
-                placeholder="15% OFF"
+                placeholder="e.g. 15% OFF, Flat ₹500 OFF"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="text-xs text-gray-500 mt-1">Leave empty if no discount available</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>

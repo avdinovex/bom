@@ -82,12 +82,26 @@ const Events = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/admin/events');
-      setEvents(response.data.data.data || []);
+      const response = await api.get('/admin/events', { params: { limit: 100 } });
+
+      const payload = response?.data?.data;
+      const eventsData = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.events)
+          ? payload.events
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : Array.isArray(payload)
+              ? payload
+            : Array.isArray(response?.data?.events)
+              ? response.data.events
+              : [];
+
+      setEvents(eventsData);
     } catch (error) {
       toast.error('Failed to fetch events');
-      console.error(error);
-      setEvents([]); // Ensure events is always an array
+      console.error('Error fetching events:', error);
+      setEvents([]);
     } finally {
       setLoading(false);
     }

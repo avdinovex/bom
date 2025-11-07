@@ -23,8 +23,8 @@ const sponsorSchema = new mongoose.Schema(
     },
     discount: {
       type: String,
-      required: [true, 'Discount information is required'],
       trim: true,
+      default: '',
     },
     description: {
       type: String,

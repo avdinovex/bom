@@ -140,9 +140,11 @@ const Sponsors = () => {
                   className="relative h-40 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
                 >
                   <div className="absolute inset-0 opacity-10" style={{ background: `linear-gradient(135deg, ${deal.color}, transparent)` }}></div>
-                  <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                    {deal.discount}
-                  </div>
+                  {deal.discount && (
+                    <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                      {deal.discount}
+                    </div>
+                  )}
                   <div className="relative z-10 w-32 h-32 flex items-center justify-center">
                     <img 
                       src={deal.logoUrl} 

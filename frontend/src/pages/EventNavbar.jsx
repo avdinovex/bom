@@ -13,6 +13,8 @@ import Footer from '../pages/Footer';
 import EventBookingForm from '../components/EventBookingForm';
 import { publicEventsAPI } from '../services/api';
 import { toast } from 'react-hot-toast';
+import { X, ExternalLink } from 'lucide-react';
+import api from '../services/api';
 
 const Events = () => {
   const { user } = useAuth();
@@ -22,13 +24,26 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showSponsor1, setShowSponsor1] = useState(true);
+  const [showSponsor2, setShowSponsor2] = useState(true);
+  const [featuredSponsors, setFeaturedSponsors] = useState([]);
 
   // Fallback images
   const fallbackImages = [mbm1, mbm2, mbm3, mbm4, mbm5, mbm6, mbm7];
 
   useEffect(() => {
     fetchEvents();
+    fetchFeaturedSponsors();
   }, []);
+
+  const fetchFeaturedSponsors = async () => {
+    try {
+      const response = await api.get('/sponsors/featured');
+      setFeaturedSponsors(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching featured sponsors:', error);
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -139,6 +154,10 @@ const Events = () => {
 
     setSelectedEvent(event);
     setShowBookingForm(true);
+  };
+
+  const navigateToSponsors = () => {
+    navigate('/sponsors');
   };
 
   const renderContentSection = (section, index) => {
@@ -692,6 +711,75 @@ const Events = () => {
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(255,71,87,0.4);
           }
+
+          @keyframes fadeInScale {
+            from {
+              opacity: 0;
+              transform: scale(0.9);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          .sponsor-card {
+            animation: fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          }
+
+          .sponsor-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.4);
+          }
+
+          .close-btn:hover {
+            background: rgba(255, 71, 87, 0.9) !important;
+            transform: rotate(90deg);
+          }
+
+          @media (min-width: 1024px) {
+            .sponsor-card:hover {
+              transform: translateY(-5px);
+            }
+          }
+
+          @media (max-width: 1024px) and (min-width: 769px) {
+            .sponsor-card {
+              width: 280px !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .sponsor-card {
+              width: 200px !important;
+            }
+            
+            .sponsor-card:first-of-type {
+              top: 80px !important;
+              left: 10px !important;
+            }
+            
+            .sponsor-card:last-of-type {
+              bottom: 80px !important;
+              right: 10px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .sponsor-card {
+              width: 180px !important;
+            }
+            
+            .sponsor-card:first-of-type {
+              top: 70px !important;
+              left: 8px !important;
+            }
+            
+            .sponsor-card:last-of-type {
+              bottom: 70px !important;
+              right: 8px !important;
+            }
+          }
         `}
       </style>
 
@@ -765,6 +853,74 @@ const Events = () => {
           {renderEventContent(events[activeTab])}
         </div>
         <Footer />
+
+        {/* Sponsor Card 1 */}
+        {showSponsor1 && featuredSponsors[0] && (
+          <div style={sponsorCard1Style} className="sponsor-card">
+            <button 
+              onClick={() => setShowSponsor1(false)}
+              style={closeBtnStyle}
+              className="close-btn"
+            >
+              <X size={18} />
+            </button>
+            <div style={sponsorBadgeStyle}>FEATURED</div>
+            <div style={sponsorImgWrapperStyle}>
+              <img 
+                src={featuredSponsors[0].logoUrl} 
+                alt={featuredSponsors[0].name}
+                style={sponsorImgStyle}
+              />
+              <div style={sponsorOverlayStyle}></div>
+            </div>
+            <div style={sponsorInfoStyle}>
+              <h3 style={sponsorTitleStyle}>{featuredSponsors[0].name}</h3>
+              <p style={sponsorDescStyle}>{featuredSponsors[0].tagline}</p>
+              <button 
+                onClick={navigateToSponsors}
+                style={sponsorBtnStyle}
+                className="sponsor-btn"
+              >
+                <span>Discover More</span>
+                <ExternalLink size={16} style={btnIconStyle} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Sponsor Card 2 */}
+        {showSponsor2 && featuredSponsors[1] && (
+          <div style={sponsorCard2Style} className="sponsor-card">
+            <button 
+              onClick={() => setShowSponsor2(false)}
+              style={closeBtnStyle}
+              className="close-btn"
+            >
+              <X size={18} />
+            </button>
+            <div style={{...sponsorBadgeStyle, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>PARTNER</div>
+            <div style={sponsorImgWrapperStyle}>
+              <img 
+                src={featuredSponsors[1].logoUrl} 
+                alt={featuredSponsors[1].name}
+                style={sponsorImgStyle}
+              />
+              <div style={sponsorOverlayStyle}></div>
+            </div>
+            <div style={sponsorInfoStyle}>
+              <h3 style={sponsorTitleStyle}>{featuredSponsors[1].name}</h3>
+              <p style={sponsorDescStyle}>{featuredSponsors[1].tagline}</p>
+              <button 
+                onClick={navigateToSponsors}
+                style={{...sponsorBtnStyle, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
+                className="sponsor-btn"
+              >
+                <span>Explore Deals</span>
+                <ExternalLink size={16} style={btnIconStyle} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Event Booking Form Modal */}
@@ -780,6 +936,132 @@ const Events = () => {
       )}
     </>
   );
+};
+
+// Sponsor card styles
+const sponsorCard1Style = {
+  position: 'fixed',
+  top: '120px',
+  left: '40px',
+  width: '320px',
+  backgroundColor: '#1a1a1a',
+  borderRadius: '16px',
+  overflow: 'hidden',
+  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6)',
+  border: '1px solid #2a2a2a',
+  zIndex: 999,
+  transition: 'all 0.3s ease',
+};
+
+const sponsorCard2Style = {
+  position: 'fixed',
+  bottom: '40px',
+  right: '40px',
+  width: '320px',
+  backgroundColor: '#1a1a1a',
+  borderRadius: '16px',
+  overflow: 'hidden',
+  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6)',
+  border: '1px solid #2a2a2a',
+  zIndex: 999,
+  transition: 'all 0.3s ease',
+};
+
+const closeBtnStyle = {
+  position: 'absolute',
+  top: '12px',
+  right: '12px',
+  background: 'rgba(0, 0, 0, 0.7)',
+  backdropFilter: 'blur(10px)',
+  border: 'none',
+  color: '#fff',
+  width: '32px',
+  height: '32px',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  zIndex: 10,
+  transition: 'all 0.3s ease',
+};
+
+const sponsorBadgeStyle = {
+  position: 'absolute',
+  top: '12px',
+  left: '12px',
+  background: 'linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%)',
+  color: '#fff',
+  padding: '4px 12px',
+  borderRadius: '20px',
+  fontSize: '0.7rem',
+  fontWeight: '700',
+  letterSpacing: '0.5px',
+  zIndex: 10,
+  boxShadow: '0 2px 10px rgba(255, 71, 87, 0.4)',
+};
+
+const sponsorImgWrapperStyle = {
+  position: 'relative',
+  width: '100%',
+  height: '160px',
+  overflow: 'hidden',
+};
+
+const sponsorImgStyle = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+};
+
+const sponsorOverlayStyle = {
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: '60%',
+  background: 'linear-gradient(to top, #1a1a1a 0%, transparent 100%)',
+};
+
+const sponsorInfoStyle = {
+  padding: '20px',
+};
+
+const sponsorTitleStyle = {
+  fontSize: '1.25rem',
+  fontWeight: '700',
+  color: '#fff',
+  marginBottom: '8px',
+  marginTop: 0,
+};
+
+const sponsorDescStyle = {
+  fontSize: '0.85rem',
+  color: '#999',
+  lineHeight: '1.5',
+  marginBottom: '16px',
+};
+
+const sponsorBtnStyle = {
+  width: '100%',
+  background: 'linear-gradient(135deg, #ff4757 0%, #ff6b7a 100%)',
+  color: '#fff',
+  padding: '12px 20px',
+  border: 'none',
+  borderRadius: '10px',
+  fontSize: '0.9rem',
+  fontWeight: '700',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 15px rgba(255, 71, 87, 0.3)',
+};
+
+const btnIconStyle = {
+  fontSize: '1rem',
 };
 
 export default Events;
