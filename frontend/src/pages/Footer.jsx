@@ -54,10 +54,10 @@ const Footer = () => {
         <div style={styles.column}>
           <h3 style={styles.heading}>Get In Touch</h3>
           <p style={styles.text}>
-            <FaMapMarkerAlt style={styles.icon} /> Dahisar, west 400 068
+            <FaMapMarkerAlt style={styles.icon} /> Dahisar(west), Mumbai- 400 068
           </p>
           <p style={styles.text}>
-            <FaClock style={styles.icon} /> Mon - Sat: 7am to 4.30pm <br /> Sunday: Holiday
+            <FaClock style={styles.icon} /> Mon - Sun: 9am to 11pm <br /> 
           </p>
         </div>
 
@@ -76,7 +76,7 @@ const Footer = () => {
 
       <div style={styles.bottom} className="footer-bottom">
         <p style={styles.copyright}>
-           <span style={{ color: "#e63946", fontWeight: "bold" }}>BOM</span>. All Rights Reserved.
+           <span style={{ color: "#e63946", fontWeight: "bold" }}>Brotherhood Of Mumbai</span>. All Rights Reserved.
         </p>
         <div style={styles.navLinks} className="footer-nav">
           <span onClick={() => handleNavClick("/", "home")} style={styles.navLink}>Home</span>
