@@ -90,8 +90,8 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter);
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // Data sanitization
 app.use(mongoSanitize());

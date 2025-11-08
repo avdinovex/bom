@@ -304,7 +304,22 @@ const Events = () => {
                     {event.pricing && !event.pricing.isFree && event.pricing.basePrice > 0 && (
                       <div className="text-white">
                         <p className="text-sm opacity-75">Price:</p>
-                        <p className="font-semibold">₹{event.pricing.basePrice}</p>
+                        <div className="font-semibold">
+                          {/* Early Bird Price */}
+                          {event.pricing.earlyBirdPrice && 
+                           event.pricing.earlyBirdDeadline && 
+                           new Date(event.pricing.earlyBirdDeadline) > new Date() ? (
+                            <div>
+                              <span className="text-green-400 text-lg">₹{event.pricing.earlyBirdPrice}</span>
+                              <span className="text-xs ml-2 line-through opacity-60">₹{event.pricing.basePrice}</span>
+                              <div className="text-xs text-green-400 mt-1">
+                                🎉 Early Bird (Until {new Date(event.pricing.earlyBirdDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                              </div>
+                            </div>
+                          ) : (
+                            <span>₹{event.pricing.basePrice}</span>
+                          )}
+                        </div>
                       </div>
                     )}
                     {event.capacity && event.capacity.maxParticipants > 0 && (
