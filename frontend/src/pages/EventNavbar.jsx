@@ -1255,6 +1255,10 @@ const Events = () => {
                                   section.subheading.trim() !== '' && 
                                   section.subheading.trim().toUpperCase() !== 'TEST';
     
+    // Check if section title should be displayed
+    const shouldShowSectionTitle = section.sectionTitle && 
+                                    section.sectionTitle.trim() !== '';
+    
     return (
       <div key={section._id || index} style={currentSectionStyle} className="event-section">
         <div style={imageContainerStyle} className="event-image-container">
@@ -1266,8 +1270,13 @@ const Events = () => {
           />
         </div>
         <div style={textContainerStyle}>
-          {shouldShowSubheading && (
+          {shouldShowSectionTitle && (
             <p style={subheadingStyle} className="event-subheading">
+              {section.sectionTitle}
+            </p>
+          )}
+          {shouldShowSubheading && (
+            <p style={{...subheadingStyle, fontSize: '1rem', marginBottom: '15px'}} className="event-subheading-alt">
               {section.subheading}
             </p>
           )}

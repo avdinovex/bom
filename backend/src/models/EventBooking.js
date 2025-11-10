@@ -54,6 +54,11 @@ const eventBookingSchema = new Schema({
         type: String,
         required: true,
         trim: true
+      },
+      foodPreference: {
+        type: String,
+        required: true,
+        enum: ['Veg', 'Non-Veg']
       }
     }]
   },
@@ -94,6 +99,11 @@ const eventBookingSchema = new Schema({
       type: String,
       required: [true, 'Blood group is required'],
       enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+    },
+    foodPreference: {
+      type: String,
+      required: [true, 'Food preference is required'],
+      enum: ['Veg', 'Non-Veg']
     }
   },
 

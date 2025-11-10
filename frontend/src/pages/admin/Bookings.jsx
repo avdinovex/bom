@@ -506,6 +506,13 @@ const Bookings = () => {
                             {member.motorcycleNumber || 'N/A'}
                           </span>
                         </div>
+                        <div>
+                          <span className="text-gray-600">Food Preference:</span>
+                          <span className={`ml-2 font-semibold ${member.foodPreference === 'Veg' ? 'text-green-600' : 'text-orange-600'}`}>
+                            {member.foodPreference === 'Veg' ? '🌱 Veg' : 
+                             member.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -546,6 +553,13 @@ const Bookings = () => {
                 <div>
                   <span className="text-gray-600">Blood Group:</span>
                   <span className="ml-2 font-medium">{selectedBooking.personalInfo?.bloodGroup || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Food Preference:</span>
+                  <span className={`ml-2 font-semibold ${selectedBooking.personalInfo?.foodPreference === 'Veg' ? 'text-green-600' : 'text-orange-600'}`}>
+                    {selectedBooking.personalInfo?.foodPreference === 'Veg' ? '🌱 Veg' : 
+                     selectedBooking.personalInfo?.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
+                  </span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-gray-600">Address:</span>

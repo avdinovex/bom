@@ -126,10 +126,14 @@ export default function RideCountdown() {
       <div style={styles.banner} className="countdown-banner">
         <div style={styles.redSection}>
           <div style={styles.textContainer}>
-            <h2 style={styles.title}>NEXT RIDE START AT {rideDateParts.monthDay}</h2>
-            <h2 style={styles.title}>{rideDateParts.year} - {rideDateParts.time}</h2>
-            {nextRide.venue && (
-              <p style={styles.venue}> {nextRide.venue}</p>
+            {nextRide.title && (
+              <h2 style={styles.title}>{nextRide.title.toUpperCase()}</h2>
+            )}
+            <h3 style={styles.dateTime}>{rideDateParts.monthDay} {rideDateParts.year} - {rideDateParts.time}</h3>
+            {nextRide.route?.startLocation && nextRide.route?.endLocation ? (
+              <p style={styles.route}>{nextRide.route.startLocation} → {nextRide.route.endLocation}</p>
+            ) : nextRide.venue && (
+              <p style={styles.route}>{nextRide.venue}</p>
             )}
           </div>
           <div style={styles.slant}></div>
@@ -200,9 +204,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     backgroundColor: '#d9434d',
-    padding: '30px 40px',
-    paddingRight: '60px',
-    minWidth: '400px'
+    padding: '20px 35px',
+    paddingRight: '55px',
+    minWidth: '450px'
   },
   textContainer: {
     position: 'relative',
@@ -210,10 +214,28 @@ const styles = {
   },
   title: {
     color: 'white',
-    fontSize: 'clamp(16px, 3vw, 24px)',
+    fontSize: 'clamp(14px, 2.8vw, 20px)',
     fontWeight: 'bold',
-    margin: '5px 0',
-    letterSpacing: '1px'
+    margin: '0 0 3px 0',
+    letterSpacing: '0.8px',
+    lineHeight: '1.3'
+  },
+  dateTime: {
+    color: 'white',
+    fontSize: 'clamp(13px, 2.3vw, 17px)',
+    fontWeight: '600',
+    margin: '3px 0',
+    letterSpacing: '0.5px',
+    opacity: 0.95
+  },
+  route: {
+    color: 'white',
+    fontSize: 'clamp(12px, 2vw, 15px)',
+    fontWeight: 'normal',
+    margin: '3px 0 0 0',
+    letterSpacing: '0.5px',
+    opacity: 0.9,
+    lineHeight: '1.3'
   },
   slant: {
     position: 'absolute',
@@ -281,14 +303,7 @@ const styles = {
   arrows: {
     fontSize: '20px'
   },
-  venue: {
-    color: 'white',
-    fontSize: 'clamp(12px, 2vw, 16px)',
-    fontWeight: 'normal',
-    margin: '5px 0 0 0',
-    letterSpacing: '0.5px',
-    opacity: 0.9
-  },
+
   loadingContainer: {
     display: 'flex',
     flexDirection: 'column',

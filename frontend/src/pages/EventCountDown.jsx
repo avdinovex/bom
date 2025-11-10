@@ -164,10 +164,12 @@ export default function EventCountdown() {
         <div style={styles.redSection}>
           <div style={styles.slant}></div>
           <div style={styles.textContainer}>
-            <h2 style={styles.title}>NEXT EVENT START AT {eventDateParts.monthDay}</h2>
-            <h2 style={styles.title}>{eventDateParts.year} - {eventDateParts.time}</h2>
+            {nextEvent.title && (
+              <h2 style={styles.title}>{nextEvent.title.toUpperCase()}</h2>
+            )}
+            <h3 style={styles.dateTime}>{eventDateParts.monthDay} {eventDateParts.year} - {eventDateParts.time}</h3>
             {nextEvent.location && (
-              <p style={styles.venue}> {nextEvent.location}</p>
+              <p style={styles.route}>{nextEvent.location}</p>
             )}
           </div>
         </div>
@@ -202,9 +204,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     backgroundColor: '#d9434d',
-    padding: '30px 40px',
-    paddingLeft: '60px',
-    minWidth: '400px'
+    padding: '20px 35px',
+    paddingLeft: '55px',
+    minWidth: '450px'
   },
   textContainer: {
     position: 'relative',
@@ -212,10 +214,28 @@ const styles = {
   },
   title: {
     color: 'white',
-    fontSize: 'clamp(16px, 3vw, 24px)',
+    fontSize: 'clamp(14px, 2.8vw, 20px)',
     fontWeight: 'bold',
-    margin: '5px 0',
-    letterSpacing: '1px'
+    margin: '0 0 3px 0',
+    letterSpacing: '0.8px',
+    lineHeight: '1.3'
+  },
+  dateTime: {
+    color: 'white',
+    fontSize: 'clamp(13px, 2.3vw, 17px)',
+    fontWeight: '600',
+    margin: '3px 0',
+    letterSpacing: '0.5px',
+    opacity: 0.95
+  },
+  route: {
+    color: 'white',
+    fontSize: 'clamp(12px, 2vw, 15px)',
+    fontWeight: 'normal',
+    margin: '3px 0 0 0',
+    letterSpacing: '0.5px',
+    opacity: 0.9,
+    lineHeight: '1.3'
   },
   slant: {
     position: 'absolute',
@@ -280,14 +300,7 @@ const styles = {
     flex: '0 0 auto',
     whiteSpace: 'nowrap'
   },
-  venue: {
-    color: 'white',
-    fontSize: 'clamp(12px, 2vw, 16px)',
-    fontWeight: 'normal',
-    margin: '5px 0 0 0',
-    letterSpacing: '0.5px',
-    opacity: 0.9
-  },
+
   loadingContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -349,18 +362,21 @@ if (typeof document !== "undefined") {
     @media (max-width: 1200px) {
       .event-countdown-container {
         justify-content: center !important;
-        flex-direction: column-reverse !important;
+        flex-direction: column !important;
       }
       .event-countdown-banner {
         flex: 1 1 100% !important;
         justify-content: center;
+        order: 1;
       }
       .event-timer-section {
         flex: 1 1 100% !important;
+        order: 2;
       }
       .event-register-button {
         flex: 1 1 100% !important;
         justify-content: center !important;
+        order: 3;
       }
     }
     

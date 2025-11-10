@@ -20,6 +20,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     gender: '',
     dateOfBirth: '',
     bloodGroup: '',
+    foodPreference: '',
     motorcycleModelName: '',
     motorcycleNumber: '',
     emergencyContactPersonName: '',
@@ -57,8 +58,8 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       setFormData(prev => ({
         ...prev,
         groupMembers: [
-          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '' },
-          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '' }
+          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' },
+          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' }
         ]
       }));
     }
@@ -80,7 +81,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     }
     setFormData(prev => ({
       ...prev,
-      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '' }]
+      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' }]
     }));
   };
 
@@ -155,7 +156,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
   const validateStep1 = () => {
     const requiredFields = [
       'email', 'fullName', 'address', 'contactNumber', 'gender', 
-      'dateOfBirth', 'bloodGroup', 'motorcycleModelName', 'motorcycleNumber',
+      'dateOfBirth', 'bloodGroup', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
       'emergencyContactPersonName', 'emergencyContactNumber', 'medicalHistory'
     ];
     
@@ -179,7 +180,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
 
       for (let i = 0; i < formData.groupMembers.length; i++) {
         const member = formData.groupMembers[i];
-        if (!member.name || !member.contactNumber || !member.motorcycleNumber || !member.motorcycleModel) {
+        if (!member.name || !member.contactNumber || !member.motorcycleNumber || !member.motorcycleModel || !member.foodPreference) {
           toast.error(`Please fill all details for member ${i + 1}`);
           return false;
         }
@@ -246,7 +247,8 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
           contactNumber: formData.contactNumber,
           gender: formData.gender,
           dateOfBirth: formData.dateOfBirth,
-          bloodGroup: formData.bloodGroup
+          bloodGroup: formData.bloodGroup,
+          foodPreference: formData.foodPreference
         },
         motorcycleInfo: {
           modelName: formData.motorcycleModelName,
@@ -469,6 +471,52 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
                 placeholder="Royal Enfield Classic 350"
               />
             </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Food Preference *</label>
+              <div style={styles.radioGroup}>
+                <label 
+                  className="radio-label-item"
+                  style={{
+                    ...styles.radioLabel,
+                    ...(member.foodPreference === 'Veg' ? {
+                      borderColor: '#ff4757',
+                      backgroundColor: 'rgba(255, 71, 87, 0.1)'
+                    } : {})
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`foodPreference-${index}`}
+                    value="Veg"
+                    checked={member.foodPreference === 'Veg'}
+                    onChange={(e) => handleGroupMemberChange(index, 'foodPreference', e.target.value)}
+                    style={styles.radio}
+                  />
+                  <span style={styles.radioText}>🌱 Veg</span>
+                </label>
+                <label 
+                  className="radio-label-item"
+                  style={{
+                    ...styles.radioLabel,
+                    ...(member.foodPreference === 'Non-Veg' ? {
+                      borderColor: '#ff4757',
+                      backgroundColor: 'rgba(255, 71, 87, 0.1)'
+                    } : {})
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`foodPreference-${index}`}
+                    value="Non-Veg"
+                    checked={member.foodPreference === 'Non-Veg'}
+                    onChange={(e) => handleGroupMemberChange(index, 'foodPreference', e.target.value)}
+                    style={styles.radio}
+                  />
+                  <span style={styles.radioText}>🍖 Non-Veg</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       ))}
@@ -566,6 +614,52 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
               <option key={group} value={group}>{group}</option>
             ))}
           </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Food Preference <span style={styles.required}>*</span></label>
+          <div style={styles.radioGroup}>
+            <label 
+              className="radio-label-item"
+              style={{
+                ...styles.radioLabel,
+                ...(formData.foodPreference === 'Veg' ? {
+                  borderColor: '#ff4757',
+                  backgroundColor: 'rgba(255, 71, 87, 0.1)'
+                } : {})
+              }}
+            >
+              <input
+                type="radio"
+                name="foodPreference"
+                value="Veg"
+                checked={formData.foodPreference === 'Veg'}
+                onChange={handleInputChange}
+                style={styles.radio}
+              />
+              <span style={styles.radioText}>🌱 Veg</span>
+            </label>
+            <label 
+              className="radio-label-item"
+              style={{
+                ...styles.radioLabel,
+                ...(formData.foodPreference === 'Non-Veg' ? {
+                  borderColor: '#ff4757',
+                  backgroundColor: 'rgba(255, 71, 87, 0.1)'
+                } : {})
+              }}
+            >
+              <input
+                type="radio"
+                name="foodPreference"
+                value="Non-Veg"
+                checked={formData.foodPreference === 'Non-Veg'}
+                onChange={handleInputChange}
+                style={styles.radio}
+              />
+              <span style={styles.radioText}>🍖 Non-Veg</span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -1128,6 +1222,38 @@ const styles = {
     height: '18px',
     cursor: 'pointer'
   },
+  radioGroup: {
+    display: 'flex',
+    gap: '15px',
+    flexWrap: 'wrap'
+  },
+  radioLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    cursor: 'pointer',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    border: '2px solid #333',
+    backgroundColor: '#1a1a1a',
+    transition: 'all 0.3s ease',
+    flex: '1',
+    minWidth: '140px',
+    justifyContent: 'center'
+  },
+  radio: {
+    width: '20px',
+    height: '20px',
+    cursor: 'pointer',
+    accentColor: '#ff4757',
+    margin: 0
+  },
+  radioText: {
+    fontSize: '1rem',
+    color: '#fff',
+    fontWeight: '600',
+    letterSpacing: '0.5px'
+  },
   summaryCard: {
     backgroundColor: '#111',
     padding: '25px',
@@ -1309,5 +1435,25 @@ const styles = {
     marginLeft: 'auto'
   }
 };
+
+// Add CSS for radio button hover effects
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.innerHTML = `
+    input[type="radio"]:checked + .radio-label-container {
+      border-color: #ff4757 !important;
+      background-color: rgba(255, 71, 87, 0.1) !important;
+    }
+    .radio-label-item:hover {
+      border-color: #ff4757 !important;
+      background-color: rgba(255, 71, 87, 0.05) !important;
+      transform: translateY(-2px);
+    }
+  `;
+  if (!document.querySelector('#booking-form-radio-styles')) {
+    styleSheet.id = 'booking-form-radio-styles';
+    document.head.appendChild(styleSheet);
+  }
+}
 
 export default BookingForm;

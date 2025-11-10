@@ -135,21 +135,22 @@ const Sponsors = () => {
                 key={deal._id}
                 className="bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-red-500 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2"
               >
+                {/* Discount Banner at Top */}
+                {deal.discount && (
+                  <div className="relative bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 text-center">
+                    <h4 className="text-lg font-bold uppercase tracking-wide">{deal.discount}</h4>
+                  </div>
+                )}
+
                 {/* Card Header with Logo */}
                 <div 
-                  className="relative h-40 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+                  className="relative h-48 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900"
                 >
-                  <div className="absolute inset-0 opacity-10" style={{ background: `linear-gradient(135deg, ${deal.color}, transparent)` }}></div>
-                  {deal.discount && (
-                    <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                      {deal.discount}
-                    </div>
-                  )}
-                  <div className="relative z-10 w-32 h-32 flex items-center justify-center">
+                  <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
                     <img 
                       src={deal.logoUrl} 
                       alt={deal.name} 
-                      className="max-w-full max-h-full object-contain rounded-lg" 
+                      className="w-full h-full object-cover rounded-lg" 
                     />
                   </div>
                 </div>
@@ -157,23 +158,34 @@ const Sponsors = () => {
                 {/* Card Content */}
                 <div className="p-6">
                   <h3 className="text-2xl font-bold mb-2 text-white">{deal.name}</h3>
-                  <p className="text-red-500 font-semibold mb-4 text-sm">{deal.tagline}</p>
+                  <p className="text-red-400 font-semibold mb-4 text-sm flex items-center gap-1">
+                    <FiCheckCircle className="text-red-500" />
+                    {deal.tagline}
+                  </p>
                   <p className="text-gray-400 text-sm leading-relaxed mb-6">{deal.description}</p>
 
                   {/* Benefits */}
-                  <div className="space-y-2 mb-6">
-                    {deal.benefits.map((benefit, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <FiCheckCircle className="text-red-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-300">{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {deal.benefits && deal.benefits.length > 0 && (
+                    <div className="space-y-2 mb-6">
+                      {deal.benefits.map((benefit, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <FiCheckCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-300">{benefit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Validity */}
                   <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-800">
                     <span className="text-xs text-gray-500">Valid until</span>
-                    <span className="text-sm font-semibold text-red-500">{deal.validUntil}</span>
+                    <span className="text-sm font-semibold text-red-400">
+                      {new Date(deal.validUntil).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: '2-digit', 
+                        day: '2-digit' 
+                      })}
+                    </span>
                   </div>
 
                   {/* CTA Button */}

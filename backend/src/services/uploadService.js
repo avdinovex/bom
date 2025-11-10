@@ -35,12 +35,13 @@ export const uploadToCloudinary = async (buffer, options = {}) => {
           folder: options.folder || 'ride-booking',
           // Remove automatic transformations to preserve original image
           transformation: options.transformation || [],
-          // Preserve original format and quality
-          quality: options.quality || 'auto',
+          // Preserve original quality - no compression
+          quality: options.quality || 100,
+          // Keep original format
           fetch_format: options.fetch_format || 'auto',
-          // Ensure no cropping occurs
+          // No cropping - preserve full image
           crop: options.crop || 'limit',
-          // Preserve aspect ratio
+          // Preserve aspect ratio and transparency
           flags: options.flags || 'preserve_transparency',
           ...options
         },
@@ -66,7 +67,7 @@ export const uploadRemoteToCloudinary = async (url, options = {}) => {
     const result = await cloudinary.uploader.upload(url, {
       resource_type: 'image',
       folder: options.folder || 'ride-booking',
-      quality: options.quality || 'auto',
+      quality: options.quality || 100,
       fetch_format: options.fetch_format || 'auto',
       crop: options.crop || 'limit',
       flags: options.flags || 'preserve_transparency',
@@ -122,9 +123,9 @@ export const uploadSingle = (fieldName) => {
         if (req.file) {
           const result = await uploadToCloudinary(req.file.buffer, {
             folder: `ride-booking/${fieldName}`,
-            // Preserve original image without any cropping
+            // Preserve original image without any cropping or compression
             crop: 'limit',
-            quality: 'auto',
+            quality: 100,
             flags: 'preserve_transparency'
           });
           req.file.cloudinaryUrl = result.secure_url;
@@ -152,9 +153,9 @@ export const uploadMultiple = (fieldName, maxCount = 5) => {
           const uploadPromises = req.files.map(file => 
             uploadToCloudinary(file.buffer, {
               folder: `ride-booking/${fieldName}`,
-              // Preserve original image without any cropping
+              // Preserve original image without any cropping or compression
               crop: 'limit',
-              quality: 'auto',
+              quality: 100,
               flags: 'preserve_transparency'
             })
           );
@@ -189,7 +190,7 @@ export const uploadFields = (fields) => {
             uploadToCloudinary(file.buffer, {
               folder: `ride-booking/${name}`,
               crop: 'limit',
-              quality: 'auto',
+              quality: 100,
               flags: 'preserve_transparency'
             }).then(result => ({ url: result.secure_url, publicId: result.public_id }))
           ));
