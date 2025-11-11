@@ -58,7 +58,8 @@ const Login = () => {
         toast.success('Login successful!');
         // Redirect to the page user came from, or default to upcoming-rides
         const from = location.state?.from?.pathname || '/upcoming-rides';
-        navigate(from, { replace: true });
+        // navigate(from, { replace: true });
+        navigate('/events')
       } else {
         // Show specific error message from backend
         const errorMessage = result.error || 'Login failed';

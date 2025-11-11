@@ -185,7 +185,8 @@ export const schemas = {
       contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
-      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required()
+      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required(),
+      foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
@@ -208,8 +209,9 @@ export const schemas = {
         Joi.object({
           name: Joi.string().trim().min(2).max(100).required(),
           contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
-          motorcycleNumber: Joi.string().trim().min(4).max(20).required(),
-          motorcycleModel: Joi.string().trim().min(2).max(100).required()
+          emergencyContact: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
+          address: Joi.string().trim().min(3).max(500).required(),
+          foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
         })
       ).min(2).required()
     }).when('bookingType', {
@@ -231,7 +233,8 @@ export const schemas = {
       contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
-      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required()
+      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required(),
+      foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
@@ -262,7 +265,8 @@ export const schemas = {
       contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
-      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required()
+      bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required(),
+      foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
@@ -285,8 +289,9 @@ export const schemas = {
         Joi.object({
           name: Joi.string().trim().min(2).max(100).required(),
           contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
-          motorcycleNumber: Joi.string().trim().min(4).max(20).required(),
-          motorcycleModel: Joi.string().trim().min(2).max(100).required()
+          emergencyContact: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
+          address: Joi.string().trim().min(3).max(500).required(),
+          foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
         })
       ).min(2).required()
     }).when('bookingType', {
