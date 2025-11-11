@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { X, ExternalLink } from 'lucide-react';
 import api from '../services/api';
@@ -16,6 +16,7 @@ const Login = () => {
   const [featuredSponsors, setFeaturedSponsors] = useState([]);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -55,7 +56,9 @@ const Login = () => {
 
       if (result.success) {
         toast.success('Login successful!');
-        navigate('/upcoming-rides');
+        // Redirect to the page user came from, or default to upcoming-rides
+        const from = location.state?.from?.pathname || '/upcoming-rides';
+        navigate(from, { replace: true });
       } else {
         // Show specific error message from backend
         const errorMessage = result.error || 'Login failed';

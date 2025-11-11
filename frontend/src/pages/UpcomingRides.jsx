@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from "../components/Navbar.jsx";
 import Footer from "./Footer.jsx";
@@ -11,6 +11,7 @@ import openRide from "../assets/openride.jpg";
 const UpcomingRides = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRide, setSelectedRide] = useState(null);
@@ -43,7 +44,7 @@ const UpcomingRides = () => {
     // Check if user is authenticated before opening the form
     if (!user) {
       toast.error('Please sign in to book a ride');
-      navigate('/login');
+      navigate('/login', { state: { from: location } });
       return;
     }
 

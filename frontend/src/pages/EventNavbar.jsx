@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import mbm1 from '../assets/mbm1.jpg'
 import mbm2 from '../assets/mbm2.jpg'
@@ -19,6 +19,7 @@ import api from '../services/api';
 const Events = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [events, setEvents] = useState({ upcoming: [], past: [] });
   const [loading, setLoading] = useState(true);
@@ -148,7 +149,7 @@ const Events = () => {
     // Check if user is authenticated before opening the form
     if (!user) {
       toast.error('Please sign in to book this event');
-      navigate('/login');
+      navigate('/login', { state: { from: location } });
       return;
     }
 

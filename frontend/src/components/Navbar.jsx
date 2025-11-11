@@ -142,7 +142,7 @@ const Navbar = () => {
       logout();
       navigate('/');
     } else {
-      navigate('/login');
+      navigate('/login', { state: { from: location } });
     }
     setMobileMenuOpen(false);
   };
