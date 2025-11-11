@@ -442,7 +442,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
             </div>
             
             <div style={styles.formGroup}>
-              <label style={styles.label}>Contact *</label>
+              <label style={styles.label}>Contact (Whatsapp No.)*</label>
               <input
                 type="tel"
                 value={member.contactNumber}
