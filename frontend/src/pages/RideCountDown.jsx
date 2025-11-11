@@ -246,10 +246,10 @@ const styles = {
     backgroundColor: '#d9434d',
     transform: 'skewX(-15deg)',
     zIndex: 1
-  },
+  },  
   blackBlock: {
     width: '80px',
-    height: '100%',
+    height: '90%',
     backgroundColor: '#2b2b2b',
     transform: 'skewX(-15deg)',
     marginLeft: '-10px'

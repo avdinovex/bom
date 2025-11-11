@@ -68,7 +68,7 @@ const Footer = () => {
           </p>
 
           <div style={styles.contactBox}>
-            <p style={styles.phone}>9821945661</p>
+            <p style={styles.phone}>9869835356</p>
             <p style={styles.email}> brotherhoodofmumbai@gmail.com </p>
           </div>
         </div>
