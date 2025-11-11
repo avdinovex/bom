@@ -44,13 +44,12 @@ const eventBookingSchema = new Schema({
         required: true,
         trim: true
       },
-      motorcycleNumber: {
+      emergencyContact: {
         type: String,
         required: true,
-        trim: true,
-        uppercase: true
+        trim: true
       },
-      motorcycleModel: {
+      address: {
         type: String,
         required: true,
         trim: true

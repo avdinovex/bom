@@ -289,6 +289,9 @@ const Events = () => {
         }
       });
       
+      // Debug: Log the details field to verify it's being sent
+      console.log('Submitting event with details:', formData.details);
+      
       // Only append sections WITHOUT image files to the main event
       // Sections WITH image files will be added separately via the sections endpoint
       if (sectionsWithoutImages.length > 0) {

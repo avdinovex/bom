@@ -58,8 +58,8 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       setFormData(prev => ({
         ...prev,
         groupMembers: [
-          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' },
-          { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' }
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' },
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }
         ]
       }));
     }
@@ -81,7 +81,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     }
     setFormData(prev => ({
       ...prev,
-      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', motorcycleNumber: '', motorcycleModel: '', foodPreference: '' }]
+      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }]
     }));
   };
 
@@ -180,7 +180,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
 
       for (let i = 0; i < formData.groupMembers.length; i++) {
         const member = formData.groupMembers[i];
-        if (!member.name || !member.contactNumber || !member.motorcycleNumber || !member.motorcycleModel || !member.foodPreference) {
+        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference) {
           toast.error(`Please fill all details for member ${i + 1}`);
           return false;
         }
@@ -440,7 +440,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             </div>
             
             <div style={styles.formGroup}>
-              <label style={styles.label}>Contact *</label>
+              <label style={styles.label}>Contact (WhatsApp No) *</label>
               <input
                 type="tel"
                 value={member.contactNumber}
@@ -451,24 +451,23 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             </div>
             
             <div style={styles.formGroup}>
-              <label style={styles.label}>Bike Number *</label>
+              <label style={styles.label}>Emergency Contact *</label>
               <input
-                type="text"
-                value={member.motorcycleNumber}
-                onChange={(e) => handleGroupMemberChange(index, 'motorcycleNumber', e.target.value.toUpperCase())}
+                type="tel"
+                value={member.emergencyContact}
+                onChange={(e) => handleGroupMemberChange(index, 'emergencyContact', e.target.value)}
                 style={styles.input}
-                placeholder="MH01AB1234"
+                placeholder="Emergency contact number"
               />
             </div>
             
             <div style={styles.formGroup}>
-              <label style={styles.label}>Bike Model *</label>
-              <input
-                type="text"
-                value={member.motorcycleModel}
-                onChange={(e) => handleGroupMemberChange(index, 'motorcycleModel', e.target.value)}
-                style={styles.input}
-                placeholder="Royal Enfield Classic 350"
+              <label style={styles.label}>Address *</label>
+              <textarea
+                value={member.address}
+                onChange={(e) => handleGroupMemberChange(index, 'address', e.target.value)}
+                style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
+                placeholder="Borivali, Mumbai"
               />
             </div>
 
@@ -565,14 +564,14 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Contact Number <span style={styles.required}>*</span></label>
+          <label style={styles.label}>Contact (WhatsApp No) * <span style={styles.required}>*</span></label>
           <input
             type="tel"
             name="contactNumber"
             value={formData.contactNumber}
             onChange={handleInputChange}
             style={styles.input}
-            placeholder="+91 98765 43210"
+            placeholder="+91 98698 35356"
           />
         </div>
 
@@ -732,7 +731,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             value={formData.emergencyContactNumber}
             onChange={handleInputChange}
             style={styles.input}
-            placeholder="+91 98765 43210"
+            placeholder="+91 98698 35356"
           />
         </div>
       </div>

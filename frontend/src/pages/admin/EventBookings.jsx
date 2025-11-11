@@ -611,13 +611,13 @@ const EventBookings = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm ml-13">
                         <div>
-                          <span className="text-gray-600">Bike Model:</span>
-                          <span className="ml-2 font-medium">{member.motorcycleModel || 'N/A'}</span>
+                          <span className="text-gray-600">Emergency Contact:</span>
+                          <span className="ml-2 font-medium">{member.emergencyContact || 'N/A'}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Bike Number:</span>
-                          <span className="ml-2 font-mono bg-yellow-100 px-2 py-1 rounded">
-                            {member.motorcycleNumber || 'N/A'}
+                          <span className="text-gray-600">Address:</span>
+                          <span className="ml-2 font-medium">
+                            {member.address || 'N/A'}
                           </span>
                         </div>
                         <div>
