@@ -224,14 +224,30 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
 
   const calculateTotal = () => {
     const groupSize = bookingType === 'group' ? formData.groupMembers.length : 1;
-    // Use pricing.basePrice first, fall back to price for backward compatibility
-    const pricePerPerson = event.pricing?.basePrice || event.price || 0;
+    
+    // Calculate price with early bird pricing if applicable
+    let pricePerPerson = event.price || 0; // Default to legacy price
+    
+    if (event.pricing && !event.pricing.isFree) {
+      const now = new Date();
+      const earlyBirdDeadline = event.pricing.earlyBirdDeadline;
+      
+      // Use early bird price if deadline hasn't passed
+      if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
+        pricePerPerson = event.pricing.earlyBirdPrice;
+        console.log('✅ Using early bird price:', pricePerPerson);
+      } else if (event.pricing.basePrice) {
+        pricePerPerson = event.pricing.basePrice;
+      }
+    }
+    
     const subtotal = pricePerPerson * groupSize;
     const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
     return {
       subtotal,
       discount,
-      total: subtotal - discount
+      total: subtotal - discount,
+      pricePerPerson // Return for display purposes
     };
   };
 
@@ -777,7 +793,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   );
 
   const renderStep2 = () => {
-    const { subtotal, discount, total } = calculateTotal();
+    const { subtotal, discount, total, pricePerPerson } = calculateTotal();
 
     return (
       <div style={styles.stepContent}>
@@ -793,7 +809,18 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           
           <div style={styles.summaryRow}>
             <span style={styles.summaryLabel}>Price per person:</span>
-            <span style={styles.summaryValue}>₹{event.pricing?.basePrice || event.price || 0}</span>
+            <span style={styles.summaryValue}>
+              ₹{pricePerPerson}
+              {/* Show early bird indicator if applicable */}
+              {event.pricing?.earlyBirdPrice && 
+               event.pricing?.earlyBirdDeadline && 
+               new Date() <= new Date(event.pricing.earlyBirdDeadline) && 
+               pricePerPerson === event.pricing.earlyBirdPrice && (
+                <span style={{marginLeft: '8px', fontSize: '0.75rem', color: '#4CAF50', fontWeight: '600'}}>
+                  🎉 Early Bird
+                </span>
+              )}
+            </span>
           </div>
 
           {bookingType === 'group' && (

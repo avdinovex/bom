@@ -293,11 +293,12 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
         if (oldStatus !== 'cancelled' && !booking.cancelledAt) {
           booking.cancelledAt = new Date();
         }
-        // Decrement participant count if moving from paid/created to cancelled
-        if (['paid', 'created'].includes(oldStatus)) {
+        // Decrement participant count ONLY if booking was paid (participants were counted)
+        if (oldStatus === 'paid') {
+          const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: -1 } },
+            { $inc: { currentParticipants: -decrement } },
             { session }
           );
         }
@@ -312,26 +313,39 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
         if (refundReason) {
           booking.refundReason = refundReason;
         }
-        // Decrement participant count if moving from paid/created to refunded
-        if (['paid', 'created'].includes(oldStatus)) {
+        // Decrement participant count ONLY if booking was paid (participants were counted)
+        if (oldStatus === 'paid') {
+          const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: -1 } },
+            { $inc: { currentParticipants: -decrement } },
             { session }
           );
         }
         break;
       case 'created':
+        // Created status means payment pending - don't count participants yet
+        // If moving from paid to created, decrement participants
+        if (oldStatus === 'paid') {
+          const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
+          await Event.findByIdAndUpdate(
+            booking.event._id,
+            { $inc: { currentParticipants: -decrement } },
+            { session }
+          );
+        }
+        break;
       case 'paid':
-        // Increment participant count if moving from cancelled/failed to created/paid
-        if (['cancelled', 'failed', 'refunded'].includes(oldStatus)) {
+        // Increment participant count if moving TO paid from other status
+        if (oldStatus !== 'paid') {
+          const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           // Check if event is not full
-          if (booking.event.currentParticipants >= booking.event.maxParticipants) {
+          if (booking.event.currentParticipants + increment > booking.event.maxParticipants) {
             throw new ApiError(400, 'Cannot reactivate booking: Event is full');
           }
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: 1 } },
+            { $inc: { currentParticipants: increment } },
             { session }
           );
         }
@@ -373,11 +387,12 @@ router.delete('/:id', asyncHandler(async (req, res) => {
       throw new ApiError(404, 'Event booking not found');
     }
 
-    // Decrement participant count if booking was active
-    if (['created', 'paid'].includes(booking.status)) {
+    // Decrement participant count ONLY if booking was paid (participants were actually counted)
+    if (booking.status === 'paid') {
+      const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
       await Event.findByIdAndUpdate(
         booking.event._id,
-        { $inc: { currentParticipants: -1 } },
+        { $inc: { currentParticipants: -decrement } },
         { session }
       );
     }

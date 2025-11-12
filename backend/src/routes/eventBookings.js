@@ -48,9 +48,26 @@ router.post('/validate-coupon', authenticate, validate(schemas.validateEventCoup
     throw new ApiError(404, 'Event not found');
   }
 
-  // Calculate amount based on booking type
+  // Calculate amount based on booking type - Use early bird pricing if available
   const memberCount = bookingType === 'group' ? (groupSize || 1) : 1;
-  const totalAmount = event.price * memberCount;
+  
+  let basePrice = event.price; // Default to legacy price field
+  
+  // Check if event has pricing structure with early bird
+  if (event.pricing && !event.pricing.isFree) {
+    const now = new Date();
+    const earlyBirdDeadline = event.pricing.earlyBirdDeadline;
+    
+    // Use early bird price if deadline hasn't passed
+    if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
+      basePrice = event.pricing.earlyBirdPrice;
+      logger.info(`Using early bird price for coupon validation: ${basePrice}`);
+    } else if (event.pricing.basePrice) {
+      basePrice = event.pricing.basePrice;
+    }
+  }
+  
+  const totalAmount = basePrice * memberCount;
 
   // Validate coupon with group size
   const validation = coupon.validateCoupon(req.user._id, bookingType, totalAmount, memberCount);
@@ -179,8 +196,24 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
       }
     }
 
-    // Calculate amount
-    let originalAmount = event.price * requiredCapacity;
+    // Calculate amount - Use early bird pricing if available and valid
+    let basePrice = event.price; // Default to legacy price field
+    
+    // Check if event has pricing structure with early bird
+    if (event.pricing && !event.pricing.isFree) {
+      const now = new Date();
+      const earlyBirdDeadline = event.pricing.earlyBirdDeadline;
+      
+      // Use early bird price if deadline hasn't passed
+      if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
+        basePrice = event.pricing.earlyBirdPrice;
+        logger.info(`Using early bird price: ${basePrice} for event ${event.title}`);
+      } else if (event.pricing.basePrice) {
+        basePrice = event.pricing.basePrice;
+      }
+    }
+    
+    let originalAmount = basePrice * requiredCapacity;
     let finalAmount = originalAmount;
     let discountAmount = 0;
     let appliedCoupon = null;
@@ -365,8 +398,13 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     if (event) {
       // For group bookings, increment by group size
       const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
-      event.currentParticipants += increment;
-      await event.save({ session });
+      
+      // Use $inc to safely increment and ensure it doesn't go negative
+      await Event.findByIdAndUpdate(
+        booking.event,
+        { $inc: { currentParticipants: increment } },
+        { session }
+      );
     }
 
     await session.commitTransaction();
