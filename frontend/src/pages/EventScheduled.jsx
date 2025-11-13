@@ -36,17 +36,17 @@ export default function EventSchedule() {
               <span style={styles.eventText}>EVENT</span>
               <span style={styles.chevronRight}>»</span>
             </div>
-            <h1 style={styles.mainTitle}>EVENT AND SCHEDULE</h1>
+            <h1 style={styles.mainTitle}>EVENT AND RIDES</h1>
             <p style={styles.description}>
               Experience the freedom of the ride like never before! Whether you're
               cruising through scenic highways.
             </p>
-            <button 
+            <button
               style={styles.viewButton}
               onClick={() => {
-  window.scrollTo(0, 0);
-  navigate('/events');
-}}
+                window.scrollTo(0, 0);
+                navigate('/events');
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                 e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -63,21 +63,21 @@ export default function EventSchedule() {
 
           <div style={styles.eventCard}>
             <div style={styles.imageContainer}>
-              <img 
+              <img
                 src={MalshejHero}
-                alt="Malshej Ghat Ride" 
+                alt="Malshej Ghat Ride"
                 style={styles.eventImage}
               />
             </div>
             <div style={styles.cardContent}>
               <h3 style={styles.eventTitle}>Malshej Ghat – BOM 7th Anniversary Ride</h3>
               <p style={styles.hostText}>Host by : <span style={styles.hostName}>Brotherhood Of Mumbai</span></p>
-              <button 
+              <button
                 style={styles.cardButton}
                 onClick={() => {
-  window.scrollTo(0, 0);
-  navigate('/event-detail', { state: malshejEventData });
-}}
+                  window.scrollTo(0, 0);
+                  navigate('/event-detail', { state: malshejEventData });
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                   e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -88,7 +88,7 @@ export default function EventSchedule() {
                 }}
               >
                 <span style={styles.buttonIcon} className="button-icon">»</span>
-                <span style={styles.buttonText} className="button-text">VIEW MORE EVENT</span>
+                <span style={styles.buttonText} className="button-text">VIEW MORE RIDE</span>
               </button>
             </div>
           </div>
@@ -97,21 +97,21 @@ export default function EventSchedule() {
         <div style={styles.rightColumn} className="event-right-column">
           <div style={styles.eventCard}>
             <div style={styles.imageContainer}>
-              <img 
+              <img
                 src={DamanHero}
-                alt="Explore Daman Ride" 
+                alt="Explore Daman Ride"
                 style={styles.eventImage}
               />
             </div>
             <div style={styles.cardContent}>
               <h3 style={styles.eventTitle}>Explore Daman Ride</h3>
               <p style={styles.hostText}>Host by : <span style={styles.hostName}>Brotherhood Of Mumbai</span></p>
-              <button 
+              <button
                 style={styles.cardButton}
                 onClick={() => {
-  window.scrollTo(0, 0);
-  navigate('/event-detail', { state: damanEventData });
-}}
+                  window.scrollTo(0, 0);
+                  navigate('/event-detail', { state: damanEventData });
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.querySelector('.button-icon').style.backgroundColor = '#d43f4d';
                   e.currentTarget.querySelector('.button-text').style.backgroundColor = '#1a1a1a';
@@ -122,7 +122,7 @@ export default function EventSchedule() {
                 }}
               >
                 <span style={styles.buttonIcon} className="button-icon">»</span>
-                <span style={styles.buttonText} className="button-text">VIEW MORE EVENT</span>
+                <span style={styles.buttonText} className="button-text">VIEW MORE RIDE</span>
               </button>
             </div>
           </div>

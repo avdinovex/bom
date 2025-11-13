@@ -59,8 +59,8 @@ router.post('/validate-coupon', authenticate, validate(schemas.validateCoupon), 
     throw new ApiError(400, validation.errors.join(', '));
   }
 
-  // Calculate discount
-  const discountAmount = coupon.calculateDiscount(totalAmount);
+  // Calculate discount - pass groupSize and bookingType for proper fixed discount calculation
+  const discountAmount = coupon.calculateDiscount(totalAmount, memberCount, bookingType);
   const finalAmount = totalAmount - discountAmount;
 
   res.json(new ApiResponse(200, {
@@ -147,26 +147,19 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
       throw new ApiError(400, `Not enough spots available. Only ${ride.maxCapacity - ride.registeredCount} spots left.`);
     }
 
-    // Check if user already booked this ride
+    // Check if user has a pending booking for this ride and cancel it
     const existingBooking = await Booking.findOne({
       user: req.user._id,
       ride: rideId,
-      status: { $in: ['created', 'paid'] }
+      status: 'created' // Only check for pending bookings
     }).session(session);
 
     if (existingBooking) {
-      // If there's an existing 'paid' booking, don't allow duplicate
-      if (existingBooking.status === 'paid') {
-        throw new ApiError(400, 'You have already booked this ride');
-      }
-      
       // If there's a pending 'created' booking (payment not completed), cancel it
-      if (existingBooking.status === 'created') {
-        existingBooking.status = 'cancelled';
-        existingBooking.cancelledAt = new Date();
-        existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
-        await existingBooking.save({ session });
-      }
+      existingBooking.status = 'cancelled';
+      existingBooking.cancelledAt = new Date();
+      existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+      await existingBooking.save({ session });
     }
 
     // Calculate amount
@@ -190,8 +183,8 @@ router.post('/create-order', authenticate, validate(schemas.createBookingOrder),
         throw new ApiError(400, validation.errors.join(', '));
       }
 
-      // Calculate discount
-      discountAmount = coupon.calculateDiscount(originalAmount);
+      // Calculate discount - pass groupSize and bookingType for proper fixed discount calculation
+      discountAmount = coupon.calculateDiscount(originalAmount, requiredCapacity, bookingType);
       finalAmount = originalAmount - discountAmount;
       appliedCoupon = coupon;
     }
@@ -347,15 +340,19 @@ router.post('/create-complete', authenticate, validate(schemas.createCompleteBoo
       throw new ApiError(400, 'Ride is fully booked');
     }
 
-    // Check if user already booked this ride
+    // Check if user has a pending booking for this ride and cancel it (allow multiple paid bookings)
     const existingBooking = await Booking.findOne({
       user: req.user._id,
       ride: rideId,
-      status: { $in: ['created', 'paid'] }
+      status: 'created' // Only check for pending bookings
     }).session(session);
 
     if (existingBooking) {
-      throw new ApiError(400, 'You have already booked this ride');
+      // Cancel the pending booking
+      existingBooking.status = 'cancelled';
+      existingBooking.cancelledAt = new Date();
+      existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+      await existingBooking.save({ session });
     }
 
     // Create booking with complete information
@@ -438,15 +435,19 @@ router.post('/create', authenticate, asyncHandler(async (req, res) => {
       throw new ApiError(400, 'Ride is fully booked');
     }
 
-    // Check if user already booked this ride
+    // Check if user has a pending booking for this ride and cancel it (allow multiple paid bookings)
     const existingBooking = await Booking.findOne({
       user: req.user._id,
       ride: rideId,
-      status: { $in: ['created', 'paid'] }
+      status: 'created' // Only check for pending bookings
     }).session(session);
 
     if (existingBooking) {
-      throw new ApiError(400, 'You have already booked this ride');
+      // Cancel the pending booking
+      existingBooking.status = 'cancelled';
+      existingBooking.cancelledAt = new Date();
+      existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+      await existingBooking.save({ session });
     }
 
     // Create booking

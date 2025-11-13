@@ -269,6 +269,8 @@ bookingSchema.index({ ride: 1, status: 1 });
 bookingSchema.index({ razorpayOrderId: 1 });
 bookingSchema.index({ razorpayPaymentId: 1 });
 bookingSchema.index({ createdAt: -1 });
+// Compound index for user + ride + status queries (NOT unique - users can book multiple times)
+bookingSchema.index({ user: 1, ride: 1, status: 1 });
 
 // Generate booking number before saving
 bookingSchema.pre('save', async function(next) {
@@ -302,10 +304,5 @@ bookingSchema.pre('save', async function(next) {
   
   next();
 });
-
-// Compound index for faster queries (removed unique constraint to allow cancelled bookings)
-// Uniqueness is now enforced in application logic for active bookings only
-bookingSchema.index({ user: 1, ride: 1 });
-bookingSchema.index({ user: 1, ride: 1, status: 1 });
 
 export default model('Booking', bookingSchema);

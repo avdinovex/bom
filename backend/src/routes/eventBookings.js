@@ -76,8 +76,8 @@ router.post('/validate-coupon', authenticate, validate(schemas.validateEventCoup
     throw new ApiError(400, validation.errors.join(', '));
   }
 
-  // Calculate discount
-  const discountAmount = coupon.calculateDiscount(totalAmount);
+  // Calculate discount - pass groupSize and bookingType for proper fixed discount calculation
+  const discountAmount = coupon.calculateDiscount(totalAmount, memberCount, bookingType);
   const finalAmount = totalAmount - discountAmount;
 
   res.json(new ApiResponse(200, {
@@ -174,26 +174,19 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
       throw new ApiError(400, `Not enough spots available. Only ${event.maxParticipants - event.currentParticipants} spots left.`);
     }
 
-    // Check if user has already booked this event
+    // Check if user has a pending booking for this event and cancel it
     const existingBooking = await EventBooking.findOne({
       user: req.user._id,
       event: eventId,
-      status: { $in: ['created', 'paid'] }
+      status: 'created' // Only check for pending bookings
     }).session(session);
 
     if (existingBooking) {
-      // If there's an existing 'paid' booking, don't allow duplicate
-      if (existingBooking.status === 'paid') {
-        throw new ApiError(400, 'You have already booked this event');
-      }
-      
       // If there's a pending 'created' booking (payment not completed), cancel it
-      if (existingBooking.status === 'created') {
-        existingBooking.status = 'cancelled';
-        existingBooking.cancelledAt = new Date();
-        existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
-        await existingBooking.save({ session });
-      }
+      existingBooking.status = 'cancelled';
+      existingBooking.cancelledAt = new Date();
+      existingBooking.cancellationReason = 'New booking attempt - previous payment not completed';
+      await existingBooking.save({ session });
     }
 
     // Calculate amount - Use early bird pricing if available and valid
@@ -233,8 +226,8 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
         throw new ApiError(400, validation.errors.join(', '));
       }
 
-      // Calculate discount
-      discountAmount = coupon.calculateDiscount(originalAmount);
+      // Calculate discount - pass groupSize and bookingType for proper fixed discount calculation
+      discountAmount = coupon.calculateDiscount(originalAmount, requiredCapacity, bookingType);
       finalAmount = originalAmount - discountAmount;
       appliedCoupon = coupon;
     }

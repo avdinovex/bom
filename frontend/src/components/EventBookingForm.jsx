@@ -772,7 +772,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       
       <div style={styles.agreementsSection}>
         {[
-          { key: 'foodAndRefreshments', label: 'I will arrange my own food and refreshments during the ride' },
+          { key: 'foodAndRefreshments', label: 'Extra food and refreshments will be arranged by me' },
           { key: 'informationAccuracy', label: 'I confirm that all information provided is accurate' },
           { key: 'noContrabands', label: 'I will not carry any contraband items during the ride' },
           { key: 'rulesAndRegulations', label: 'I agree to follow all rules and regulations of the ride' }

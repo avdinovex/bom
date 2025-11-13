@@ -269,6 +269,8 @@ eventBookingSchema.index({ event: 1, status: 1 });
 eventBookingSchema.index({ razorpayOrderId: 1 });
 eventBookingSchema.index({ razorpayPaymentId: 1 });
 eventBookingSchema.index({ createdAt: -1 });
+// Compound index for user + event + status queries (NOT unique - users can book multiple times)
+eventBookingSchema.index({ user: 1, event: 1, status: 1 });
 
 // Generate booking number before saving
 eventBookingSchema.pre('save', async function(next) {
@@ -302,10 +304,5 @@ eventBookingSchema.pre('save', async function(next) {
   
   next();
 });
-
-// Compound index for faster queries (removed unique constraint to allow cancelled bookings)
-// Uniqueness is now enforced in application logic for active bookings only
-eventBookingSchema.index({ user: 1, event: 1 });
-eventBookingSchema.index({ user: 1, event: 1, status: 1 });
 
 export default model('EventBooking', eventBookingSchema);

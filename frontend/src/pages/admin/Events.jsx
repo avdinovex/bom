@@ -14,6 +14,15 @@ const Events = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+
+  // Helper function to convert UTC date to IST for datetime-local input
+  const convertUTCtoISTForInput = (utcDate) => {
+    if (!utcDate) return '';
+    const date = new Date(utcDate);
+    // Convert to IST (UTC+5:30)
+    const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+    return istDate.toISOString().slice(0, 16);
+  };
   
   // Form state
   const [formData, setFormData] = useState({
@@ -157,10 +166,15 @@ const Events = () => {
           <div className="text-sm">
             <div className="flex items-center text-gray-900">
               <FiCalendar className="h-3 w-3 mr-1" />
-              {new Date(startDate).toLocaleDateString()}
+              {new Date(startDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
             </div>
             <div className="text-gray-500 text-xs">
-              {new Date(startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              {new Date(startDate).toLocaleTimeString('en-IN', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true
+              })}
             </div>
           </div>
         );
@@ -398,8 +412,8 @@ const Events = () => {
       subtitle: event.subtitle || '',
       description: event.description || '',
       details: event.details || '',
-      startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
-      endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
+      startDate: convertUTCtoISTForInput(event.startDate),
+      endDate: convertUTCtoISTForInput(event.endDate),
       location: event.location || '',
       category: event.category || 'other',
       imgUrl: event.imgUrl || '',
@@ -410,8 +424,7 @@ const Events = () => {
       isFeatured: event.isFeatured || false,
       eventType: event.eventType || 'upcoming',
       status: event.status || 'draft',
-      registrationDeadline: event.registrationDeadline || event.registrationInfo?.deadline ? 
-        new Date(event.registrationDeadline || event.registrationInfo.deadline).toISOString().slice(0, 16) : '',
+      registrationDeadline: convertUTCtoISTForInput(event.registrationDeadline || event.registrationInfo?.deadline),
       tags: event.tags ? event.tags.join(', ') : '',
       venue: {
         name: event.venue?.name || '',
@@ -425,8 +438,7 @@ const Events = () => {
         basePrice: event.pricing?.basePrice || event.price || 0,
         currency: event.pricing?.currency || 'INR',
         earlyBirdPrice: event.pricing?.earlyBirdPrice || '',
-        earlyBirdDeadline: event.pricing?.earlyBirdDeadline ? 
-          new Date(event.pricing.earlyBirdDeadline).toISOString().slice(0, 16) : ''
+        earlyBirdDeadline: convertUTCtoISTForInput(event.pricing?.earlyBirdDeadline)
       },
       contactInfo: {
         supportEmail: event.contactInfo?.supportEmail || '',

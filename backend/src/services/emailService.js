@@ -8,6 +8,26 @@ class EmailService {
     // Don't initialize immediately - do it lazily when first used
   }
 
+  // Helper function to convert UTC date to IST and format it
+  formatDateToIST(date, options = {}) {
+    if (!date) return 'N/A';
+    
+    const defaultOptions = {
+      timeZone: 'Asia/Kolkata', // IST timezone
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    const formatOptions = { ...defaultOptions, ...options };
+    
+    return new Date(date).toLocaleString('en-IN', formatOptions);
+  }
+
   init() {
     // Skip if already initialized
     if (this.initialized) {
@@ -286,23 +306,9 @@ class EmailService {
         paidAt
       } = bookingData;
 
-      const formattedDate = new Date(startTime).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      const formattedEndDate = endTime ? new Date(endTime).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }) : null;
+      const formattedDate = this.formatDateToIST(startTime);
+      const formattedEndDate = endTime ? this.formatDateToIST(endTime) : null;
+      const formattedPaidAt = this.formatDateToIST(paidAt);
 
       const mailOptions = {
         from: {
@@ -364,13 +370,7 @@ class EmailService {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Payment Date:</span>
-                    <span class="detail-value">${new Date(paidAt).toLocaleDateString('en-IN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric', 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}</span>
+                    <span class="detail-value">${formattedPaidAt}</span>
                   </div>
                 </div>
 
@@ -521,23 +521,9 @@ class EmailService {
         paidAt
       } = bookingData;
 
-      const formattedStartDate = new Date(startDate).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      const formattedEndDate = endDate ? new Date(endDate).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }) : null;
+      const formattedStartDate = this.formatDateToIST(startDate);
+      const formattedEndDate = endDate ? this.formatDateToIST(endDate) : null;
+      const formattedPaidAt = this.formatDateToIST(paidAt);
 
       const mailOptions = {
         from: {
@@ -598,13 +584,7 @@ class EmailService {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Payment Date:</span>
-                    <span class="detail-value">${new Date(paidAt).toLocaleDateString('en-IN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric', 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}</span>
+                    <span class="detail-value">${formattedPaidAt}</span>
                   </div>
                 </div>
 
@@ -697,7 +677,7 @@ class EmailService {
 
                 <div class="warning-box">
                   <strong>⚠️ Cancellation Policy:</strong>
-                  <p style="margin: 10px 0;">Cancellations are not allowed once the event has started. For assistance before the event, contact our support team.</p>
+                  <p style="margin: 10px 0;">Cancellation is not allowed once the ticket is booked. For assistance before the event contact our support team.</p>
                 </div>
 
 

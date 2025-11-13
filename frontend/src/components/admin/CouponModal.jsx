@@ -253,7 +253,7 @@ const CouponModal = ({ coupon, onClose, onSuccess }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder={formData.discountType === 'percentage' ? '10' : '500'}
               min="0"
-              step={formData.discountType === 'percentage' ? '1' : '10'}
+              step="1"
               required
             />
           </div>

@@ -181,11 +181,8 @@ couponSchema.methods.validateCoupon = function(userId, bookingType, amount, grou
     errors.push(`Minimum order amount of ₹${this.minOrderAmount} required`);
   }
 
-  // Check if user already used this coupon
-  const userUsage = this.usedBy.find(usage => usage.user.toString() === userId.toString());
-  if (userUsage) {
-    errors.push('You have already used this coupon');
-  }
+  // Removed: Check if user already used this coupon
+  // Users can now use the same coupon multiple times as long as usage limit allows
 
   return {
     isValid: errors.length === 0,
@@ -194,13 +191,18 @@ couponSchema.methods.validateCoupon = function(userId, bookingType, amount, grou
 };
 
 // Method to calculate discount
-couponSchema.methods.calculateDiscount = function(amount) {
+couponSchema.methods.calculateDiscount = function(amount, groupSize = 1, bookingType = 'individual') {
   let discount = 0;
 
   if (this.discountType === 'percentage') {
     discount = (amount * this.discountValue) / 100;
   } else {
-    discount = this.discountValue;
+    // For fixed discount in group bookings, multiply by group size
+    if (bookingType === 'group' && groupSize > 1) {
+      discount = this.discountValue * groupSize;
+    } else {
+      discount = this.discountValue;
+    }
   }
 
   // Apply max discount limit if set
