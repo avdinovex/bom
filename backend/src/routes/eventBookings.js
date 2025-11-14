@@ -61,7 +61,6 @@ router.post('/validate-coupon', authenticate, validate(schemas.validateEventCoup
     // Use early bird price if deadline hasn't passed
     if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
       basePrice = event.pricing.earlyBirdPrice;
-      logger.info(`Using early bird price for coupon validation: ${basePrice}`);
     } else if (event.pricing.basePrice) {
       basePrice = event.pricing.basePrice;
     }
@@ -200,7 +199,6 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
       // Use early bird price if deadline hasn't passed
       if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
         basePrice = event.pricing.earlyBirdPrice;
-        logger.info(`Using early bird price: ${basePrice} for event ${event.title}`);
       } else if (event.pricing.basePrice) {
         basePrice = event.pricing.basePrice;
       }

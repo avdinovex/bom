@@ -65,7 +65,6 @@ class EmailService {
           response: error.response
         });
       } else {
-        console.log('Email server is ready to send messages');
         this.initialized = true;
       }
     });
@@ -140,7 +139,6 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('Registration OTP sent successfully to:', email);
     } catch (error) {
       console.error('Error sending registration OTP:', error);
       throw new ApiError(500, 'Failed to send verification email');
@@ -206,7 +204,6 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('Forgot password OTP sent successfully to:', email);
     } catch (error) {
       console.error('Error sending forgot password OTP:', error);
       throw new ApiError(500, 'Failed to send password reset email');
@@ -275,11 +272,9 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('Welcome email sent successfully to:', email);
     } catch (error) {
       console.error('Error sending welcome email:', error);
       // Don't throw error for welcome email as it's not critical
-      console.log('Warning: Welcome email failed to send, but registration was successful');
     }
   }
 
@@ -490,11 +485,9 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('Ride booking confirmation email sent successfully to:', email);
     } catch (error) {
       console.error('Error sending ride booking confirmation email:', error);
       // Don't throw error as booking is already confirmed
-      console.log('Warning: Booking confirmation email failed to send, but booking is confirmed');
     }
   }
 
@@ -701,11 +694,9 @@ class EmailService {
       };
 
       await this.transporter.sendMail(mailOptions);
-      console.log('Event booking confirmation email sent successfully to:', email);
     } catch (error) {
       console.error('Error sending event booking confirmation email:', error);
       // Don't throw error as booking is already confirmed
-      console.log('Warning: Event booking confirmation email failed to send, but booking is confirmed');
     }
   }
 }

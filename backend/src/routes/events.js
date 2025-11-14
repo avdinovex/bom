@@ -36,8 +36,6 @@ router.get('/', optionalAuth, validate(schemas.eventQuery, 'query'), asyncHandle
   // Get sort options
   const sort = getSortOptions(sortBy, sortOrder);
 
-  console.log('Events filter:', JSON.stringify(filter, null, 2));
-
   // Execute queries
   const [events, totalCount] = await Promise.all([
     Event.find(filter)
@@ -47,8 +45,6 @@ router.get('/', optionalAuth, validate(schemas.eventQuery, 'query'), asyncHandle
       .limit(limitNumber),
     Event.countDocuments(filter)
   ]);
-
-  console.log(`Found ${events.length} events total`);
 
   const result = getPaginationResult(events, totalCount, pageNumber, limitNumber);
 
@@ -135,8 +131,6 @@ router.get('/type/:eventType', optionalAuth, validate(schemas.eventQuery, 'query
       .limit(limitNumber),
     Event.countDocuments(filter)
   ]);
-
-  console.log(`Found ${events.length} ${eventType} events`);
 
   const result = getPaginationResult(events, totalCount, pageNumber, limitNumber);
 
@@ -236,17 +230,6 @@ router.get('/mumbai-bikers-mania/all', asyncHandler(async (req, res) => {
     .populate('coOrganizers', 'fullName')
     .sort({ startDate: -1 });
 
-  console.log(`Found ${events.length} Mumbai Bikers Mania events`);
-  if (events.length > 0) {
-    console.log('First event:', {
-      title: events[0].title,
-      startDate: events[0].startDate,
-      isPublished: events[0].isPublished,
-      status: events[0].status,
-      eventType: events[0].eventType
-    });
-  }
-
   res.json(new ApiResponse(200, { events }, `Found ${events.length} Mumbai Bikers Mania events`));
 }));
 
@@ -257,8 +240,6 @@ router.get('/debug/all', asyncHandler(async (req, res) => {
   const allEvents = await Event.find({})
     .populate('organizer', 'fullName')
     .sort({ createdAt: -1 });
-
-  console.log(`Found ${allEvents.length} total events in database`);
   
   const eventSummary = allEvents.map(event => ({
     _id: event._id,
@@ -316,7 +297,6 @@ router.post('/debug/create-test', asyncHandler(async (req, res) => {
       ]
     });
 
-    console.log('Created test event:', testEvent);
     res.json(new ApiResponse(201, { event: testEvent }, 'Test event created successfully'));
   } catch (error) {
     console.error('Error creating test event:', error);
@@ -337,8 +317,6 @@ router.post('/debug/fix-categories', asyncHandler(async (req, res) => {
         { title: { $regex: 'mbm', $options: 'i' } }
       ]
     });
-
-    console.log(`Found ${eventsToFix.length} events to fix`);
 
     const updateResults = [];
     for (const event of eventsToFix) {

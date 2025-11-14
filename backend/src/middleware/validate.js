@@ -11,13 +11,6 @@ export const validate = (schema, source = 'body') => {
         message: detail.message
       }));
       
-      // Log validation errors for debugging
-      console.log('❌ Validation failed:', {
-        source,
-        errors,
-        receivedData: req[source]
-      });
-      
       throw new ApiError(400, 'Validation error', errors);
     }
     

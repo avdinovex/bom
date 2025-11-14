@@ -23,7 +23,6 @@ startRideMigrationScheduler();
 
 // Start server
 const server = app.listen(PORT, () => {
-  console.log(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
@@ -43,9 +42,7 @@ process.on('uncaughtException', (err) => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('👋 SIGTERM received. Shutting down gracefully');
   server.close(() => {
-    logger.info('💀 Process terminated');
   });
 });
 

@@ -137,7 +137,6 @@ export const startRideMigrationScheduler = () => {
   // Run every hour at minute 0
   cron.schedule('0 * * * *', async () => {
     try {
-      logger.info('Starting scheduled ride migration check');
       await migrateExpiredRides();
     } catch (error) {
       logger.error('Scheduled ride migration failed:', error);
