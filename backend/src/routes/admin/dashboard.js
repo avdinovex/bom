@@ -3,6 +3,7 @@ import User from '../../models/User.js';
 import UpcomingRide from '../../models/UpcomingRide.js';
 import CompletedRide from '../../models/CompletedRide.js';
 import Booking from '../../models/Booking.js';
+import EventBooking from '../../models/EventBooking.js';
 import Blog from '../../models/Blog.js';
 import Event from '../../models/Event.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -21,11 +22,13 @@ router.get('/stats', asyncHandler(async (req, res) => {
     totalRides,
     totalCompletedRides,
     totalBookings,
+    totalEventBookings,
     totalBlogs,
     totalEvents,
     activeUsers,
     upcomingRides,
     paidBookings,
+    paidEventBookings,
     publishedBlogs,
     activeEvents,
     migrationStats
@@ -34,27 +37,48 @@ router.get('/stats', asyncHandler(async (req, res) => {
     UpcomingRide.countDocuments(),
     CompletedRide.countDocuments(),
     Booking.countDocuments(),
+    EventBooking.countDocuments(),
     Blog.countDocuments(),
     Event.countDocuments(),
     User.countDocuments({ isActive: true }),
     UpcomingRide.countDocuments({ isActive: true, startTime: { $gte: new Date() } }),
     Booking.countDocuments({ status: 'paid' }),
+    EventBooking.countDocuments({ status: 'paid' }),
     Blog.countDocuments({ isPublished: true }),
     Event.countDocuments({ isActive: true }),
     getMigrationStats()
   ]);
 
-  // Get revenue statistics
-  const revenueStats = await Booking.aggregate([
-    { $match: { status: 'paid' } },
-    {
-      $group: {
-        _id: null,
-        totalRevenue: { $sum: '$amount' },
-        averageBookingValue: { $avg: '$amount' }
+  // Get revenue statistics from both ride bookings and event bookings
+  const [rideRevenueStats, eventRevenueStats] = await Promise.all([
+    Booking.aggregate([
+      { $match: { status: 'paid' } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
       }
-    }
+    ]),
+    EventBooking.aggregate([
+      { $match: { status: 'paid' } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ])
   ]);
+
+  const rideRevenue = rideRevenueStats[0] || { totalRevenue: 0, count: 0 };
+  const eventRevenue = eventRevenueStats[0] || { totalRevenue: 0, count: 0 };
+  
+  const totalRevenue = rideRevenue.totalRevenue + eventRevenue.totalRevenue;
+  const totalPaidBookings = rideRevenue.count + eventRevenue.count;
+  const averageBookingValue = totalPaidBookings > 0 ? totalRevenue / totalPaidBookings : 0;
 
   // Get monthly growth statistics
   const monthlyGrowth = await User.aggregate([
@@ -89,14 +113,21 @@ router.get('/stats', asyncHandler(async (req, res) => {
       totalRides,
       totalCompletedRides,
       upcomingRides,
-      totalBookings,
-      paidBookings,
+      totalBookings: totalBookings + totalEventBookings,
+      paidBookings: paidBookings + paidEventBookings,
       totalBlogs,
       publishedBlogs,
       totalEvents,
       activeEvents
     },
-    revenue: revenueStats[0] || { totalRevenue: 0, averageBookingValue: 0 },
+    revenue: {
+      totalRevenue,
+      averageBookingValue,
+      rideRevenue: rideRevenue.totalRevenue,
+      eventRevenue: eventRevenue.totalRevenue,
+      rideBookings: rideRevenue.count,
+      eventBookings: eventRevenue.count
+    },
     monthlyGrowth,
     rideStats,
     migration: migrationStats
@@ -109,7 +140,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
 // @desc    Get recent activity (admin)
 // @access  Admin
 router.get('/recent-activity', asyncHandler(async (req, res) => {
-  const [recentUsers, recentBookings, recentBlogs] = await Promise.all([
+  const [recentUsers, recentRideBookings, recentEventBookings, recentBlogs] = await Promise.all([
     User.find()
       .select('fullName email createdAt')
       .sort({ createdAt: -1 })
@@ -120,6 +151,12 @@ router.get('/recent-activity', asyncHandler(async (req, res) => {
       .select('user ride amount status createdAt')
       .sort({ createdAt: -1 })
       .limit(5),
+    EventBooking.find()
+      .populate('user', 'fullName')
+      .populate('event', 'title')
+      .select('user event amount status createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5),
     Blog.find({ isPublished: true })
       .populate('author', 'fullName')
       .select('title author publishedAt views')
@@ -127,9 +164,15 @@ router.get('/recent-activity', asyncHandler(async (req, res) => {
       .limit(5)
   ]);
 
+  // Combine and sort ride and event bookings by date
+  const allBookings = [
+    ...recentRideBookings.map(b => ({ ...b.toObject(), type: 'ride' })),
+    ...recentEventBookings.map(b => ({ ...b.toObject(), type: 'event' }))
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
   res.json(new ApiResponse(200, {
     recentUsers,
-    recentBookings,
+    recentBookings: allBookings,
     recentBlogs
   }, 'Recent activity retrieved successfully'));
 }));

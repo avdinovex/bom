@@ -152,14 +152,14 @@ const Dashboard = () => {
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Bookings</h4>
                   {recentActivity.recentBookings?.length > 0 ? (
                     <div className="space-y-2">
-                      {recentActivity.recentBookings.slice(0, 3).map((booking) => (
-                        <div key={booking._id} className="flex items-center text-sm">
+                      {recentActivity.recentBookings.slice(0, 3).map((booking, index) => (
+                        <div key={booking._id || index} className="flex items-center text-sm">
                           <div className="h-6 w-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
                             <FiCreditCard className="h-3 w-3 text-green-600" />
                           </div>
                           <span className="font-medium">{booking.user?.fullName}</span>
                           <span className="text-gray-500 ml-2">
-                            booked {booking.ride?.title} - {formatCurrency(booking.amount)}
+                            booked {booking.type === 'event' ? booking.event?.title : booking.ride?.title} - {formatCurrency(booking.amount)}
                           </span>
                         </div>
                       ))}
