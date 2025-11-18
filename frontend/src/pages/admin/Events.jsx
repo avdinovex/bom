@@ -18,10 +18,42 @@ const Events = () => {
   // Helper function to convert UTC date to IST for datetime-local input
   const convertUTCtoISTForInput = (utcDate) => {
     if (!utcDate) return '';
+    // Convert UTC date to IST using toLocaleString
     const date = new Date(utcDate);
-    // Convert to IST (UTC+5:30)
-    const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
-    return istDate.toISOString().slice(0, 16);
+    
+    // Get IST time components
+    const istDateStr = date.toLocaleString('en-CA', { 
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    // Format: "2024-03-15, 14:30" -> "2024-03-15T14:30"
+    const formatted = istDateStr.replace(', ', 'T').replace(/\//g, '-');
+    return formatted;
+  };
+
+  // Helper function to convert IST datetime-local input back to UTC
+  const convertISTtoUTC = (istDateString) => {
+    if (!istDateString) return null;
+    // The datetime-local gives us a string like "2024-03-15T14:30"
+    // We need to treat this as IST time and convert to UTC
+    
+    // Parse the IST datetime string
+    const [datePart, timePart] = istDateString.split('T');
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes] = timePart.split(':');
+    
+    // Create a date string in IST format that can be parsed
+    const istDateTimeStr = `${year}-${month}-${day}T${hours}:${minutes}:00.000+05:30`;
+    
+    // Parse and convert to UTC
+    const utcDate = new Date(istDateTimeStr);
+    return utcDate.toISOString();
   };
   
   // Form state
@@ -217,7 +249,7 @@ const Events = () => {
         <div className="text-sm">
           <div className="text-gray-900 font-medium">₹{event?.price || 0}</div>
           <div className="text-gray-500">
-            {event?.currentParticipants || 0}/{event?.maxParticipants || 0} booked
+            {event?.capacity?.currentParticipants ?? event?.currentParticipants ?? 0}/{event?.capacity?.maxParticipants ?? event?.maxParticipants ?? 0} booked
           </div>
           <div className="text-xs">
             {event?.isBookingEnabled ? (
@@ -293,11 +325,22 @@ const Events = () => {
       
       const submitData = new FormData();
       
-      // Append basic fields
+      // Append basic fields with IST to UTC conversion for datetime fields
       Object.keys(formData).forEach(key => {
-        if (key === 'venue' || key === 'pricing' || key === 'contactInfo') {
+        if (key === 'venue' || key === 'contactInfo') {
           // Handle nested objects
           submitData.append(key, JSON.stringify(formData[key]));
+        } else if (key === 'pricing') {
+          // Handle pricing with datetime conversion
+          const pricingData = {
+            ...formData.pricing,
+            earlyBirdDeadline: formData.pricing.earlyBirdDeadline ? convertISTtoUTC(formData.pricing.earlyBirdDeadline) : null
+          };
+          submitData.append(key, JSON.stringify(pricingData));
+        } else if (key === 'startDate' || key === 'endDate' || key === 'registrationDeadline') {
+          // Convert IST datetime-local inputs to UTC
+          const utcDate = formData[key] ? convertISTtoUTC(formData[key]) : '';
+          submitData.append(key, utcDate);
         } else if (key !== 'imgUrl') { // Skip imgUrl as we're using file upload
           submitData.append(key, formData[key]);
         }
@@ -557,7 +600,9 @@ const Events = () => {
   const todayEvents = events.filter(e => 
     e.startDate && new Date(e.startDate).toDateString() === new Date().toDateString()
   ).length;
-  const totalAttendees = events.reduce((sum, event) => sum + (event.attendees?.length || 0), 0);
+  const totalAttendees = events.reduce((sum, event) => 
+    sum + (event?.capacity?.currentParticipants ?? event?.currentParticipants ?? event.attendees?.length ?? 0), 0
+  );
 
   return (
     <div className="p-6">
@@ -762,7 +807,7 @@ const Events = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date & Time *
+                  Start Date & Time * <span className="text-xs text-blue-600 font-normal">(IST/India Time)</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -775,7 +820,7 @@ const Events = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date & Time
+                  End Date & Time <span className="text-xs text-blue-600 font-normal">(IST/India Time)</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -787,7 +832,7 @@ const Events = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Registration Deadline
+                  Registration Deadline <span className="text-xs text-blue-600 font-normal">(IST/India Time)</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -999,7 +1044,7 @@ const Events = () => {
                   {formData.pricing.earlyBirdPrice && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Early Bird Deadline
+                        Early Bird Deadline <span className="text-xs text-blue-600 font-normal">(IST/India Time)</span>
                       </label>
                       <input
                         type="datetime-local"

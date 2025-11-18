@@ -627,6 +627,12 @@ const EventBookings = () => {
                              member.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
                           </span>
                         </div>
+                        <div>
+                          <span className="text-gray-600">T-Shirt Size:</span>
+                          <span className="ml-2 font-medium bg-blue-100 px-2 py-1 rounded">
+                            {member.tshirtSize || 'N/A'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -673,6 +679,12 @@ const EventBookings = () => {
                   <span className={`ml-2 font-semibold ${selectedBooking.personalInfo?.foodPreference === 'Veg' ? 'text-green-600' : 'text-orange-600'}`}>
                     {selectedBooking.personalInfo?.foodPreference === 'Veg' ? '🌱 Veg' : 
                      selectedBooking.personalInfo?.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">T-Shirt Size:</span>
+                  <span className="ml-2 font-medium bg-blue-100 px-2 py-1 rounded">
+                    {selectedBooking.personalInfo?.tshirtSize || 'N/A'}
                   </span>
                 </div>
                 <div className="col-span-2">

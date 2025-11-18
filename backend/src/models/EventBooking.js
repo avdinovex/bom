@@ -54,15 +54,18 @@ const eventBookingSchema = new Schema({
         required: true,
         trim: true
       },
-      foodPreference: {
-        type: String,
-        required: true,
-        enum: ['Veg', 'Non-Veg']
-      }
+    foodPreference: {
+      type: String,
+      required: true,
+      enum: ['Veg', 'Non-Veg']
+    },
+    tshirtSize: {
+      type: String,
+      required: true,
+      enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
+    }
     }]
-  },
-  
-  // Personal Information (Group Leader info for group bookings)
+  },  // Personal Information (Group Leader info for group bookings)
   personalInfo: {
     email: {
       type: String,
@@ -103,6 +106,11 @@ const eventBookingSchema = new Schema({
       type: String,
       required: [true, 'Food preference is required'],
       enum: ['Veg', 'Non-Veg']
+    },
+    tshirtSize: {
+      type: String,
+      required: [true, 'T-shirt size is required'],
+      enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL']
     }
   },
 

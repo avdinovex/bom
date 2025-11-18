@@ -298,8 +298,13 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
           const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: -decrement } },
-            { session }
+            { 
+              $inc: { 
+                currentParticipants: -decrement,
+                'capacity.currentParticipants': -decrement
+              } 
+            },
+            { session, new: true }
           );
         }
         break;
@@ -318,8 +323,13 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
           const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: -decrement } },
-            { session }
+            { 
+              $inc: { 
+                currentParticipants: -decrement,
+                'capacity.currentParticipants': -decrement
+              } 
+            },
+            { session, new: true }
           );
         }
         break;
@@ -330,8 +340,13 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
           const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: -decrement } },
-            { session }
+            { 
+              $inc: { 
+                currentParticipants: -decrement,
+                'capacity.currentParticipants': -decrement
+              } 
+            },
+            { session, new: true }
           );
         }
         break;
@@ -345,8 +360,13 @@ router.put('/:id/status', asyncHandler(async (req, res) => {
           }
           await Event.findByIdAndUpdate(
             booking.event._id,
-            { $inc: { currentParticipants: increment } },
-            { session }
+            { 
+              $inc: { 
+                currentParticipants: increment,
+                'capacity.currentParticipants': increment
+              } 
+            },
+            { session, new: true }
           );
         }
         break;
@@ -392,8 +412,13 @@ router.delete('/:id', asyncHandler(async (req, res) => {
       const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
       await Event.findByIdAndUpdate(
         booking.event._id,
-        { $inc: { currentParticipants: -decrement } },
-        { session }
+        { 
+          $inc: { 
+            currentParticipants: -decrement,
+            'capacity.currentParticipants': -decrement
+          } 
+        },
+        { session, new: true }
       );
     }
 

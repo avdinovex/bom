@@ -21,6 +21,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     dateOfBirth: '',
     bloodGroup: '',
     foodPreference: '',
+    tshirtSize: '',
     motorcycleModelName: '',
     motorcycleNumber: '',
     emergencyContactPersonName: '',
@@ -41,6 +42,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   ];
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const tshirtSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -58,8 +60,8 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       setFormData(prev => ({
         ...prev,
         groupMembers: [
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' },
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' },
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }
         ]
       }));
     }
@@ -81,7 +83,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     }
     setFormData(prev => ({
       ...prev,
-      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }]
+      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }]
     }));
   };
 
@@ -156,7 +158,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   const validateStep1 = () => {
     const requiredFields = [
       'email', 'fullName', 'address', 'contactNumber', 'gender', 
-      'dateOfBirth', 'bloodGroup', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
+      'dateOfBirth', 'bloodGroup', 'foodPreference', 'tshirtSize', 'motorcycleModelName', 'motorcycleNumber',
       'emergencyContactPersonName', 'emergencyContactNumber', 'medicalHistory'
     ];
     
@@ -180,7 +182,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
 
       for (let i = 0; i < formData.groupMembers.length; i++) {
         const member = formData.groupMembers[i];
-        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference) {
+        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference || !member.tshirtSize) {
           toast.error(`Please fill all details for member ${i + 1}`);
           return false;
         }
@@ -534,6 +536,20 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
                 </label>
               </div>
             </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>T-Shirt Size *</label>
+              <select
+                value={member.tshirtSize}
+                onChange={(e) => handleGroupMemberChange(index, 'tshirtSize', e.target.value)}
+                style={styles.select}
+              >
+                <option value="">Select Size</option>
+                {tshirtSizes.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       ))}
@@ -634,49 +650,64 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Food Preference <span style={styles.required}>*</span></label>
-          <div style={styles.radioGroup}>
-            <label 
-              className="radio-label-item"
-              style={{
-                ...styles.radioLabel,
-                ...(formData.foodPreference === 'Veg' ? {
-                  borderColor: '#ff4757',
-                  backgroundColor: 'rgba(255, 71, 87, 0.1)'
-                } : {})
-              }}
-            >
-              <input
-                type="radio"
-                name="foodPreference"
-                value="Veg"
-                checked={formData.foodPreference === 'Veg'}
-                onChange={handleInputChange}
-                style={styles.radio}
-              />
-              <span style={styles.radioText}>🌱 Veg</span>
-            </label>
-            <label 
-              className="radio-label-item"
-              style={{
-                ...styles.radioLabel,
-                ...(formData.foodPreference === 'Non-Veg' ? {
-                  borderColor: '#ff4757',
-                  backgroundColor: 'rgba(255, 71, 87, 0.1)'
-                } : {})
-              }}
-            >
-              <input
-                type="radio"
-                name="foodPreference"
-                value="Non-Veg"
-                checked={formData.foodPreference === 'Non-Veg'}
-                onChange={handleInputChange}
-                style={styles.radio}
-              />
-              <span style={styles.radioText}>🍖 Non-Veg</span>
-            </label>
-          </div>
+          <label style={styles.label}>T-Shirt Size <span style={styles.required}>*</span></label>
+          <select
+            name="tshirtSize"
+            value={formData.tshirtSize}
+            onChange={handleInputChange}
+            style={styles.select}
+          >
+            <option value="">Select Size</option>
+            {tshirtSizes.map(size => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div style={styles.formGroup}>
+        <label style={styles.label}>Food Preference <span style={styles.required}>*</span></label>
+        <div style={styles.radioGroup}>
+          <label 
+            className="radio-label-item"
+            style={{
+              ...styles.radioLabel,
+              ...(formData.foodPreference === 'Veg' ? {
+                borderColor: '#ff4757',
+                backgroundColor: 'rgba(255, 71, 87, 0.1)'
+              } : {})
+            }}
+          >
+            <input
+              type="radio"
+              name="foodPreference"
+              value="Veg"
+              checked={formData.foodPreference === 'Veg'}
+              onChange={handleInputChange}
+              style={styles.radio}
+            />
+            <span style={styles.radioText}>🌱 Veg</span>
+          </label>
+          <label 
+            className="radio-label-item"
+            style={{
+              ...styles.radioLabel,
+              ...(formData.foodPreference === 'Non-Veg' ? {
+                borderColor: '#ff4757',
+                backgroundColor: 'rgba(255, 71, 87, 0.1)'
+              } : {})
+            }}
+          >
+            <input
+              type="radio"
+              name="foodPreference"
+              value="Non-Veg"
+              checked={formData.foodPreference === 'Non-Veg'}
+              onChange={handleInputChange}
+              style={styles.radio}
+            />
+            <span style={styles.radioText}>🍖 Non-Veg</span>
+          </label>
         </div>
       </div>
 
