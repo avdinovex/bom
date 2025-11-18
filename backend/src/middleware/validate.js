@@ -259,7 +259,8 @@ export const schemas = {
       gender: Joi.string().valid('Male', 'Female').required(),
       dateOfBirth: Joi.date().required(),
       bloodGroup: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-').required(),
-      foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
+      foodPreference: Joi.string().valid('Veg', 'Non-Veg').required(),
+      tshirtSize: Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL').required()
     }).required(),
     motorcycleInfo: Joi.object({
       modelName: Joi.string().trim().min(2).max(100).required(),
@@ -284,7 +285,8 @@ export const schemas = {
           contactNumber: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
           emergencyContact: Joi.string().pattern(/^[+]?[0-9]{8,15}$/).required(),
           address: Joi.string().trim().min(3).max(500).required(),
-          foodPreference: Joi.string().valid('Veg', 'Non-Veg').required()
+          foodPreference: Joi.string().valid('Veg', 'Non-Veg').required(),
+          tshirtSize: Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL').required()
         })
       ).min(2).required()
     }).when('bookingType', {

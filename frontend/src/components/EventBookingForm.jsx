@@ -268,7 +268,8 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           gender: formData.gender,
           dateOfBirth: formData.dateOfBirth,
           bloodGroup: formData.bloodGroup,
-          foodPreference: formData.foodPreference
+          foodPreference: formData.foodPreference,
+          tshirtSize: formData.tshirtSize
         },
         motorcycleInfo: {
           modelName: formData.motorcycleModelName,
@@ -803,7 +804,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       
       <div style={styles.agreementsSection}>
         {[
-          { key: 'foodAndRefreshments', label: 'Extra food and refreshments will be arranged by me' },
+          { key: 'foodAndRefreshments', label: 'Extra food and refreshments will be arranged by me, if needed' },
           { key: 'informationAccuracy', label: 'I confirm that all information provided is accurate' },
           { key: 'noContrabands', label: 'I will not carry any contraband items during the ride' },
           { key: 'rulesAndRegulations', label: 'I agree to follow all rules and regulations of the ride' }
