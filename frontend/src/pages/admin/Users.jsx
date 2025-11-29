@@ -14,7 +14,12 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-  
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState(null);
+
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -25,32 +30,63 @@ const Users = () => {
   });
 
   // Fetch users
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = currentPage, limit = itemsPerPage) => {
     try {
       setLoading(true);
-      const response = await api.get('/admin/users');
-      setUsers(response.data.data.data || []);
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
+
+      // Add optional filters
+      if (filterRole !== 'all') {
+        params.append('role', filterRole);
+      }
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+
+      const response = await api.get(`/admin/users?${params.toString()}`);
+      const result = response.data.data;
+
+      setUsers(result.data || []);
+      setPagination(result.pagination || null);
     } catch (error) {
       toast.error('Failed to fetch users');
       console.error('Fetch users error:', error);
-      setUsers([]); // Ensure users is always an array
+      setUsers([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Filter users based on search and role
-  const filteredUsers = Array.isArray(users) ? users.filter(user => {
-    const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone?.includes(searchTerm);
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    return matchesSearch && matchesRole;
-  }) : [];
+  // Refetch when filters change
+  useEffect(() => {
+    if (searchTerm !== '' || filterRole !== 'all') {
+      setCurrentPage(1); // Reset to page 1 when filters change
+      fetchUsers(1, itemsPerPage);
+    }
+  }, [searchTerm, filterRole]);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    fetchUsers(newPage, itemsPerPage);
+  };
+
+  // Filter users based on search and role - NO LONGER NEEDED, backend handles this
+  // But we keep it for display purposes if needed
+  const filteredUsers = users;
 
   // Table columns configuration
   const columns = [
@@ -78,11 +114,10 @@ const Users = () => {
       key: 'role',
       title: 'Role',
       render: (user) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          user.role === 'admin' 
-            ? 'bg-purple-100 text-purple-800' 
-            : 'bg-blue-100 text-blue-800'
-        }`}>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin'
+          ? 'bg-purple-100 text-purple-800'
+          : 'bg-blue-100 text-blue-800'
+          }`}>
           {user.role}
         </span>
       )
@@ -91,11 +126,10 @@ const Users = () => {
       key: 'isActive',
       title: 'Status',
       render: (user) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          user.isActive 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.isActive
+          ? 'bg-green-100 text-green-800'
+          : 'bg-red-100 text-red-800'
+          }`}>
           {user.isActive ? 'Active' : 'Inactive'}
         </span>
       )
@@ -126,7 +160,7 @@ const Users = () => {
         await api.post('/admin/users', formData);
         toast.success('User created successfully');
       }
-      
+
       setIsModalOpen(false);
       resetForm();
       fetchUsers();
@@ -181,21 +215,37 @@ const Users = () => {
     resetForm();
   };
 
-  // Export users
-  const handleExport = () => {
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Name,Email,Phone,Role,Status,Joined\n" +
-      filteredUsers.map(user => 
-        `${user.fullName},${user.email},${user.phone},${user.role},${user.isActive ? 'Active' : 'Inactive'},${new Date(user.createdAt).toLocaleDateString()}`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "users.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Export users (fetch all from backend export endpoint)
+  const handleExport = async () => {
+    try {
+      // Build query params for filters if needed
+      const params = new URLSearchParams();
+      if (filterRole !== 'all') {
+        params.append('role', filterRole);
+      }
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      // Fetch all users from export endpoint
+      const response = await api.get(`/admin/users/export?${params.toString()}`);
+      const allUsers = response.data.data || [];
+
+      const csvContent = "data:text/csv;charset=utf-8," +
+        "Name,Email,Phone,Role,Status,Joined\n" +
+        allUsers.map(user =>
+          `${user.fullName},${user.email},${user.phone},${user.role},${user.isActive ? 'Active' : 'Inactive'},${new Date(user.createdAt).toLocaleDateString()}`
+        ).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "users.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast.error('Failed to export users');
+    }
   };
 
   return (
@@ -258,20 +308,22 @@ const Users = () => {
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{users.length}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {pagination?.totalItems || users.length}
+            </div>
             <div className="text-sm text-gray-600">Total Users</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
               {users.filter(u => u.isActive).length}
             </div>
-            <div className="text-sm text-gray-600">Active Users</div>
+            <div className="text-sm text-gray-600">Active Users (Current Page)</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
               {users.filter(u => u.role === 'admin').length}
             </div>
-            <div className="text-sm text-gray-600">Administrators</div>
+            <div className="text-sm text-gray-600">Administrators (Current Page)</div>
           </div>
         </div>
       </div>
@@ -284,6 +336,8 @@ const Users = () => {
         onDelete={handleDelete}
         loading={loading}
         emptyMessage="No users found"
+        pagination={pagination}
+        onPageChange={handlePageChange}
       />
 
       {/* Create/Edit Modal */}
@@ -302,7 +356,7 @@ const Users = () => {
               type="text"
               required
               value={formData.fullName}
-              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter full name"
             />
@@ -316,7 +370,7 @@ const Users = () => {
               type="email"
               required
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter email address"
             />
@@ -329,7 +383,7 @@ const Users = () => {
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter phone number"
             />
@@ -342,7 +396,7 @@ const Users = () => {
             <select
               required
               value={formData.role}
-              onChange={(e) => setFormData({...formData, role: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="user">User</option>
@@ -355,7 +409,7 @@ const Users = () => {
               type="checkbox"
               id="isActive"
               checked={formData.isActive}
-              onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">

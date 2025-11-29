@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import Pagination from './Pagination';
 
 const DataTable = ({
   data,
@@ -9,7 +10,9 @@ const DataTable = ({
   onView,
   actions,
   loading,
-  emptyMessage = "No data available"
+  emptyMessage = "No data available",
+  pagination,
+  onPageChange
 }) => {
   if (loading) {
     return (
@@ -76,7 +79,7 @@ const DataTable = ({
                           if (action.condition && typeof action.condition === 'function' && !action.condition(item)) {
                             return null;
                           }
-                          
+
                           const IconComponent = action.icon;
                           return (
                             <button
@@ -128,6 +131,19 @@ const DataTable = ({
           </tbody>
         </table>
       </div>
+      {console.log('DataTable pagination prop:', pagination)}
+      {console.log('DataTable onPageChange prop:', onPageChange)}
+      {pagination && onPageChange && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          hasNextPage={pagination.hasNextPage}
+          hasPrevPage={pagination.hasPrevPage}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.itemsPerPage}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 };

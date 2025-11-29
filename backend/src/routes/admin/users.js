@@ -46,31 +46,26 @@ router.get('/', validate(schemas.pagination, 'query'), asyncHandler(async (req, 
   res.json(new ApiResponse(200, result, 'Users retrieved successfully'));
 }));
 
-// @route   GET /api/admin/users/:id
-// @desc    Get single user (admin)
-// @access  Admin
-router.get('/:id', asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id)
-    .select('-passwordHash')
-    .populate('bookings');
 
-  if (!user) {
-    throw new ApiError(404, 'User not found');
+// @route   GET /api/admin/users/export
+// @desc    Export all users (admin, no pagination)
+// @access  Admin
+router.get('/export', asyncHandler(async (req, res) => {
+  // Build filter (optional: allow role, isActive, search as query params)
+  const { role, isActive, search } = req.query;
+  const filter = {};
+  if (role) filter.role = role;
+  if (isActive !== undefined) filter.isActive = isActive === 'true';
+  if (search) {
+    filter.$or = [
+      { fullName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { primaryBike: { $regex: search, $options: 'i' } }
+    ];
   }
 
-  // Get user's booking statistics
-  const bookingStats = await Booking.aggregate([
-    { $match: { user: user._id } },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-        totalAmount: { $sum: '$amount' }
-      }
-    }
-  ]);
-
-  res.json(new ApiResponse(200, { user, bookingStats }, 'User retrieved successfully'));
+  const users = await User.find(filter).select('-passwordHash').sort({ createdAt: -1 });
+  res.json(new ApiResponse(200, users, 'All users exported successfully'));
 }));
 
 // @route   PUT /api/admin/users/:id

@@ -239,19 +239,11 @@ const Events = () => {
                 <h2 className="text-4xl font-bold text-white mb-3">{event.title}</h2>
                 {event.startDate && (
                   <p className="text-red-500 text-xl font-medium">
-                    {new Date(event.startDate).toLocaleDateString('en-IN', {
-                      timeZone: 'Asia/Kolkata',
+                    {new Date(event.startDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
-                    })}
-                    {' at '}
-                    {new Date(event.startDate).toLocaleTimeString('en-IN', {
-                      timeZone: 'Asia/Kolkata',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
                     })}
                   </p>
                 )}
@@ -313,22 +305,13 @@ const Events = () => {
                     )}
                     {event.startDate && (
                       <div className="text-white">
-                        <p className="text-sm opacity-75">Date & Time:</p>
+                        <p className="text-sm opacity-75">Date:</p>
                         <p className="font-semibold">
-                          {new Date(event.startDate).toLocaleDateString('en-IN', {
-                            timeZone: 'Asia/Kolkata',
+                          {new Date(event.startDate).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
-                          })}
-                        </p>
-                        <p className="text-sm font-medium text-red-400">
-                          {new Date(event.startDate).toLocaleTimeString('en-IN', {
-                            timeZone: 'Asia/Kolkata',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
                           })}
                         </p>
                       </div>
@@ -345,11 +328,7 @@ const Events = () => {
                               <span className="text-green-400 text-lg">₹{event.pricing.earlyBirdPrice}</span>
                               <span className="text-xs ml-2 line-through opacity-60">₹{event.pricing.basePrice}</span>
                               <div className="text-xs text-green-400 mt-1">
-                                🎉 Early Bird (Until {new Date(event.pricing.earlyBirdDeadline).toLocaleDateString('en-IN', { 
-                                  timeZone: 'Asia/Kolkata',
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })})
+                                🎉 Early Bird (Until {new Date(event.pricing.earlyBirdDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
                               </div>
                             </div>
                           ) : (

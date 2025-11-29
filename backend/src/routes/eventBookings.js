@@ -390,16 +390,11 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
       // For group bookings, increment by group size
       const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
       
-      // Increment both legacy and new capacity fields to ensure compatibility
+      // Use $inc to safely increment and ensure it doesn't go negative
       await Event.findByIdAndUpdate(
         booking.event,
-        { 
-          $inc: { 
-            currentParticipants: increment,
-            'capacity.currentParticipants': increment
-          } 
-        },
-        { session, new: true }
+        { $inc: { currentParticipants: increment } },
+        { session }
       );
     }
 
@@ -609,13 +604,8 @@ router.put('/:id/cancel', authenticate, asyncHandler(async (req, res) => {
       const decrement = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
       await Event.findByIdAndUpdate(
         booking.event._id,
-        { 
-          $inc: { 
-            currentParticipants: -decrement,
-            'capacity.currentParticipants': -decrement
-          } 
-        },
-        { session, new: true }
+        { $inc: { currentParticipants: -decrement } },
+        { session }
       );
     }
 

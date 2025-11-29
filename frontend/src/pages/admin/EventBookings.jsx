@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FiUsers, 
-  FiCalendar, 
-  FiDollarSign, 
+import {
+  FiUsers,
+  FiCalendar,
+  FiDollarSign,
   FiTrendingUp,
   FiEye,
   FiEdit,
@@ -36,11 +36,12 @@ const EventBookings = () => {
     startDate: '',
     endDate: ''
   });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0
-  });
+
+  // Pagination state - simplified to match backend structure
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState(null);
+
   const [sortConfig, setSortConfig] = useState({
     key: 'createdAt',
     direction: 'desc'
@@ -49,53 +50,82 @@ const EventBookings = () => {
   useEffect(() => {
     fetchData();
     fetchEvents();
-  }, [pagination.page, pagination.limit, sortConfig, filters]);
+  }, []);
+
+  // Refetch when filters, page, or sort changes
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1); // Reset to page 1 when filters change
+    } else {
+      fetchData();
+    }
+  }, [filters, sortConfig]);
+
+  // Fetch when page changes
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, itemsPerPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+
+      // Build query parameters as object
       const params = {
-        page: pagination.page,
-        limit: pagination.limit,
+        page: currentPage,
+        limit: itemsPerPage,
         sortBy: sortConfig.key,
-        sortOrder: sortConfig.direction,
-        ...filters
+        sortOrder: sortConfig.direction
       };
+
+      // Add filters
+      if (filters.status) params.status = filters.status;
+      if (filters.eventId) params.eventId = filters.eventId;
+      if (filters.search) params.search = filters.search;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
 
       const [bookingsResponse, statsResponse] = await Promise.all([
         eventBookingsAPI.getAll(params),
         eventBookingsAPI.getStats()
       ]);
-      
 
-      const bookingsPayload = bookingsResponse?.data?.data || bookingsResponse?.data;
-      const bookingsData = Array.isArray(bookingsPayload?.data)
-        ? bookingsPayload.data
-        : Array.isArray(bookingsPayload?.bookings)
-          ? bookingsPayload.bookings
-          : Array.isArray(bookingsPayload?.items)
-            ? bookingsPayload.items
-            : Array.isArray(bookingsPayload)
-              ? bookingsPayload
-              : Array.isArray(bookingsResponse?.data?.bookings)
-                ? bookingsResponse.data.bookings
-                : [];
+      console.log('Full Bookings Response:', bookingsResponse);
 
-      const paginationData = bookingsPayload?.pagination || bookingsResponse?.data?.pagination || {};
+      // Extract data from response - the structure is response.data.data (array) and response.data.pagination
+      const responseData = bookingsResponse?.data?.data || bookingsResponse?.data;
+
+      // Check if responseData is an object with data and pagination, or just an array
+      let bookingsData;
+      let paginationData;
+
+      if (Array.isArray(responseData)) {
+        // If responseData is directly an array, use it as bookings
+        bookingsData = responseData;
+        // Try to get pagination from the parent level
+        paginationData = bookingsResponse?.data?.pagination || null;
+      } else if (responseData && typeof responseData === 'object') {
+        // If responseData is an object, extract data and pagination from it
+        bookingsData = Array.isArray(responseData.data) ? responseData.data : [];
+        paginationData = responseData.pagination || null;
+      } else {
+        bookingsData = [];
+        paginationData = null;
+      }
 
       const statsPayload = statsResponse?.data?.data || statsResponse?.data;
 
+      console.log('Extracted Bookings Data:', bookingsData);
+      console.log('Extracted Pagination Data:', paginationData);
+
       setBookings(bookingsData);
-      setPagination(prev => ({
-        ...prev,
-        total: paginationData.totalItems || paginationData.total || bookingsData.length,
-        page: paginationData.currentPage || prev.page,
-        limit: paginationData.itemsPerPage || paginationData.limit || prev.limit
-      }));
+      setPagination(paginationData);
       setStats(statsPayload || {});
     } catch (error) {
       console.error('Error fetching event bookings:', error);
       toast.error('Failed to fetch event bookings');
+      setBookings([]);
+      setPagination(null);
     } finally {
       setLoading(false);
     }
@@ -124,11 +154,11 @@ const EventBookings = () => {
 
   const handleStatusUpdate = async (id, status, notes = '', refundAmount = 0, refundReason = '') => {
     try {
-      await eventBookingsAPI.updateStatus(id, { 
-        status, 
-        notes, 
+      await eventBookingsAPI.updateStatus(id, {
+        status,
+        notes,
         refundAmount: parseFloat(refundAmount) || 0,
-        refundReason 
+        refundReason
       });
       toast.success('Booking status updated successfully');
       fetchData();
@@ -181,7 +211,10 @@ const EventBookings = () => {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
   };
 
   const clearFilters = () => {
@@ -213,7 +246,7 @@ const EventBookings = () => {
   const columns = [
     {
       key: 'bookingNumber',
-  title: 'Booking ID',
+      title: 'Booking ID',
       sortable: true,
       render: (booking) => (
         <div className="font-medium text-gray-900">
@@ -223,7 +256,7 @@ const EventBookings = () => {
     },
     {
       key: 'event.title',
-  title: 'Event',
+      title: 'Event',
       sortable: true,
       render: (booking) => (
         <div>
@@ -236,7 +269,7 @@ const EventBookings = () => {
     },
     {
       key: 'personalInfo.fullName',
-  title: 'Customer',
+      title: 'Customer',
       sortable: true,
       render: (booking) => (
         <div>
@@ -247,7 +280,7 @@ const EventBookings = () => {
     },
     {
       key: 'amount',
-  title: 'Amount',
+      title: 'Amount',
       sortable: true,
       render: (booking) => (
         <div className="text-sm">
@@ -271,25 +304,24 @@ const EventBookings = () => {
       sortable: true,
       render: (booking) => (
         <div className="text-sm">
-          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-            booking.status === 'paid' 
-              ? 'bg-green-100 text-green-800' 
-              : booking.status === 'created'
+          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'paid'
+            ? 'bg-green-100 text-green-800'
+            : booking.status === 'created'
               ? 'bg-yellow-100 text-yellow-800'
               : booking.status === 'failed'
-              ? 'bg-red-100 text-red-800'
-              : booking.status === 'refunded'
-              ? 'bg-purple-100 text-purple-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {booking.status === 'paid' ? '✓ Paid' : 
-             booking.status === 'created' ? '⏳ Pending' :
-             booking.status === 'failed' ? '✗ Failed' :
-             booking.status === 'refunded' ? '↩ Refunded' :
-             booking.status}
+                ? 'bg-red-100 text-red-800'
+                : booking.status === 'refunded'
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-gray-100 text-gray-800'
+            }`}>
+            {booking.status === 'paid' ? '✓ Paid' :
+              booking.status === 'created' ? '⏳ Pending' :
+                booking.status === 'failed' ? '✗ Failed' :
+                  booking.status === 'refunded' ? '↩ Refunded' :
+                    booking.status}
           </div>
           {booking.razorpayPaymentId && (
-            <div className="text-xs text-gray-500 mt-1 font-mono truncate" style={{maxWidth: '120px'}} title={booking.razorpayPaymentId}>
+            <div className="text-xs text-gray-500 mt-1 font-mono truncate" style={{ maxWidth: '120px' }} title={booking.razorpayPaymentId}>
               {booking.razorpayPaymentId}
             </div>
           )}
@@ -301,13 +333,13 @@ const EventBookings = () => {
     },
     {
       key: 'status',
-  title: 'Status',
+      title: 'Status',
       sortable: true,
       render: (booking) => getStatusBadge(booking.status)
     },
     {
       key: 'createdAt',
-  title: 'Booking Date',
+      title: 'Booking Date',
       sortable: true,
       render: (booking) => (
         <div className="text-sm text-gray-900">
@@ -317,7 +349,7 @@ const EventBookings = () => {
     },
     {
       key: 'actions',
-  title: 'Actions',
+      title: 'Actions',
       render: (booking) => (
         <div className="flex space-x-2">
           <button
@@ -506,10 +538,7 @@ const EventBookings = () => {
           columns={columns}
           loading={loading}
           pagination={pagination}
-          onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-          onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
-          onSort={handleSort}
-          sortConfig={sortConfig}
+          onPageChange={handlePageChange}
           emptyMessage="No event bookings found"
         />
       </div>
@@ -536,14 +565,13 @@ const EventBookings = () => {
                 </div>
                 <div>
                   <span className="text-gray-600">Status:</span>
-                  <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                    selectedBooking.status === 'paid' ? 'bg-green-100 text-green-800' :
+                  <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${selectedBooking.status === 'paid' ? 'bg-green-100 text-green-800' :
                     selectedBooking.status === 'created' ? 'bg-yellow-100 text-yellow-800' :
-                    selectedBooking.status === 'failed' ? 'bg-red-100 text-red-800' :
-                    selectedBooking.status === 'refunded' ? 'bg-blue-100 text-blue-800' :
-                    selectedBooking.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                      selectedBooking.status === 'failed' ? 'bg-red-100 text-red-800' :
+                        selectedBooking.status === 'refunded' ? 'bg-blue-100 text-blue-800' :
+                          selectedBooking.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                            'bg-gray-100 text-gray-800'
+                    }`}>
                     {selectedBooking.status?.charAt(0)?.toUpperCase() + selectedBooking.status?.slice(1)}
                   </span>
                 </div>
@@ -593,7 +621,7 @@ const EventBookings = () => {
                     {selectedBooking.groupInfo.groupName || 'N/A'}
                   </span>
                 </div>
-                
+
                 <h5 className="font-semibold text-gray-800 mb-3 mt-4">
                   Group Members ({selectedBooking.groupInfo.members?.length || 0}):
                 </h5>
@@ -623,14 +651,8 @@ const EventBookings = () => {
                         <div>
                           <span className="text-gray-600">Food Preference:</span>
                           <span className={`ml-2 font-semibold ${member.foodPreference === 'Veg' ? 'text-green-600' : 'text-orange-600'}`}>
-                            {member.foodPreference === 'Veg' ? '🌱 Veg' : 
-                             member.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">T-Shirt Size:</span>
-                          <span className="ml-2 font-medium bg-blue-100 px-2 py-1 rounded">
-                            {member.tshirtSize || 'N/A'}
+                            {member.foodPreference === 'Veg' ? '🌱 Veg' :
+                              member.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
                           </span>
                         </div>
                       </div>
@@ -666,7 +688,7 @@ const EventBookings = () => {
                 <div>
                   <span className="text-gray-600">Date of Birth:</span>
                   <span className="ml-2">
-                    {selectedBooking.personalInfo?.dateOfBirth ? 
+                    {selectedBooking.personalInfo?.dateOfBirth ?
                       new Date(selectedBooking.personalInfo.dateOfBirth).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
@@ -677,14 +699,8 @@ const EventBookings = () => {
                 <div>
                   <span className="text-gray-600">Food Preference:</span>
                   <span className={`ml-2 font-semibold ${selectedBooking.personalInfo?.foodPreference === 'Veg' ? 'text-green-600' : 'text-orange-600'}`}>
-                    {selectedBooking.personalInfo?.foodPreference === 'Veg' ? '🌱 Veg' : 
-                     selectedBooking.personalInfo?.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600">T-Shirt Size:</span>
-                  <span className="ml-2 font-medium bg-blue-100 px-2 py-1 rounded">
-                    {selectedBooking.personalInfo?.tshirtSize || 'N/A'}
+                    {selectedBooking.personalInfo?.foodPreference === 'Veg' ? '🌱 Veg' :
+                      selectedBooking.personalInfo?.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
                   </span>
                 </div>
                 <div className="col-span-2">
@@ -795,14 +811,14 @@ const EventBookings = () => {
                 <div>
                   <span className="text-gray-600">Start Date:</span>
                   <span className="ml-2 font-medium">
-                    {selectedBooking.event?.startDate ? 
+                    {selectedBooking.event?.startDate ?
                       new Date(selectedBooking.event.startDate).toLocaleDateString() : 'Not specified'}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">End Date:</span>
                   <span className="ml-2">
-                    {selectedBooking.event?.endDate ? 
+                    {selectedBooking.event?.endDate ?
                       new Date(selectedBooking.event.endDate).toLocaleDateString() : 'Not specified'}
                   </span>
                 </div>

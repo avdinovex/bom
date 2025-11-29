@@ -109,48 +109,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Temporary development-only migration endpoint (remove after running once)
-app.post('/api/migrate-capacity', async (req, res) => {
-  try {
-    const Event = (await import('./models/Event.js')).default;
-    const events = await Event.find({});
-    
-    let syncedCount = 0;
-    
-    for (const event of events) {
-      const needsSync = 
-        !event.capacity || 
-        event.capacity.currentParticipants !== event.currentParticipants ||
-        event.capacity.maxParticipants !== event.maxParticipants;
-      
-      if (needsSync) {
-        event.capacity = event.capacity || {};
-        event.capacity.currentParticipants = event.currentParticipants || 0;
-        event.capacity.maxParticipants = event.maxParticipants || 100;
-        event.capacity.waitlistEnabled = event.capacity.waitlistEnabled ?? true;
-        event.capacity.maxWaitlist = event.capacity.maxWaitlist || 50;
-        
-        await event.save();
-        syncedCount++;
-      }
-    }
-    
-    res.json({ 
-      status: 'success',
-      data: {
-        totalEvents: events.length,
-        syncedEvents: syncedCount 
-      },
-      message: `Capacity sync completed. ${syncedCount} events updated.`
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message
-    });
-  }
-});
-
 // Very lenient rate limiting for admin routes
 const adminLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute window
