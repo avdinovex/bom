@@ -298,7 +298,10 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         bookingData.couponCode = couponCodeToSend;
       }
 
-      console.log('Sending event booking data:', bookingData);
+      console.log('=== EVENT BOOKING SUBMISSION ===');
+      console.log('Booking Type:', bookingType);
+      console.log('Group Info:', bookingData.groupInfo);
+      console.log('Full Booking Data:', JSON.stringify(bookingData, null, 2));
 
       const orderResponse = await api.post('/event-bookings/create-order', bookingData);
       const { booking, razorpayOrder, event: eventData } = orderResponse.data.data;

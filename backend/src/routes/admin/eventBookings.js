@@ -19,6 +19,7 @@ router.get('/', asyncHandler(async (req, res) => {
     limit = 10, 
     status, 
     eventId,
+    bookingType,
     search,
     sortBy = 'createdAt', 
     sortOrder = 'desc' 
@@ -34,6 +35,9 @@ router.get('/', asyncHandler(async (req, res) => {
   }
   if (eventId) {
     filter.event = eventId;
+  }
+  if (bookingType) {
+    filter.bookingType = bookingType;
   }
 
   // Build aggregation pipeline for search

@@ -32,6 +32,7 @@ const EventBookings = () => {
   const [filters, setFilters] = useState({
     status: '',
     eventId: '',
+    bookingType: '',
     search: '',
     startDate: '',
     endDate: ''
@@ -48,23 +49,14 @@ const EventBookings = () => {
   });
 
   useEffect(() => {
-    fetchData();
     fetchEvents();
   }, []);
 
-  // Refetch when filters, page, or sort changes
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1); // Reset to page 1 when filters change
-    } else {
-      fetchData();
-    }
-  }, [filters, sortConfig]);
-
-  // Fetch when page changes
+  // Fetch data when page, itemsPerPage, filters, or sort changes
   useEffect(() => {
     fetchData();
-  }, [currentPage, itemsPerPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, filters, sortConfig]);
 
   const fetchData = async () => {
     try {
@@ -81,6 +73,7 @@ const EventBookings = () => {
       // Add filters
       if (filters.status) params.status = filters.status;
       if (filters.eventId) params.eventId = filters.eventId;
+      if (filters.bookingType) params.bookingType = filters.bookingType;
       if (filters.search) params.search = filters.search;
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
@@ -211,6 +204,7 @@ const EventBookings = () => {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to page 1 when filters change
   };
 
   const handlePageChange = (newPage) => {
@@ -221,10 +215,12 @@ const EventBookings = () => {
     setFilters({
       status: '',
       eventId: '',
+      bookingType: '',
       search: '',
       startDate: '',
       endDate: ''
     });
+    setCurrentPage(1); // Reset to page 1 when clearing filters
   };
 
   const getStatusBadge = (status) => {
@@ -252,6 +248,21 @@ const EventBookings = () => {
         <div className="font-medium text-gray-900">
           {booking.bookingNumber}
         </div>
+      )
+    },
+    {
+      key: 'bookingType',
+      title: 'Type',
+      sortable: true,
+      render: (booking) => (
+        <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+          booking.bookingType === 'group'
+            ? 'bg-purple-100 text-purple-800'
+            : 'bg-blue-100 text-blue-800'
+        }`}>
+          {booking.bookingType === 'group' && <FiUsers className="mr-1" size={12} />}
+          {booking.bookingType === 'group' ? `Group (${booking.groupInfo?.groupSize || 0})` : 'Individual'}
+        </span>
       )
     },
     {
@@ -505,6 +516,21 @@ const EventBookings = () => {
             </select>
           </div>
 
+          <div className="min-w-[150px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Booking Type
+            </label>
+            <select
+              value={filters.bookingType}
+              onChange={(e) => handleFilterChange('bookingType', e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">All Types</option>
+              <option value="individual">Individual</option>
+              <option value="group">Group</option>
+            </select>
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={clearFilters}
@@ -537,10 +563,51 @@ const EventBookings = () => {
           data={bookings}
           columns={columns}
           loading={loading}
-          pagination={pagination}
-          onPageChange={handlePageChange}
           emptyMessage="No event bookings found"
         />
+        
+        {/* Pagination Controls */}
+        {pagination && pagination.totalPages > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={!pagination.hasPrevPage}
+                className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="mx-3 text-sm text-gray-600">
+                Page {pagination.currentPage} of {pagination.totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                disabled={!pagination.hasNextPage}
+                className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Rows per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {[10, 20, 50, 100].map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="text-sm text-gray-500">
+              Showing {bookings.length} of {pagination.totalItems} bookings
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Booking Details Modal */}

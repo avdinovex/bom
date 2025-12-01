@@ -111,6 +111,12 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
     couponCode
   } = req.body;
 
+  // Log received data for debugging
+  console.log('=== CREATE EVENT BOOKING ORDER ===');
+  console.log('Booking Type:', bookingType);
+  console.log('Group Info:', JSON.stringify(groupInfo, null, 2));
+  console.log('Personal Info:', JSON.stringify(personalInfo, null, 2));
+
   // Validation
   if (!eventId) {
     throw new ApiError(400, 'Event ID is required');
@@ -123,8 +129,10 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
   // Validate group booking
   if (bookingType === 'group') {
     if (!groupInfo || !groupInfo.groupName || !groupInfo.members || groupInfo.members.length < 2) {
+      console.error('❌ Group validation failed:', { groupInfo });
       throw new ApiError(400, 'Group bookings require group name and at least 2 members');
     }
+    console.log('✅ Group validation passed - Group Size:', groupInfo.members.length);
   }
 
   if (!personalInfo || !motorcycleInfo || !emergencyContact || !medicalHistory || !agreements) {
@@ -262,8 +270,15 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
       bookingData.coupon = appliedCoupon._id;
     }
 
+    console.log('=== SAVING BOOKING TO DATABASE ===');
+    console.log('Booking Data:', JSON.stringify(bookingData, null, 2));
+    
     const booking = new EventBooking(bookingData);
     await booking.save({ session });
+    
+    console.log('✅ Booking saved successfully:', booking._id);
+    console.log('Saved Booking Type:', booking.bookingType);
+    console.log('Saved Group Info:', JSON.stringify(booking.groupInfo, null, 2));
 
     // Create Razorpay order
     const razorpayOrder = await createOrder({
