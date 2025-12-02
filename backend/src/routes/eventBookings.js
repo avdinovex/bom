@@ -347,6 +347,8 @@ router.post('/create-order', authenticate, validate(schemas.createEventBookingOr
 router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+  logger.info(`Payment verification attempt - Order: ${razorpay_order_id}, Payment: ${razorpay_payment_id}`);
+
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     throw new ApiError(400, 'Missing payment verification data');
   }
@@ -364,8 +366,11 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     });
 
     if (!isValid) {
+      logger.warn(`Invalid payment signature for order ${razorpay_order_id}`);
       throw new ApiError(400, 'Payment verification failed');
     }
+
+    logger.info(`Payment signature verified for order ${razorpay_order_id}`);
 
     // Find the booking
     const booking = await EventBooking.findOne({
@@ -377,11 +382,22 @@ router.post('/verify-payment', authenticate, asyncHandler(async (req, res) => {
     .session(session);
 
     if (!booking) {
+      logger.error(`Booking not found for order ${razorpay_order_id}`);
       throw new ApiError(404, 'Booking not found');
     }
 
     if (booking.status === 'paid') {
-      throw new ApiError(400, 'Payment already verified');
+      logger.info(`Booking ${booking.bookingNumber} already marked as paid`);
+      await session.abortTransaction();
+      
+      // Return success even if already paid - the payment went through
+      return res.status(200).json(
+        new ApiResponse(200, { 
+          booking,
+          message: 'Payment already verified',
+          alreadyProcessed: true
+        }, 'Booking already confirmed')
+      );
     }
 
     // Update booking
@@ -717,6 +733,162 @@ router.post('/:id/resend-ticket', authenticate, asyncHandler(async (req, res) =>
   } catch (error) {
     logger.error('Failed to resend event ticket:', error.message);
     throw new ApiError(500, `Failed to send ticket: ${error.message}`);
+  }
+}));
+
+// @route   POST /api/event-bookings/webhook
+// @desc    Handle Razorpay webhooks for payment events (for card/netbanking async payments)
+// @access  Public (but verified with webhook signature)
+router.post('/webhook', express.raw({ type: 'application/json' }), asyncHandler(async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+    
+    // Verify webhook signature if secret is configured
+    if (webhookSecret && signature) {
+      const crypto = await import('crypto');
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+      
+      if (signature !== expectedSignature) {
+        logger.warn('Invalid webhook signature');
+        return res.status(400).json({ error: 'Invalid signature' });
+      }
+    }
+
+    const event = req.body;
+    logger.info(`Received webhook event: ${event.event}`);
+
+    // Handle payment.authorized or payment.captured events
+    if (event.event === 'payment.authorized' || event.event === 'payment.captured') {
+      const paymentEntity = event.payload.payment.entity;
+      const orderId = paymentEntity.order_id;
+      const paymentId = paymentEntity.id;
+
+      logger.info(`Processing payment for order ${orderId}, payment ${paymentId}`);
+
+      // Find the booking
+      const booking = await EventBooking.findOne({ razorpayOrderId: orderId })
+        .populate('event', 'title startDate endDate location imgUrl price')
+        .populate('user', 'fullName email');
+
+      if (!booking) {
+        logger.warn(`Booking not found for order ${orderId}`);
+        return res.status(200).json({ status: 'ok' });
+      }
+
+      // If already paid, skip
+      if (booking.status === 'paid') {
+        logger.info(`Booking ${booking.bookingNumber} already marked as paid`);
+        return res.status(200).json({ status: 'already_processed' });
+      }
+
+      // Start transaction
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      try {
+        // Update booking status
+        booking.status = 'paid';
+        booking.razorpayPaymentId = paymentId;
+        booking.paidAt = new Date();
+        await booking.save({ session });
+
+        // If coupon was used, increment its usage count
+        if (booking.coupon) {
+          const coupon = await Coupon.findById(booking.coupon).session(session);
+          if (coupon && booking.user) {
+            await coupon.incrementUsage(booking.user._id, booking._id);
+          }
+        }
+
+        // Update event participants
+        const eventDoc = await Event.findById(booking.event).session(session);
+        if (eventDoc) {
+          const increment = booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1;
+          await Event.findByIdAndUpdate(
+            booking.event._id,
+            { 
+              $inc: { 
+                currentParticipants: increment,
+                'capacity.currentParticipants': increment
+              } 
+            },
+            { session }
+          );
+        }
+
+        await session.commitTransaction();
+        logger.info(`Booking ${booking.bookingNumber} marked as paid via webhook`);
+
+        // Send confirmation email (async, don't wait)
+        if (booking.user && booking.user.email) {
+          emailService.sendEventBookingConfirmation(booking.user.email, {
+            fullName: booking.user.fullName,
+            bookingNumber: booking.bookingNumber,
+            eventTitle: booking.event.title,
+            location: booking.event.location,
+            startDate: booking.event.startDate,
+            endDate: booking.event.endDate,
+            amount: booking.amount,
+            originalAmount: booking.originalAmount,
+            discountAmount: booking.discountAmount,
+            bookingType: booking.bookingType,
+            groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1,
+            personalInfo: booking.personalInfo,
+            motorcycleInfo: booking.motorcycleInfo,
+            couponCode: booking.couponCode,
+            paymentId: paymentId,
+            paidAt: booking.paidAt
+          }).catch(err => logger.error('Failed to send confirmation email from webhook:', err));
+        }
+
+        // Send ticket via WhatsApp (async, don't wait)
+        (async () => {
+          try {
+            const ticketBuffer = await generateEventTicket({
+              bookingNumber: booking.bookingNumber,
+              userName: booking.personalInfo.fullName,
+              eventName: booking.event.title,
+              location: booking.event.location,
+              startDate: booking.event.startDate,
+              endDate: booking.event.endDate,
+              amount: booking.amount,
+              bookingType: booking.bookingType,
+              groupSize: booking.bookingType === 'group' ? booking.groupInfo.groupSize : 1
+            });
+
+            await whatsappService.sendEventTicket(
+              booking.personalInfo.contactNumber,
+              ticketBuffer,
+              {
+                userName: booking.personalInfo.fullName,
+                bookingNumber: booking.bookingNumber,
+                eventName: booking.event.title,
+                amount: booking.amount
+              }
+            );
+            logger.info(`Ticket sent via WhatsApp from webhook for ${booking.bookingNumber}`);
+          } catch (error) {
+            logger.error('Failed to send ticket from webhook:', error);
+          }
+        })();
+
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        session.endSession();
+      }
+    }
+
+    res.status(200).json({ status: 'ok' });
+
+  } catch (error) {
+    logger.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 }));
 

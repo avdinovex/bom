@@ -332,8 +332,16 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
             setCurrentStep(3);
             onSuccess && onSuccess(verificationResponse.data);
           } catch (error) {
-            toast.error('Payment verification failed');
             console.error('Payment verification error:', error);
+            const errorMsg = error.response?.data?.message || 'Payment verification failed';
+            toast.error(errorMsg);
+            
+            // If payment was already verified, still show success
+            if (errorMsg.includes('already verified')) {
+              toast.success('Payment was already processed successfully!');
+              setCurrentStep(3);
+              onSuccess && onSuccess({ booking });
+            }
           } finally {
             setLoading(false);
           }
@@ -355,16 +363,43 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         },
         modal: {
           ondismiss: () => {
-            toast.info('Payment cancelled');
+            console.log('Payment modal dismissed');
+            toast.info('Payment cancelled or closed');
             setLoading(false);
           },
           confirm_close: true,
           escape: false,
-          animation: true
+          animation: true,
+          // Handle payment failure
+          onhidden: () => {
+            console.log('Payment modal hidden');
+            setLoading(false);
+          }
+        },
+        // Add retry configuration for better card/netbanking support
+        retry: {
+          enabled: true,
+          max_count: 3
+        },
+        // Add timeout for better UX
+        timeout: 600, // 10 minutes
+        // Handle payment errors
+        error: (error) => {
+          console.error('Razorpay payment error:', error);
+          toast.error(`Payment failed: ${error.description || error.reason || 'Unknown error'}`);
+          setLoading(false);
         }
       };
 
       const razorpay = new window.Razorpay(options);
+      
+      // Add event listener for payment failure
+      razorpay.on('payment.failed', function (response) {
+        console.error('Payment failed event:', response);
+        toast.error(`Payment failed: ${response.error.description || 'Please try again'}`);
+        setLoading(false);
+      });
+      
       razorpay.open();
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to create booking';
