@@ -40,31 +40,54 @@ class EmailService {
       return;
     }
 
-    // Create transporter using Gmail SMTP with explicit configuration
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
+    // Determine SMTP configuration
+    const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
+    const emailPort = parseInt(process.env.EMAIL_PORT || '587', 10);
+    const emailSecure = process.env.EMAIL_SECURE === 'true'; // true for port 465, false for port 587
+    
+    // Create transporter with flexible SMTP configuration
+    const transportConfig = {
+      host: emailHost,
+      port: emailPort,
+      secure: emailSecure,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
+        pass: process.env.EMAIL_PASSWORD
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000
+    };
+
+    // Add service property only for Gmail
+    if (emailHost === 'smtp.gmail.com') {
+      transportConfig.service = 'gmail';
+    }
+
+    console.log('📧 Initializing email service...', {
+      host: emailHost,
+      port: emailPort,
+      secure: emailSecure,
+      user: process.env.EMAIL_USER
     });
+
+    this.transporter = nodemailer.createTransport(transportConfig);
 
     // Verify connection configuration
     this.transporter.verify((error, success) => {
       if (error) {
-        console.error('Email configuration error:', {
+        console.error('❌ Email configuration error:', {
           message: error.message,
           code: error.code,
           command: error.command,
           response: error.response
         });
       } else {
+        console.log('✅ Email service initialized successfully');
         this.initialized = true;
       }
     });
