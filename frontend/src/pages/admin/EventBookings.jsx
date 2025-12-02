@@ -722,6 +722,10 @@ const EventBookings = () => {
                               member.foodPreference === 'Non-Veg' ? '🍖 Non-Veg' : 'N/A'}
                           </span>
                         </div>
+                        <div>
+                          <span className="text-gray-600">T-shirt Size:</span>
+                          <span className="ml-2 font-medium">{member.tshirtSize || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -762,6 +766,10 @@ const EventBookings = () => {
                 <div>
                   <span className="text-gray-600">Blood Group:</span>
                   <span className="ml-2 font-medium">{selectedBooking.personalInfo?.bloodGroup || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">T-shirt Size:</span>
+                  <span className="ml-2 font-medium">{selectedBooking.personalInfo?.tshirtSize || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Food Preference:</span>

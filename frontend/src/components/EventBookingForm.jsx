@@ -20,6 +20,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     gender: '',
     dateOfBirth: '',
     bloodGroup: '',
+    tshirtSize: '',
     foodPreference: '',
     motorcycleModelName: '',
     motorcycleNumber: '',
@@ -41,6 +42,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   ];
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const tshirtSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -58,8 +60,8 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       setFormData(prev => ({
         ...prev,
         groupMembers: [
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' },
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' },
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }
         ]
       }));
     }
@@ -81,7 +83,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     }
     setFormData(prev => ({
       ...prev,
-      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }]
+      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }]
     }));
   };
 
@@ -156,7 +158,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   const validateStep1 = () => {
     const requiredFields = [
       'email', 'fullName', 'address', 'contactNumber', 'gender', 
-      'dateOfBirth', 'bloodGroup', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
+      'dateOfBirth', 'bloodGroup', 'tshirtSize', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
       'emergencyContactPersonName', 'emergencyContactNumber', 'medicalHistory'
     ];
     
@@ -180,7 +182,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
 
       for (let i = 0; i < formData.groupMembers.length; i++) {
         const member = formData.groupMembers[i];
-        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference) {
+        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference || !member.tshirtSize) {
           toast.error(`Please fill all details for member ${i + 1}`);
           return false;
         }
@@ -235,7 +237,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       // Use early bird price if deadline hasn't passed
       if (earlyBirdDeadline && now <= new Date(earlyBirdDeadline) && event.pricing.earlyBirdPrice) {
         pricePerPerson = event.pricing.earlyBirdPrice;
-        console.log('✅ Using early bird price:', pricePerPerson);
       } else if (event.pricing.basePrice) {
         pricePerPerson = event.pricing.basePrice;
       }
@@ -266,6 +267,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           gender: formData.gender,
           dateOfBirth: formData.dateOfBirth,
           bloodGroup: formData.bloodGroup,
+          tshirtSize: formData.tshirtSize,
           foodPreference: formData.foodPreference
         },
         motorcycleInfo: {
@@ -298,11 +300,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         bookingData.couponCode = couponCodeToSend;
       }
 
-      console.log('=== EVENT BOOKING SUBMISSION ===');
-      console.log('Booking Type:', bookingType);
-      console.log('Group Info:', bookingData.groupInfo);
-      console.log('Full Booking Data:', JSON.stringify(bookingData, null, 2));
-
       const orderResponse = await api.post('/event-bookings/create-order', bookingData);
       const { booking, razorpayOrder, event: eventData } = orderResponse.data.data;
 
@@ -332,7 +329,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
             setCurrentStep(3);
             onSuccess && onSuccess(verificationResponse.data);
           } catch (error) {
-            console.error('Payment verification error:', error);
             const errorMsg = error.response?.data?.message || 'Payment verification failed';
             toast.error(errorMsg);
             
@@ -363,7 +359,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         },
         modal: {
           ondismiss: () => {
-            console.log('Payment modal dismissed');
             toast.info('Payment cancelled or closed');
             setLoading(false);
           },
@@ -372,7 +367,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
           animation: true,
           // Handle payment failure
           onhidden: () => {
-            console.log('Payment modal hidden');
             setLoading(false);
           }
         },
@@ -385,7 +379,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         timeout: 600, // 10 minutes
         // Handle payment errors
         error: (error) => {
-          console.error('Razorpay payment error:', error);
           toast.error(`Payment failed: ${error.description || error.reason || 'Unknown error'}`);
           setLoading(false);
         }
@@ -395,7 +388,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       
       // Add event listener for payment failure
       razorpay.on('payment.failed', function (response) {
-        console.error('Payment failed event:', response);
         toast.error(`Payment failed: ${response.error.description || 'Please try again'}`);
         setLoading(false);
       });
@@ -404,9 +396,6 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to create booking';
       const errorDetails = error.response?.data?.errors || [];
-      
-      console.error('Event Booking error:', error);
-      console.error('Error details:', errorDetails);
       
       // Show detailed validation errors if available
       if (errorDetails.length > 0) {
@@ -525,6 +514,20 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
                 style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
                 placeholder="Borival, Mumbai"
               />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>T-shirt Size *</label>
+              <select
+                value={member.tshirtSize}
+                onChange={(e) => handleGroupMemberChange(index, 'tshirtSize', e.target.value)}
+                style={styles.select}
+              >
+                <option value="">Select size</option>
+                {tshirtSizes.map(size => (
+                  <option key={`${index}-${size}`} value={size}>{size}</option>
+                ))}
+              </select>
             </div>
 
             <div style={styles.formGroup}>
@@ -667,6 +670,21 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
             <option value="">Select Blood Group</option>
             {bloodGroups.map(group => (
               <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label}>T-shirt Size <span style={styles.required}>*</span></label>
+          <select
+            name="tshirtSize"
+            value={formData.tshirtSize}
+            onChange={handleInputChange}
+            style={styles.select}
+          >
+            <option value="">Select Size</option>
+            {tshirtSizes.map(size => (
+              <option key={size} value={size}>{size}</option>
             ))}
           </select>
         </div>

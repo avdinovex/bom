@@ -20,6 +20,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     gender: '',
     dateOfBirth: '',
     bloodGroup: '',
+    tshirtSize: '',
     foodPreference: '',
     motorcycleModelName: '',
     motorcycleNumber: '',
@@ -41,6 +42,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
   ];
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  const tshirtSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -58,8 +60,8 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
       setFormData(prev => ({
         ...prev,
         groupMembers: [
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' },
-          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' },
+          { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }
         ]
       }));
     }
@@ -81,7 +83,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     }
     setFormData(prev => ({
       ...prev,
-      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '' }]
+      groupMembers: [...prev.groupMembers, { name: '', contactNumber: '', emergencyContact: '', address: '', foodPreference: '', tshirtSize: '' }]
     }));
   };
 
@@ -156,7 +158,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
   const validateStep1 = () => {
     const requiredFields = [
       'email', 'fullName', 'address', 'contactNumber', 'gender', 
-      'dateOfBirth', 'bloodGroup', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
+      'dateOfBirth', 'bloodGroup', 'tshirtSize', 'foodPreference', 'motorcycleModelName', 'motorcycleNumber',
       'emergencyContactPersonName', 'emergencyContactNumber', 'medicalHistory'
     ];
     
@@ -180,7 +182,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
 
       for (let i = 0; i < formData.groupMembers.length; i++) {
         const member = formData.groupMembers[i];
-        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference) {
+        if (!member.name || !member.contactNumber || !member.emergencyContact || !member.address || !member.foodPreference || !member.tshirtSize) {
           toast.error(`Please fill all details for member ${i + 1}`);
           return false;
         }
@@ -248,6 +250,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
           gender: formData.gender,
           dateOfBirth: formData.dateOfBirth,
           bloodGroup: formData.bloodGroup,
+          tshirtSize: formData.tshirtSize,
           foodPreference: formData.foodPreference
         },
         motorcycleInfo: {
@@ -472,6 +475,20 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             </div>
 
             <div style={styles.formGroup}>
+              <label style={styles.label}>T-shirt Size *</label>
+              <select
+                value={member.tshirtSize}
+                onChange={(e) => handleGroupMemberChange(index, 'tshirtSize', e.target.value)}
+                style={styles.select}
+              >
+                <option value="">Select size</option>
+                {tshirtSizes.map(size => (
+                  <option key={`${index}-${size}`} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={styles.formGroup}>
               <label style={styles.label}>Food Preference *</label>
               <div style={styles.radioGroup}>
                 <label 
@@ -611,6 +628,21 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
             <option value="">Select Blood Group</option>
             {bloodGroups.map(group => (
               <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label}>T-shirt Size <span style={styles.required}>*</span></label>
+          <select
+            name="tshirtSize"
+            value={formData.tshirtSize}
+            onChange={handleInputChange}
+            style={styles.select}
+          >
+            <option value="">Select Size</option>
+            {tshirtSizes.map(size => (
+              <option key={size} value={size}>{size}</option>
             ))}
           </select>
         </div>

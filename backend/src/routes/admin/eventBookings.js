@@ -437,7 +437,7 @@ router.get('/export/csv', asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
 
   // Convert to CSV format
-  const csvHeader = 'Booking Number,Booking Type,Group Name,Member Type,Event Title,User Name,User Email,Full Name,Contact Number,Emergency Contact,Address,Gender,Blood Group,Food Preference,Motorcycle Model,Motorcycle Number,Amount,Discount,Final Amount,Status,Booking Date,Payment Date\n';
+  const csvHeader = 'Booking Number,Booking Type,Group Name,Member Type,Event Title,User Name,User Email,Full Name,Contact Number,Emergency Contact,Address,Gender,Blood Group,T-Shirt Size,Food Preference,Motorcycle Model,Motorcycle Number,Amount,Discount,Final Amount,Status,Booking Date,Payment Date\n';
   
   const csvRows = [];
   
@@ -458,6 +458,7 @@ router.get('/export/csv', asyncHandler(async (req, res) => {
         `"${(booking.personalInfo.address || '').replace(/"/g, '""')}"`,
         booking.personalInfo.gender || '',
         booking.personalInfo.bloodGroup || '',
+        booking.personalInfo.tshirtSize || '',
         booking.personalInfo.foodPreference || '',
         booking.motorcycleInfo.modelName || '',
         booking.motorcycleInfo.motorcycleNumber || '',
@@ -485,6 +486,7 @@ router.get('/export/csv', asyncHandler(async (req, res) => {
           `"${(member.address || '').replace(/"/g, '""')}"`,
           '', // Gender not in member info
           '', // Blood group not in member info
+          member.tshirtSize || '',
           member.foodPreference || '',
           '', // Motorcycle model not in member info
           '', // Motorcycle number not in member info
@@ -512,6 +514,7 @@ router.get('/export/csv', asyncHandler(async (req, res) => {
         `"${(booking.personalInfo.address || '').replace(/"/g, '""')}"`,
         booking.personalInfo.gender || '',
         booking.personalInfo.bloodGroup || '',
+        booking.personalInfo.tshirtSize || '',
         booking.personalInfo.foodPreference || '',
         booking.motorcycleInfo.modelName || '',
         booking.motorcycleInfo.motorcycleNumber || '',

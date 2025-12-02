@@ -54,6 +54,11 @@ const eventBookingSchema = new Schema({
         required: true,
         trim: true
       },
+      tshirtSize: {
+        type: String,
+        required: true,
+        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+      },
       foodPreference: {
         type: String,
         required: true,
@@ -98,6 +103,11 @@ const eventBookingSchema = new Schema({
       type: String,
       required: [true, 'Blood group is required'],
       enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+    },
+    tshirtSize: {
+      type: String,
+      required: [true, 'T-shirt size is required'],
+      enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
     },
     foodPreference: {
       type: String,
