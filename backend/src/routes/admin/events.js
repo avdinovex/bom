@@ -6,6 +6,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { getPagination, getPaginationResult, getSortOptions } from '../../utils/pagination.js';
 import { uploadSingle, deleteFromCloudinary } from '../../services/uploadService.js';
+import logger from '../../config/logger.js';
 
 const router = express.Router();
 
@@ -245,9 +246,13 @@ router.put('/:id', uploadSingle('eventImage'), asyncHandler(async (req, res) => 
     // Delete old image if it exists and is from cloudinary
     if (existingEvent.imgUrl && existingEvent.imgUrl.includes('cloudinary')) {
       try {
-        await deleteFromCloudinary(existingEvent.imgUrl);
+        const deleteResult = await deleteFromCloudinary(existingEvent.imgUrl);
+        if (deleteResult && deleteResult.result !== 'skipped') {
+          logger.info('Old event image deleted successfully');
+        }
       } catch (error) {
-        console.error('Error deleting old image:', error);
+        // Log but don't fail the request if image deletion fails
+        logger.error('Error deleting old image:', error);
       }
     }
     updateData.imgUrl = req.file.cloudinaryUrl;
@@ -319,9 +324,13 @@ router.put('/:id/content-sections/:sectionId', uploadSingle('sectionImage'), asy
     // Delete old image if it exists and is from cloudinary
     if (oldImageUrl && oldImageUrl.includes('cloudinary')) {
       try {
-        await deleteFromCloudinary(oldImageUrl);
+        const deleteResult = await deleteFromCloudinary(oldImageUrl);
+        if (deleteResult && deleteResult.result !== 'skipped') {
+          logger.info('Old section image deleted successfully');
+        }
       } catch (error) {
-        console.error('Error deleting old section image:', error);
+        // Log but don't fail the request if image deletion fails
+        logger.error('Error deleting old section image:', error);
       }
     }
     section.imageUrl = req.file.cloudinaryUrl;
@@ -345,9 +354,13 @@ router.delete('/:id/content-sections/:sectionId', asyncHandler(async (req, res) 
   // Delete section image if it exists
   if (section.imageUrl && section.imageUrl.includes('cloudinary')) {
     try {
-      await deleteFromCloudinary(section.imageUrl);
+      const deleteResult = await deleteFromCloudinary(section.imageUrl);
+      if (deleteResult && deleteResult.result !== 'skipped') {
+        logger.info('Section image deleted successfully');
+      }
     } catch (error) {
-      console.error('Error deleting section image:', error);
+      // Log but don't fail the request if image deletion fails
+      logger.error('Error deleting section image:', error);
     }
   }
   
@@ -492,9 +505,13 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   // Delete main image from cloudinary if it exists
   if (event.imgUrl && event.imgUrl.includes('cloudinary')) {
     try {
-      await deleteFromCloudinary(event.imgUrl);
+      const deleteResult = await deleteFromCloudinary(event.imgUrl);
+      if (deleteResult && deleteResult.result !== 'skipped') {
+        logger.info('Main event image deleted successfully');
+      }
     } catch (error) {
-      console.error('Error deleting main image:', error);
+      // Log but don't fail the request if image deletion fails
+      logger.error('Error deleting main image:', error);
     }
   }
   
@@ -503,9 +520,13 @@ router.delete('/:id', asyncHandler(async (req, res) => {
     for (const section of event.contentSections) {
       if (section.imageUrl && section.imageUrl.includes('cloudinary')) {
         try {
-          await deleteFromCloudinary(section.imageUrl);
+          const deleteResult = await deleteFromCloudinary(section.imageUrl);
+          if (deleteResult && deleteResult.result !== 'skipped') {
+            logger.info('Section image deleted successfully');
+          }
         } catch (error) {
-          console.error('Error deleting section image:', error);
+          // Log but don't fail the request if image deletion fails
+          logger.error('Error deleting section image:', error);
         }
       }
     }

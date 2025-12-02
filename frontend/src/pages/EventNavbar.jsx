@@ -530,7 +530,7 @@ const Events = () => {
 
   const imageStyle = {
     width: '100%',
-    height: '500px',
+    aspectRatio: '1 / 1',
     objectFit: 'cover',
     transition: 'transform 0.5s'
   };
@@ -681,7 +681,8 @@ const Events = () => {
               margin-bottom: 60px !important;
             }
             .event-image {
-              height: 350px !important;
+              aspect-ratio: 1 / 1 !important;
+              height: auto !important;
             }
             .content-wrapper {
               padding: 0 25px !important;

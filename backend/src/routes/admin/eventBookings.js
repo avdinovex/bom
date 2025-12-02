@@ -437,28 +437,95 @@ router.get('/export/csv', asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
 
   // Convert to CSV format
-  const csvHeader = 'Booking Number,Event Title,User Name,User Email,Full Name,Contact Number,Gender,Blood Group,Motorcycle Model,Motorcycle Number,Amount,Status,Booking Date,Payment Date\n';
+  const csvHeader = 'Booking Number,Booking Type,Group Name,Member Type,Event Title,User Name,User Email,Full Name,Contact Number,Emergency Contact,Address,Gender,Blood Group,Food Preference,Motorcycle Model,Motorcycle Number,Amount,Discount,Final Amount,Status,Booking Date,Payment Date\n';
   
-  const csvRows = bookings.map(booking => {
-    return [
-      booking.bookingNumber,
-      booking.event.title,
-      booking.user.fullName,
-      booking.user.email,
-      booking.personalInfo.fullName,
-      booking.personalInfo.contactNumber,
-      booking.personalInfo.gender,
-      booking.personalInfo.bloodGroup,
-      booking.motorcycleInfo.modelName,
-      booking.motorcycleInfo.motorcycleNumber,
-      booking.amount,
-      booking.status,
-      booking.createdAt.toISOString().split('T')[0],
-      booking.paidAt ? booking.paidAt.toISOString().split('T')[0] : ''
-    ].join(',');
-  }).join('\n');
+  const csvRows = [];
+  
+  bookings.forEach(booking => {
+    if (booking.bookingType === 'group' && booking.groupInfo && booking.groupInfo.members && booking.groupInfo.members.length > 0) {
+      // For group bookings, create a row for the leader
+      csvRows.push([
+        booking.bookingNumber,
+        'Group',
+        booking.groupInfo.groupName || '',
+        'Leader',
+        booking.event.title,
+        booking.user.fullName,
+        booking.user.email,
+        booking.personalInfo.fullName,
+        booking.personalInfo.contactNumber,
+        booking.emergencyContact?.number || '',
+        `"${(booking.personalInfo.address || '').replace(/"/g, '""')}"`,
+        booking.personalInfo.gender || '',
+        booking.personalInfo.bloodGroup || '',
+        booking.personalInfo.foodPreference || '',
+        booking.motorcycleInfo.modelName || '',
+        booking.motorcycleInfo.motorcycleNumber || '',
+        booking.originalAmount || booking.amount,
+        booking.discountAmount || 0,
+        booking.amount,
+        booking.status,
+        booking.createdAt.toISOString().split('T')[0],
+        booking.paidAt ? booking.paidAt.toISOString().split('T')[0] : ''
+      ].join(','));
+      
+      // Add a row for each group member
+      booking.groupInfo.members.forEach((member, index) => {
+        csvRows.push([
+          booking.bookingNumber,
+          'Group',
+          booking.groupInfo.groupName || '',
+          `Member ${index + 1}`,
+          booking.event.title,
+          booking.user.fullName,
+          booking.user.email,
+          member.name || '',
+          member.contactNumber || '',
+          member.emergencyContact || '',
+          `"${(member.address || '').replace(/"/g, '""')}"`,
+          '', // Gender not in member info
+          '', // Blood group not in member info
+          member.foodPreference || '',
+          '', // Motorcycle model not in member info
+          '', // Motorcycle number not in member info
+          '', // Individual member doesn't have separate amount
+          '', // No discount for individual member
+          '', // No amount for individual member
+          booking.status,
+          booking.createdAt.toISOString().split('T')[0],
+          booking.paidAt ? booking.paidAt.toISOString().split('T')[0] : ''
+        ].join(','));
+      });
+    } else {
+      // For individual bookings
+      csvRows.push([
+        booking.bookingNumber,
+        'Individual',
+        '', // No group name
+        'Individual',
+        booking.event.title,
+        booking.user.fullName,
+        booking.user.email,
+        booking.personalInfo.fullName,
+        booking.personalInfo.contactNumber,
+        booking.emergencyContact?.number || '',
+        `"${(booking.personalInfo.address || '').replace(/"/g, '""')}"`,
+        booking.personalInfo.gender || '',
+        booking.personalInfo.bloodGroup || '',
+        booking.personalInfo.foodPreference || '',
+        booking.motorcycleInfo.modelName || '',
+        booking.motorcycleInfo.motorcycleNumber || '',
+        booking.originalAmount || booking.amount,
+        booking.discountAmount || 0,
+        booking.amount,
+        booking.status,
+        booking.createdAt.toISOString().split('T')[0],
+        booking.paidAt ? booking.paidAt.toISOString().split('T')[0] : ''
+      ].join(','));
+    }
+  });
 
-  const csvContent = csvHeader + csvRows;
+  const csvContent = csvHeader + csvRows.join('\n');
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename=event-bookings.csv');

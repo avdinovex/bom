@@ -1,5 +1,5 @@
 import multer from 'multer';
-import cloudinary from '../config/cloudinary.js';
+import cloudinary, { hasCloudinaryCredentials } from '../config/cloudinary.js';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../config/logger.js';
 
@@ -33,16 +33,14 @@ export const uploadToCloudinary = async (buffer, options = {}) => {
         {
           resource_type: 'image',
           folder: options.folder || 'ride-booking',
-          // Remove automatic transformations to preserve original image
-          transformation: options.transformation || [],
-          // Preserve original quality - no compression
-          quality: options.quality || 100,
-          // Keep original format
-          fetch_format: options.fetch_format || 'auto',
-          // No cropping - preserve full image
-          crop: options.crop || 'limit',
-          // Preserve aspect ratio and transparency
-          flags: options.flags || 'preserve_transparency',
+          // Preserve original image - no transformations
+          quality: 'auto:best',
+          // Keep original format without conversion
+          format: options.format,
+          // Preserve transparency
+          flags: 'keep_iptc.preserve_transparency',
+          // Use original image - no resizing or cropping
+          invalidate: true,
           ...options
         },
         (error, result) => {
@@ -67,10 +65,14 @@ export const uploadRemoteToCloudinary = async (url, options = {}) => {
     const result = await cloudinary.uploader.upload(url, {
       resource_type: 'image',
       folder: options.folder || 'ride-booking',
-      quality: options.quality || 100,
-      fetch_format: options.fetch_format || 'auto',
-      crop: options.crop || 'limit',
-      flags: options.flags || 'preserve_transparency',
+      // Preserve original image - no transformations
+      quality: 'auto:best',
+      // Keep original format without conversion
+      format: options.format,
+      // Preserve transparency
+      flags: 'keep_iptc.preserve_transparency',
+      // Use original image - no resizing or cropping
+      invalidate: true,
       ...options
     });
     return result;
@@ -82,6 +84,12 @@ export const uploadRemoteToCloudinary = async (url, options = {}) => {
 
 // Delete from Cloudinary
 export const deleteFromCloudinary = async (publicIdOrUrl) => {
+  // Skip if Cloudinary is not configured
+  if (!hasCloudinaryCredentials) {
+    logger.warn('Cloudinary not configured - skipping image deletion');
+    return { result: 'skipped', reason: 'cloudinary_not_configured' };
+  }
+  
   try {
     // Extract public ID from URL if a full URL is provided
     let publicId = publicIdOrUrl;
