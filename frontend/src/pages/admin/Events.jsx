@@ -23,6 +23,13 @@ const Events = () => {
     const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
     return istDate.toISOString().slice(0, 16);
   };
+
+  // Helper to convert local datetime-local value to ISO string (UTC)
+  const convertLocalInputToUTC = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+  };
   
   // Form state
   const [formData, setFormData] = useState({
@@ -295,10 +302,17 @@ const Events = () => {
       
       // Append basic fields
       Object.keys(formData).forEach(key => {
-        if (key === 'venue' || key === 'pricing' || key === 'contactInfo') {
-          // Handle nested objects
+        if (key === 'venue' || key === 'contactInfo') {
           submitData.append(key, JSON.stringify(formData[key]));
-        } else if (key !== 'imgUrl') { // Skip imgUrl as we're using file upload
+        } else if (key === 'pricing') {
+          const pricingPayload = {
+            ...formData.pricing,
+            earlyBirdDeadline: convertLocalInputToUTC(formData.pricing?.earlyBirdDeadline)
+          };
+          submitData.append(key, JSON.stringify(pricingPayload));
+        } else if (['startDate', 'endDate', 'registrationDeadline'].includes(key)) {
+          submitData.append(key, convertLocalInputToUTC(formData[key]));
+        } else if (key !== 'imgUrl') {
           submitData.append(key, formData[key]);
         }
       });
