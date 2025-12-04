@@ -337,14 +337,6 @@ const Events = () => {
                         </div>
                       </div>
                     )}
-                    {event.capacity && event.capacity.maxParticipants > 0 && (
-                      <div className="text-white">
-                        <p className="text-sm opacity-75">Capacity:</p>
-                        <p className="font-semibold">
-                          {event.capacity.currentParticipants || 0}/{event.capacity.maxParticipants}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
