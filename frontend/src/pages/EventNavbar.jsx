@@ -10,7 +10,7 @@ import mbm6 from '../assets/mbm6.jpg'
 import mbm7 from '../assets/mbm7.jpg'
 import Navbar from '../components/Navbar';
 import Footer from '../pages/Footer';
-import EventBookingForm from '../components/EventBookingForm';
+// import EventBookingForm from '../components/EventBookingForm';
 import { publicEventsAPI } from '../services/api';
 import { toast } from 'react-hot-toast';
 import { X, ExternalLink, Instagram, Youtube } from 'lucide-react';
@@ -23,8 +23,8 @@ const Events = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [events, setEvents] = useState({ upcoming: [], past: [] });
   const [loading, setLoading] = useState(true);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  // const [showBookingForm, setShowBookingForm] = useState(false);
+  // const [selectedEvent, setSelectedEvent] = useState(null);
   const [showSponsor1, setShowSponsor1] = useState(true);
   const [showSponsor2, setShowSponsor2] = useState(true);
   const [featuredSponsors, setFeaturedSponsors] = useState([]);
@@ -153,8 +153,7 @@ const Events = () => {
       return;
     }
 
-    setSelectedEvent(event);
-    setShowBookingForm(true);
+    navigate('/audience-or-rider', { state: { event } });
   };
 
   const navigateToSponsors = () => {
@@ -1030,7 +1029,7 @@ const Events = () => {
         )}
       </div>
       
-      {/* Event Booking Form Modal */}
+      {/* Event Booking Form Modal
       {showBookingForm && selectedEvent && (
         <EventBookingForm 
           event={selectedEvent}
@@ -1040,7 +1039,7 @@ const Events = () => {
           }}
           onSuccess={handleBookingSuccess}
         />
-      )}
+      )} */}
     </>
   );
 };

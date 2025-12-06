@@ -3,6 +3,7 @@ import { FiUser, FiCreditCard, FiCheck, FiArrowLeft, FiArrowRight, FiUsers, FiX,
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import GuidelinesPopup from './PopUp';
 
 const BookingForm = ({ ride, onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [showGuidelines, setShowGuidelines] = useState(true);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -34,6 +36,25 @@ const BookingForm = ({ ride, onClose, onSuccess }) => {
     noContrabands: false,
     rulesAndRegulations: false
   });
+
+   const handleGuidelinesAccept = () => {
+  setShowGuidelines(false);
+  toast.success('Guidelines accepted. Please complete the booking form.');
+};
+
+const handleGuidelinesClose = () => {
+  navigate(-1);
+};
+
+// Add this conditional render BEFORE the main return statement
+if (showGuidelines) {
+  return (
+    <GuidelinesPopup 
+      onClose={handleGuidelinesClose}
+      onAccept={handleGuidelinesAccept}
+    />
+  );
+}
 
   const steps = [
     { number: 1, title: bookingType === 'group' ? 'Group Details' : 'Personal Details', icon: bookingType === 'group' ? FiUsers : FiUser },

@@ -30,6 +30,9 @@ import ResetPassword from "./pages/ResetPassword";
 import ScrollToTop from "./pages/ScrollToTop.jsx";
 import Sponsors from "./pages/Sponsors.jsx";
 import Band from './pages/Band.jsx'
+import AudienceOrRider from './components/AudienceOrRider'; // or './pages/AudienceOrRider'
+import AudienceForm from './components/Audience'; // Your audience form component
+import EventBookingForm from './components/EventBookingForm';
 // Policy Pages
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsCondition";
@@ -156,7 +159,11 @@ function App() {
           <Route path="/testimonials-stories" element={<Blogs />} />
           <Route path="/event-detail" element={<EventDetail />} />
           <Route path="/sponsors" element={<Sponsors />} />
-         
+       
+          <Route path="/audience-or-rider" element={<AudienceOrRider />} />
+          <Route path="/audience-registration" element={<AudienceForm />} />
+          <Route path="/participant-registration" element={<EventBookingForm />} />
+
            <Route path="/riders" element={<Riders />} />
           {/* User Authentication Routes */}
           <Route path="/login" element={<Login />} />

@@ -3,6 +3,7 @@ import { FiUser, FiCreditCard, FiCheck, FiArrowLeft, FiArrowRight, FiUsers, FiX,
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import GuidelinesPopup from './PopUp';
 
 const EventBookingForm = ({ event, onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [showGuidelines, setShowGuidelines] = useState(true);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -24,7 +26,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     foodPreference: '',
     motorcycleModelName: '',
     motorcycleNumber: '',
-    emergencyContactPersonName: '',
+    emergencyContactPersonName: '',  
     emergencyContactNumber: '',
     medicalHistory: '',
     groupName: '',
@@ -34,7 +36,25 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     noContrabands: false,
     rulesAndRegulations: false
   });
+  const handleGuidelinesAccept = () => {
+    setShowGuidelines(false);
+    toast.success('Guidelines accepted. Please complete the booking form.');
+  };
 
+  const handleGuidelinesClose = () => {
+    // If user closes without accepting, go back
+    navigate(-1);
+  };
+
+  // Show guidelines popup first
+  if (showGuidelines) {
+    return (
+      <GuidelinesPopup 
+        onClose={handleGuidelinesClose}
+        onAccept={handleGuidelinesAccept}
+      />
+    );
+  }
   const steps = [
     { number: 1, title: bookingType === 'group' ? 'Group Details' : 'Personal Details', icon: bookingType === 'group' ? FiUsers : FiUser },
     { number: 2, title: 'Payment', icon: FiCreditCard },
@@ -97,6 +117,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       groupMembers: prev.groupMembers.filter((_, i) => i !== index)
     }));
   };
+
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
