@@ -6,7 +6,7 @@ import { Bike, Eye } from 'lucide-react';
 const AudienceOrRider = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const event = location.state?.event; // Get event data passed from Events page
+  const event = location.state?.event;
   const [selectedType, setSelectedType] = useState(null);
 
   const handleSelection = (type) => {
@@ -16,10 +16,8 @@ const AudienceOrRider = () => {
     }
 
     if (type === 'audience') {
-      // Navigate to Audience component with event data
       navigate('/audience-registration', { state: { event } });
     } else if (type === 'participant') {
-      // Navigate to EventBookingForm component with event data
       navigate('/participant-registration', { state: { event } });
     }
   };
@@ -60,7 +58,7 @@ const AudienceOrRider = () => {
             }}
           >
             <div style={styles.cardIcon}>
-              <Eye size={48} />
+              <Eye size={48} className="card-icon-svg" />
             </div>
             <h2 style={styles.cardTitle}>Audience</h2>
             <p style={styles.cardDescription}>
@@ -111,7 +109,7 @@ const AudienceOrRider = () => {
             }}
           >
             <div style={styles.cardIcon}>
-              <Bike size={48} />
+              <Bike size={48} className="card-icon-svg" />
             </div>
             <h2 style={styles.cardTitle}>Participant</h2>
             <p style={styles.cardDescription}>
@@ -166,6 +164,63 @@ const AudienceOrRider = () => {
           </button>
         </div>
       </div>
+
+      <style>{`
+        .back-btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-color: #888;
+          transform: translateX(-3px);
+        }
+
+        .continue-btn:hover:not(:disabled) {
+          background-color: #ff3545;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(255, 71, 87, 0.5);
+        }
+
+        /* Tablet styles (768px - 1024px) */
+        @media (max-width: 1024px) {
+          .selection-card {
+            padding: 32px !important;
+          }
+        }
+
+        @media (max-width: 968px) {
+          .selection-card {
+            padding: 28px !important;
+          }
+        }
+
+        /* Mobile and small tablet styles */
+        @media (max-width: 768px) {
+          .selection-card {
+            padding: 24px !important;
+          }
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 640px) {
+          .selection-card {
+            padding: 20px !important;
+          }
+          
+          .card-icon-svg {
+            width: 40px !important;
+            height: 40px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .selection-card {
+            padding: 18px !important;
+          }
+          
+          .card-icon-svg {
+            width: 36px !important;
+            height: 36px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -177,7 +232,13 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '40px 20px'
+    padding: '40px 20px',
+    '@media (maxWidth: 768px)': {
+      padding: '30px 16px'
+    },
+    '@media (maxWidth: 480px)': {
+      padding: '20px 12px'
+    }
   },
   container: {
     maxWidth: '1200px',
@@ -185,7 +246,13 @@ const styles = {
   },
   header: {
     textAlign: 'center',
-    marginBottom: '60px'
+    marginBottom: '60px',
+    '@media (maxWidth: 768px)': {
+      marginBottom: '40px'
+    },
+    '@media (maxWidth: 480px)': {
+      marginBottom: '30px'
+    }
   },
   headerIcon: {
     width: '80px',
@@ -197,25 +264,41 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ff4757',
-    margin: '0 auto 25px'
+    margin: '0 auto 25px',
+    '@media (maxWidth: 480px)': {
+      width: '60px',
+      height: '60px',
+      marginBottom: '20px'
+    }
   },
   title: {
-    fontSize: '2.5rem',
+    fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
     fontWeight: '800',
     color: '#fff',
     marginBottom: '15px',
-    letterSpacing: '1px'
+    letterSpacing: '1px',
+    padding: '0 16px'
   },
   subtitle: {
-    fontSize: '1.1rem',
+    fontSize: 'clamp(0.95rem, 2.5vw, 1.1rem)',
     color: '#aaa',
-    margin: 0
+    margin: 0,
+    padding: '0 16px'
   },
   cardsContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))',
     gap: '40px',
-    marginBottom: '50px'
+    marginBottom: '50px',
+    '@media (maxWidth: 768px)': {
+      gap: '30px',
+      marginBottom: '40px'
+    },
+    '@media (maxWidth: 640px)': {
+      gap: '24px',
+      marginBottom: '30px',
+      gridTemplateColumns: '1fr'
+    }
   },
   card: {
     backgroundColor: '#1a1a1a',
@@ -234,8 +317,8 @@ const styles = {
     boxShadow: '0 15px 40px rgba(255, 71, 87, 0.3)'
   },
   cardIcon: {
-    width: '80px',
-    height: '80px',
+    width: 'clamp(60px, 15vw, 80px)',
+    height: 'clamp(60px, 15vw, 80px)',
     borderRadius: '16px',
     backgroundColor: '#0a0a0a',
     border: '2px solid #333',
@@ -243,20 +326,28 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     color: '#ff4757',
-    marginBottom: '25px'
+    marginBottom: '25px',
+    '@media (maxWidth: 480px)': {
+      marginBottom: '20px',
+      borderRadius: '12px'
+    }
   },
   cardTitle: {
-    fontSize: '2rem',
+    fontSize: 'clamp(1.5rem, 4vw, 2rem)',
     fontWeight: '700',
     color: '#fff',
     marginBottom: '15px',
     margin: 0
   },
   cardDescription: {
-    fontSize: '1rem',
+    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
     color: '#aaa',
     lineHeight: '1.6',
-    marginBottom: '30px'
+    marginBottom: '30px',
+    '@media (maxWidth: 480px)': {
+      marginBottom: '24px',
+      lineHeight: '1.5'
+    }
   },
   featuresList: {
     listStyle: 'none',
@@ -269,12 +360,17 @@ const styles = {
     gap: '12px',
     marginBottom: '15px',
     color: '#ccc',
-    fontSize: '0.95rem'
+    fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
+    '@media (maxWidth: 480px)': {
+      marginBottom: '12px',
+      gap: '10px'
+    }
   },
   checkmark: {
     color: '#4CAF50',
-    fontSize: '1.2rem',
-    fontWeight: 'bold'
+    fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
+    fontWeight: 'bold',
+    flexShrink: 0
   },
   selectedBadge: {
     position: 'absolute',
@@ -284,16 +380,26 @@ const styles = {
     color: '#fff',
     padding: '8px 20px',
     borderRadius: '20px',
-    fontSize: '0.85rem',
+    fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
     fontWeight: '700',
     letterSpacing: '0.5px',
-    boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)'
+    boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)',
+    '@media (maxWidth: 480px)': {
+      top: '16px',
+      right: '16px',
+      padding: '6px 16px'
+    }
   },
   footer: {
     display: 'flex',
     justifyContent: 'space-between',
     gap: '20px',
-    paddingTop: '20px'
+    paddingTop: '20px',
+    flexWrap: 'wrap',
+    '@media (maxWidth: 640px)': {
+      flexDirection: 'column',
+      gap: '16px'
+    }
   },
   backButton: {
     padding: '16px 40px',
@@ -301,10 +407,15 @@ const styles = {
     border: '2px solid #555',
     backgroundColor: 'transparent',
     color: '#fff',
-    fontSize: '1rem',
+    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    minWidth: '140px',
+    '@media (maxWidth: 640px)': {
+      width: '100%',
+      padding: '14px 32px'
+    }
   },
   continueButton: {
     flex: 1,
@@ -313,12 +424,17 @@ const styles = {
     border: 'none',
     backgroundColor: '#ff4757',
     color: '#fff',
-    fontSize: '1rem',
+    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     letterSpacing: '0.5px',
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
+    minWidth: '200px',
+    '@media (maxWidth: 640px)': {
+      width: '100%',
+      padding: '14px 32px'
+    }
   },
   continueButtonDisabled: {
     backgroundColor: '#444',
@@ -326,62 +442,5 @@ const styles = {
     opacity: 0.5
   }
 };
-
-// Add hover effects and responsive styles
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.innerHTML = `
-    .back-btn:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-color: #888;
-      transform: translateX(-3px);
-    }
-
-    .continue-btn:hover:not(:disabled) {
-      background-color: #ff3545;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.5);
-    }
-
-    @media (max-width: 968px) {
-      .selection-card {
-        padding: 30px !important;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .cards-container {
-        grid-template-columns: 1fr !important;
-        gap: 30px !important;
-      }
-      
-      .footer {
-        flex-direction: column !important;
-      }
-      
-      .back-btn, .continue-btn {
-        width: 100% !important;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .header-title {
-        font-size: 2rem !important;
-      }
-      
-      .card-title {
-        font-size: 1.5rem !important;
-      }
-      
-      .selection-card {
-        padding: 25px !important;
-      }
-    }
-  `;
-  if (!document.querySelector('#audience-or-rider-styles')) {
-    styleSheet.id = 'audience-or-rider-styles';
-    document.head.appendChild(styleSheet);
-  }
-}
 
 export default AudienceOrRider;
