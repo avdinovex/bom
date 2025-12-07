@@ -1,13 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiUser, FiUsers } from 'react-icons/fi';
+import { FiUsers } from 'react-icons/fi';
 import { Bike, Eye } from 'lucide-react';
+import { registrationEntitiesAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const AudienceOrRider = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const event = location.state?.event;
   const [selectedType, setSelectedType] = useState(null);
+  const [entities, setEntities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEntities();
+  }, [event]);
+
+  const fetchEntities = async () => {
+    try {
+      setLoading(true);
+      const response = await registrationEntitiesAPI.getAll(event?._id);
+      setEntities(response.data || []);
+    } catch (error) {
+      console.error('Error fetching registration entities:', error);
+      toast.error('Failed to load registration options');
+      // Fallback to default if API fails
+      setEntities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIcon = (iconName) => {
+    const iconMap = {
+      'Eye': Eye,
+      'Bike': Bike,
+      'FiUsers': FiUsers,
+    };
+    return iconMap[iconName] || Eye;
+  };
 
   const handleSelection = (type) => {
     if (!event) {
@@ -21,6 +53,30 @@ const AudienceOrRider = () => {
       navigate('/participant-registration', { state: { event } });
     }
   };
+
+  if (loading) {
+    return (
+      <div style={styles.overlay}>
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Loading registration options...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (entities.length === 0) {
+    return (
+      <div style={styles.overlay}>
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>No registration options available at this time.</p>
+          <button onClick={() => navigate(-1)} style={styles.backButton}>
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.overlay}>
@@ -36,111 +92,60 @@ const AudienceOrRider = () => {
         </div>
 
         <div style={styles.cardsContainer}>
-          {/* Audience Card */}
-          <div
-            style={{
-              ...styles.card,
-              ...(selectedType === 'audience' ? styles.cardSelected : {})
-            }}
-            className="selection-card"
-            onClick={() => setSelectedType('audience')}
-            onMouseEnter={(e) => {
-              if (selectedType !== 'audience') {
-                e.currentTarget.style.borderColor = '#ff4757';
-                e.currentTarget.style.transform = 'translateY(-8px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedType !== 'audience') {
-                e.currentTarget.style.borderColor = '#333';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }
-            }}
-          >
-            <div style={styles.cardIcon}>
-              <Eye size={48} className="card-icon-svg" />
-            </div>
-            <h2 style={styles.cardTitle}>Audience</h2>
-            <p style={styles.cardDescription}>
-              Join us as a spectator and witness the thrill of the event. Perfect for enthusiasts who want to experience the excitement without riding.
-            </p>
-            <ul style={styles.featuresList}>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Event access pass</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Complimentary refreshments</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Photo opportunities</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Meet fellow enthusiasts</span>
-              </li>
-            </ul>
-            {selectedType === 'audience' && (
-              <div style={styles.selectedBadge}>Selected</div>
-            )}
-          </div>
+          {entities.map((entity) => {
+            const IconComponent = getIcon(entity.icon);
+            const isSelected = selectedType === entity.entityType;
 
-          {/* Participant Card */}
-          <div
-            style={{
-              ...styles.card,
-              ...(selectedType === 'participant' ? styles.cardSelected : {})
-            }}
-            className="selection-card"
-            onClick={() => setSelectedType('participant')}
-            onMouseEnter={(e) => {
-              if (selectedType !== 'participant') {
-                e.currentTarget.style.borderColor = '#ff4757';
-                e.currentTarget.style.transform = 'translateY(-8px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedType !== 'participant') {
-                e.currentTarget.style.borderColor = '#333';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }
-            }}
-          >
-            <div style={styles.cardIcon}>
-              <Bike size={48} className="card-icon-svg" />
-            </div>
-            <h2 style={styles.cardTitle}>Participant</h2>
-            <p style={styles.cardDescription}>
-              Ride with us! Join the event as an active participant and be part of the motorcycle community on the road.
-            </p>
-            <ul style={styles.featuresList}>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Full ride participation</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Event T-shirt</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Meals & refreshments</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Rider support & safety</span>
-              </li>
-              <li style={styles.featureItem}>
-                <span style={styles.checkmark}>✓</span>
-                <span>Certificate & goodies</span>
-              </li>
-            </ul>
-            {selectedType === 'participant' && (
-              <div style={styles.selectedBadge}>Selected</div>
-            )}
-          </div>
+            return (
+              <div
+                key={entity.entityType}
+                style={{
+                  ...styles.card,
+                  ...(isSelected ? styles.cardSelected : {})
+                }}
+                className="selection-card"
+                onClick={() => setSelectedType(entity.entityType)}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = entity.config?.themeColor || '#ff4757';
+                    e.currentTarget.style.transform = 'translateY(-8px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = '#333';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                <div style={styles.cardIcon}>
+                  <IconComponent size={48} className="card-icon-svg" />
+                </div>
+                <h2 style={styles.cardTitle}>
+                  {entity.config?.customLabels?.cardTitle || entity.displayName}
+                </h2>
+                <p style={styles.cardDescription}>
+                  {entity.description}
+                </p>
+                <ul style={styles.featuresList}>
+                  {entity.features?.map((feature, idx) => (
+                    <li key={idx} style={styles.featureItem}>
+                      <span style={styles.checkmark}>✓</span>
+                      <span>{feature.title}</span>
+                    </li>
+                  ))}
+                </ul>
+                {isSelected && (
+                  <div style={{
+                    ...styles.selectedBadge,
+                    backgroundColor: entity.config?.themeColor || '#ff4757'
+                  }}>
+                    Selected
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div style={styles.footer}>
@@ -166,6 +171,11 @@ const AudienceOrRider = () => {
       </div>
 
       <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         .back-btn:hover {
           background-color: rgba(255, 255, 255, 0.1);
           border-color: #888;
@@ -440,6 +450,34 @@ const styles = {
     backgroundColor: '#444',
     cursor: 'not-allowed',
     opacity: 0.5
+  },
+  loadingContainer: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#fff'
+  },
+  spinner: {
+    width: '50px',
+    height: '50px',
+    margin: '0 auto 20px',
+    border: '4px solid #333',
+    borderTop: '4px solid #ff4757',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingText: {
+    fontSize: '1.1rem',
+    color: '#aaa'
+  },
+  errorContainer: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#fff'
+  },
+  errorText: {
+    fontSize: '1.2rem',
+    color: '#ff4757',
+    marginBottom: '30px'
   }
 };
 

@@ -18,6 +18,7 @@ import sponsorRoutes from './routes/sponsors.js';
 import sponsorCategoryRoutes from './routes/sponsorCategories.js';
 import testimonialRoutes from './routes/testimonials.js';
 import audienceRegistrationRoutes from './routes/audienceRegistrations.js';
+import registrationEntityRoutes from './routes/registrationEntities.js';
 import adminRoutes from './routes/admin/index.js';
 import testRoutes from './routes/test.js';
 
@@ -138,6 +139,7 @@ app.use('/api/sponsors', sponsorRoutes);
 app.use('/api/sponsor-categories', sponsorCategoryRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/audience-registrations', audienceRegistrationRoutes);
+app.use('/api/registration-entities', registrationEntityRoutes);
 app.use('/api/admin', adminLimiter, adminRoutes);
 app.use('/api/test', testRoutes);
 

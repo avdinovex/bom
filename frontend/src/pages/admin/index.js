@@ -16,3 +16,4 @@ export { default as SponsorCategories } from './SponsorCategories';
 export { default as Testimonials } from './Testimonials';
 export { default as AudienceRegistrations } from './AudienceRegistrations';
 export { default as Coupons } from './Coupons';
+export { default as RegistrationEntities } from './RegistrationEntities';

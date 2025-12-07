@@ -18,7 +18,8 @@ import {
   FiGift,
   FiTag,
   FiUserCheck,
-  FiStar
+  FiStar,
+  FiSettings
 } from 'react-icons/fi';
 
 const AdminLayout = () => {
@@ -98,6 +99,11 @@ const AdminLayout = () => {
       name: 'Coupons',
       href: '/admin/coupons',
       icon: FiTag
+    },
+    {
+      name: 'Registration Entities',
+      href: '/admin/registration-entities',
+      icon: FiSettings
     },
     {
       name: 'Testimonials',

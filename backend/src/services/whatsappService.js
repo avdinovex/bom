@@ -20,8 +20,16 @@ class WhatsAppService {
    */
   validateConfig() {
     if (!this.phoneNumberId || !this.accessToken) {
-      throw new Error('WhatsApp API configuration is missing. Please set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in environment variables.');
+      return false;
     }
+    return true;
+  }
+
+  /**
+   * Check if WhatsApp service is configured
+   */
+  isConfigured() {
+    return !!(this.phoneNumberId && this.accessToken);
   }
 
   /**
@@ -87,7 +95,10 @@ class WhatsAppService {
    */
   async sendTextMessage(to, message) {
     try {
-      this.validateConfig();
+      if (!this.validateConfig()) {
+        logger.warn('WhatsApp service not configured, skipping message');
+        return { skipped: true, reason: 'WhatsApp not configured' };
+      }
 
       const formattedNumber = this.formatPhoneNumber(to);
 

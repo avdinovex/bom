@@ -4,6 +4,7 @@ import UpcomingRide from '../../models/UpcomingRide.js';
 import CompletedRide from '../../models/CompletedRide.js';
 import Booking from '../../models/Booking.js';
 import EventBooking from '../../models/EventBooking.js';
+import AudienceRegistration from '../../models/AudienceRegistration.js';
 import Blog from '../../models/Blog.js';
 import Event from '../../models/Event.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -23,12 +24,14 @@ router.get('/stats', asyncHandler(async (req, res) => {
     totalCompletedRides,
     totalBookings,
     totalEventBookings,
+    totalAudienceRegistrations,
     totalBlogs,
     totalEvents,
     activeUsers,
     upcomingRides,
     paidBookings,
     paidEventBookings,
+    paidAudienceRegistrations,
     publishedBlogs,
     activeEvents,
     migrationStats
@@ -38,19 +41,21 @@ router.get('/stats', asyncHandler(async (req, res) => {
     CompletedRide.countDocuments(),
     Booking.countDocuments(),
     EventBooking.countDocuments(),
+    AudienceRegistration.countDocuments(),
     Blog.countDocuments(),
     Event.countDocuments(),
     User.countDocuments({ isActive: true }),
     UpcomingRide.countDocuments({ isActive: true, startTime: { $gte: new Date() } }),
     Booking.countDocuments({ status: 'paid' }),
     EventBooking.countDocuments({ status: 'paid' }),
+    AudienceRegistration.countDocuments({ 'paymentInfo.paymentStatus': 'completed' }),
     Blog.countDocuments({ isPublished: true }),
     Event.countDocuments({ isActive: true }),
     getMigrationStats()
   ]);
 
-  // Get revenue statistics from both ride bookings and event bookings
-  const [rideRevenueStats, eventRevenueStats] = await Promise.all([
+  // Get revenue statistics from ride bookings, event bookings, and audience registrations
+  const [rideRevenueStats, eventRevenueStats, audienceRevenueStats] = await Promise.all([
     Booking.aggregate([
       { $match: { status: 'paid' } },
       {
@@ -70,14 +75,46 @@ router.get('/stats', asyncHandler(async (req, res) => {
           count: { $sum: 1 }
         }
       }
+    ]),
+    AudienceRegistration.aggregate([
+      { $match: { 'paymentInfo.paymentStatus': 'completed' } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: {
+              $cond: {
+                if: { $and: [{ $ifNull: ['$coupon.discount', false] }, { $gt: ['$coupon.discount', 0] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: ['$coupon.discountType', 'percentage'] },
+                    then: {
+                      $subtract: [
+                        '$paymentInfo.amount',
+                        { $multiply: ['$paymentInfo.amount', { $divide: ['$coupon.discount', 100] }] }
+                      ]
+                    },
+                    else: {
+                      $subtract: ['$paymentInfo.amount', '$coupon.discount']
+                    }
+                  }
+                },
+                else: '$paymentInfo.amount'
+              }
+            }
+          },
+          count: { $sum: 1 }
+        }
+      }
     ])
   ]);
 
   const rideRevenue = rideRevenueStats[0] || { totalRevenue: 0, count: 0 };
   const eventRevenue = eventRevenueStats[0] || { totalRevenue: 0, count: 0 };
+  const audienceRevenue = audienceRevenueStats[0] || { totalRevenue: 0, count: 0 };
   
-  const totalRevenue = rideRevenue.totalRevenue + eventRevenue.totalRevenue;
-  const totalPaidBookings = rideRevenue.count + eventRevenue.count;
+  const totalRevenue = rideRevenue.totalRevenue + eventRevenue.totalRevenue + audienceRevenue.totalRevenue;
+  const totalPaidBookings = rideRevenue.count + eventRevenue.count + audienceRevenue.count;
   const averageBookingValue = totalPaidBookings > 0 ? totalRevenue / totalPaidBookings : 0;
 
   // Get monthly growth statistics
@@ -113,8 +150,8 @@ router.get('/stats', asyncHandler(async (req, res) => {
       totalRides,
       totalCompletedRides,
       upcomingRides,
-      totalBookings: totalBookings + totalEventBookings,
-      paidBookings: paidBookings + paidEventBookings,
+      totalBookings: totalBookings + totalEventBookings + totalAudienceRegistrations,
+      paidBookings: paidBookings + paidEventBookings + paidAudienceRegistrations,
       totalBlogs,
       publishedBlogs,
       totalEvents,
@@ -125,8 +162,10 @@ router.get('/stats', asyncHandler(async (req, res) => {
       averageBookingValue,
       rideRevenue: rideRevenue.totalRevenue,
       eventRevenue: eventRevenue.totalRevenue,
+      audienceRevenue: audienceRevenue.totalRevenue,
       rideBookings: rideRevenue.count,
-      eventBookings: eventRevenue.count
+      eventBookings: eventRevenue.count,
+      audienceRegistrations: audienceRevenue.count
     },
     monthlyGrowth,
     rideStats,

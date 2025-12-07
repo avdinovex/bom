@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 
-const GuidelinesPopup = ({ onAccept }) => {
+const GuidelinesPopup = ({ onAccept, termsAndConditions = [], entityType = 'participant' }) => {
   const [acknowledged, setAcknowledged] = useState(false);
 
   // Auto-close when checkbox is checked
@@ -15,7 +15,8 @@ const GuidelinesPopup = ({ onAccept }) => {
     }
   }, [acknowledged, onAccept]);
 
-  const termsAndConditions = [
+  // Default terms if none provided
+  const defaultTerms = [
     'I confirm that all information provided is accurate and complete.',
     'I agree to follow all event rules, regulations, and safety guidelines.',
     'I understand that participation is at my own risk and I release the organizers from any liability.',
@@ -27,6 +28,11 @@ const GuidelinesPopup = ({ onAccept }) => {
     'I understand that non-compliance may result in removal from the event without refund.',
     'I authorize the organizers to use photographs/videos taken during the event for promotional purposes.'
   ];
+
+  // Use provided terms or fall back to defaults
+  const displayTerms = termsAndConditions.length > 0 
+    ? termsAndConditions.map(t => typeof t === 'string' ? t : t.content)
+    : defaultTerms;
 
   return (
     <div style={styles.overlay}>
@@ -42,12 +48,12 @@ const GuidelinesPopup = ({ onAccept }) => {
         <div style={styles.content}>
           <div style={styles.warningBanner}>
             <FiAlertCircle size={20} />
-            <span>These terms are mandatory for all participants. Please read carefully.</span>
+            <span>These terms are mandatory for all {entityType === 'audience' ? 'audience members' : 'participants'}. Please read carefully.</span>
           </div>
 
           <div style={styles.termsContainer}>
             <ul style={styles.termsList}>
-              {termsAndConditions.map((term, index) => (
+              {displayTerms.map((term, index) => (
                 <li key={index} style={styles.termItem}>
                   <div style={styles.bulletPoint}>{index + 1}</div>
                   <span style={styles.termText}>{term}</span>

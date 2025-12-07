@@ -214,16 +214,31 @@ router.post('/create-order', asyncHandler(async (req, res) => {
       );
     }
 
-    // Send confirmation emails/messages (non-blocking)
-    setImmediate(async () => {
+  // Send confirmation emails/messages (non-blocking)
+  setImmediate(async () => {
+    try {
+      await emailService.sendAudienceConfirmation(registration, event);
+      registration.emailSent = true;
+      await registration.save();
+      logger.info('Free registration confirmation email sent successfully');
+    } catch (error) {
+      logger.error('Error sending audience confirmation email:', error);
+    }
+
+    // Only send WhatsApp if configured
+    if (whatsappService.isConfigured && whatsappService.isConfigured()) {
       try {
-        await emailService.sendAudienceConfirmation(registration, event);
-        registration.emailSent = true;
+        await whatsappService.sendAudienceConfirmation(registration, event);
+        registration.whatsappSent = true;
         await registration.save();
+        logger.info('Free registration confirmation WhatsApp sent successfully');
       } catch (error) {
-        logger.error('Error sending audience confirmation email:', error);
+        logger.warn('WhatsApp not sent (service not configured or failed):', error.message);
       }
-    });
+    } else {
+      logger.info('WhatsApp service not configured, skipping WhatsApp notification');
+    }
+  });
 
     return res.json(new ApiResponse(201, {
       registration: {
@@ -335,16 +350,23 @@ router.post('/verify-payment', asyncHandler(async (req, res) => {
       await emailService.sendAudienceConfirmation(registration, event);
       registration.emailSent = true;
       await registration.save();
+      logger.info('Audience confirmation email sent successfully');
     } catch (error) {
       logger.error('Error sending audience confirmation email:', error);
     }
 
-    try {
-      await whatsappService.sendAudienceConfirmation(registration, event);
-      registration.whatsappSent = true;
-      await registration.save();
-    } catch (error) {
-      logger.error('Error sending audience confirmation WhatsApp:', error);
+    // Only send WhatsApp if configured
+    if (whatsappService.isConfigured && whatsappService.isConfigured()) {
+      try {
+        await whatsappService.sendAudienceConfirmation(registration, event);
+        registration.whatsappSent = true;
+        await registration.save();
+        logger.info('Audience confirmation WhatsApp sent successfully');
+      } catch (error) {
+        logger.warn('WhatsApp not sent (service not configured or failed):', error.message);
+      }
+    } else {
+      logger.info('WhatsApp service not configured, skipping WhatsApp notification');
     }
   });
 

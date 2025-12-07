@@ -12,11 +12,15 @@ import app from './app.js';
 import connectDB from './config/db.js';
 import logger from './config/logger.js';
 import { startRideMigrationScheduler } from './services/rideMigrationService.js';
+import emailService from './services/emailService.js';
 
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize email service
+emailService.init();
 
 // Start the ride migration scheduler
 startRideMigrationScheduler();

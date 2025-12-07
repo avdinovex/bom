@@ -66,8 +66,8 @@ const AudienceForm = () => {
 
           if (result.success) {
             toast.success(
-              `🎉 Registration Successful!\n\nTicket #${result.data.registration.ticketNumber}\n\nA confirmation email has been sent to ${formData.email}`,
-              { duration: 6000 }
+              `🎉 Registration Successful!`,
+              { duration: 3000 }
             );
             
             // Reset form

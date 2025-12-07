@@ -58,6 +58,7 @@ import AdminCoupons from './pages/admin/Coupons';
 import AdminTestimonials from './pages/admin/Testimonials';
 import AdminEventBookings from './pages/admin/EventBookings';
 import AdminAudienceRegistrations from './pages/admin/AudienceRegistrations';
+import AdminRegistrationEntities from './pages/admin/RegistrationEntities';
 import BlogDetails from "./pages/BlogDetails.jsx";
 import RegistrationSuccess from "./pages/RegistrationSuccess.jsx";
 
@@ -207,6 +208,7 @@ function App() {
             <Route path="bookings" element={<Bookings />} />
             <Route path="event-bookings" element={<AdminEventBookings />} />
             <Route path="audience-registrations" element={<AdminAudienceRegistrations />} />
+            <Route path="registration-entities" element={<AdminRegistrationEntities />} />
             <Route path="sponsors" element={<AdminSponsors />} />
             <Route path="sponsor-categories" element={<AdminSponsorCategories />} />
             <Route path="coupons" element={<AdminCoupons />} />

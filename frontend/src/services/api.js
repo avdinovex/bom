@@ -564,6 +564,68 @@ export const audienceRegistrationsAPI = {
   },
 };
 
+// Registration Entities API (Audience/Participant Configuration)
+export const registrationEntitiesAPI = {
+  // Public endpoints
+  getAll: async (eventId = null) => {
+    const params = eventId ? { eventId } : {};
+    const response = await api.get('/registration-entities', { params });
+    return response.data;
+  },
+
+  getByType: async (entityType, eventId = null) => {
+    const params = eventId ? { eventId } : {};
+    const response = await api.get(`/registration-entities/${entityType}`, { params });
+    return response.data;
+  },
+
+  // Admin endpoints
+  adminGetAll: async () => {
+    const response = await api.get('/admin/registration-entities');
+    return response.data;
+  },
+
+  adminGetById: async (id) => {
+    const response = await api.get(`/admin/registration-entities/${id}`);
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await api.post('/admin/registration-entities', data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.put(`/admin/registration-entities/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/admin/registration-entities/${id}`);
+    return response.data;
+  },
+
+  toggleStatus: async (id) => {
+    const response = await api.patch(`/admin/registration-entities/${id}/toggle-status`);
+    return response.data;
+  },
+
+  addEventOverride: async (id, data) => {
+    const response = await api.post(`/admin/registration-entities/${id}/event-override`, data);
+    return response.data;
+  },
+
+  removeEventOverride: async (id, eventId) => {
+    const response = await api.delete(`/admin/registration-entities/${id}/event-override/${eventId}`);
+    return response.data;
+  },
+
+  seed: async () => {
+    const response = await api.post('/admin/registration-entities/seed');
+    return response.data;
+  },
+};
+
 // Export both default and named export for compatibility
 export { api };
 export default api;
