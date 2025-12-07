@@ -722,6 +722,206 @@ class EmailService {
       // Don't throw error as booking is already confirmed
     }
   }
+
+  async sendAudienceConfirmation(registration, event) {
+    this.ensureInitialized();
+
+    if (!this.initialized || !this.transporter) {
+      console.error('Email service not initialized');
+      return;
+    }
+
+    try {
+      const { personalInfo, paymentInfo, ticketNumber } = registration;
+      const eventDate = this.formatDateToIST(event.eventDate);
+
+      const mailOptions = {
+        from: `"Brotherhood Of Mumbai" <${process.env.EMAIL_USER}>`,
+        to: personalInfo.email,
+        subject: `🎉 Audience Registration Confirmed - ${event.title}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 10px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                overflow: hidden;
+              }
+              .header {
+                background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 28px;
+              }
+              .content {
+                padding: 30px;
+              }
+              .ticket-info {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+                margin: 20px 0;
+              }
+              .ticket-number {
+                font-size: 24px;
+                font-weight: bold;
+                margin: 10px 0;
+                letter-spacing: 2px;
+              }
+              .detail-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+              }
+              .detail-label {
+                font-weight: 600;
+                color: #666;
+              }
+              .detail-value {
+                color: #333;
+              }
+              .info-box {
+                background-color: #e7f3ff;
+                border-left: 4px solid #2196F3;
+                padding: 15px;
+                margin: 20px 0;
+                border-radius: 4px;
+              }
+              .footer {
+                background-color: #f8f9fa;
+                padding: 20px;
+                text-align: center;
+                color: #666;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Registration Confirmed!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 16px;">Thank you for registering as an audience member</p>
+              </div>
+              
+              <div class="content">
+                <p>Dear <strong>${personalInfo.name}</strong>,</p>
+                
+                <p>Your registration for <strong>${event.title}</strong> has been confirmed successfully! We're excited to have you join us.</p>
+
+                ${ticketNumber ? `
+                <div class="ticket-info">
+                  <div>🎫 Your Ticket Number</div>
+                  <div class="ticket-number">${ticketNumber}</div>
+                  <div style="font-size: 14px; margin-top: 10px;">Please keep this for your records</div>
+                </div>
+                ` : ''}
+
+                <h3 style="color: #ff4757; margin-top: 30px;">📅 Event Details</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Event:</span>
+                  <span class="detail-value">${event.title}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Date & Time:</span>
+                  <span class="detail-value">${eventDate}</span>
+                </div>
+                ${event.venue?.name ? `
+                <div class="detail-row">
+                  <span class="detail-label">Venue:</span>
+                  <span class="detail-value">${event.venue.name}</span>
+                </div>
+                ` : event.location ? `
+                <div class="detail-row">
+                  <span class="detail-label">Location:</span>
+                  <span class="detail-value">${event.location}</span>
+                </div>
+                ` : ''}
+
+                <h3 style="color: #ff4757; margin-top: 30px;">👤 Your Information</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Name:</span>
+                  <span class="detail-value">${personalInfo.name}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">${personalInfo.email}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Phone:</span>
+                  <span class="detail-value">${personalInfo.phoneNumber}</span>
+                </div>
+
+                ${paymentInfo?.amount > 0 ? `
+                <h3 style="color: #ff4757; margin-top: 30px;">💰 Payment Details</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Amount Paid:</span>
+                  <span class="detail-value"><strong>₹${paymentInfo.amount}</strong></span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Payment Status:</span>
+                  <span class="detail-value" style="color: #4CAF50; font-weight: bold;">✓ Completed</span>
+                </div>
+                ` : ''}
+
+                <div class="info-box">
+                  <strong>📌 Important Instructions:</strong>
+                  <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Please arrive at the venue at least 30 minutes before the event starts</li>
+                    <li>Carry a valid ID proof for verification</li>
+                    <li>Keep this confirmation email handy</li>
+                    <li>Check your email regularly for any event updates</li>
+                    <li>Follow all event guidelines and instructions from the organizers</li>
+                  </ul>
+                </div>
+
+                <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+                
+                <p>We look forward to seeing you at the event! 🎉</p>
+                
+                <p>Best regards,<br>
+                <strong>Brotherhood Of Mumbai Team</strong></p>
+              </div>
+              
+              <div class="footer">
+                <p><strong>Brotherhood Of Mumbai</strong></p>
+                <p>Email: ${process.env.EMAIL_USER} | Website: ${process.env.FRONTEND_URL || 'https://brotherhoodofmumbai.com'}</p>
+                <p>&copy; ${new Date().getFullYear()} Brotherhood Of Mumbai. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('✅ Audience confirmation email sent to:', personalInfo.email);
+    } catch (error) {
+      console.error('Error sending audience confirmation email:', error);
+      // Don't throw error as registration is already confirmed
+    }
+  }
 }
 
 export default new EmailService();

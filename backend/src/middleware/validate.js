@@ -142,7 +142,9 @@ export const schemas = {
       Joi.array().items(Joi.string().trim())
     ),
     skillLevel: Joi.string().valid('beginner', 'intermediate', 'advanced', 'all'),
-    isFree: Joi.string().valid('true', 'false')
+    isFree: Joi.string().valid('true', 'false'),
+    isActive: Joi.string().valid('true', 'false'),
+    status: Joi.string().valid('draft', 'published', 'cancelled', 'completed')
   }),
 
   // Blog query parameters

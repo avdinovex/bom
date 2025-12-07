@@ -15,6 +15,7 @@ import sponsorRoutes from './sponsors.js';
 import sponsorCategoryRoutes from './sponsorCategories.js';
 import couponRoutes from './coupons.js';
 import testimonialRoutes from './testimonials.js';
+import audienceRegistrationRoutes from './audienceRegistrations.js';
 
 const router = express.Router();
 
@@ -35,5 +36,6 @@ router.use('/sponsors', sponsorRoutes);
 router.use('/sponsor-categories', sponsorCategoryRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/testimonials', testimonialRoutes);
+router.use('/audience-registrations', audienceRegistrationRoutes);
 
 export default router;

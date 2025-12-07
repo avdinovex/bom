@@ -14,3 +14,5 @@ export { default as EventBookings } from './EventBookings';
 export { default as Sponsors } from './Sponsors';
 export { default as SponsorCategories } from './SponsorCategories';
 export { default as Testimonials } from './Testimonials';
+export { default as AudienceRegistrations } from './AudienceRegistrations';
+export { default as Coupons } from './Coupons';

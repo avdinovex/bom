@@ -17,6 +17,7 @@ import completedRideRoutes from './routes/completedRides.js';
 import sponsorRoutes from './routes/sponsors.js';
 import sponsorCategoryRoutes from './routes/sponsorCategories.js';
 import testimonialRoutes from './routes/testimonials.js';
+import audienceRegistrationRoutes from './routes/audienceRegistrations.js';
 import adminRoutes from './routes/admin/index.js';
 import testRoutes from './routes/test.js';
 
@@ -44,7 +45,7 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
@@ -136,6 +137,7 @@ app.use('/api/completed-rides', completedRideRoutes);
 app.use('/api/sponsors', sponsorRoutes);
 app.use('/api/sponsor-categories', sponsorCategoryRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/audience-registrations', audienceRegistrationRoutes);
 app.use('/api/admin', adminLimiter, adminRoutes);
 app.use('/api/test', testRoutes);
 

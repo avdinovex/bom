@@ -71,22 +71,18 @@ const Events = () => {
       // Check if data.data.data exists (pagination structure)
       if (Array.isArray(upcomingResponse.data?.data?.data)) {
         upcomingEvents = upcomingResponse.data.data.data;
-        console.log('✓ Found upcoming events at data.data.data');
       } 
       // Check if data.data is array (direct array)
       else if (Array.isArray(upcomingResponse.data?.data)) {
         upcomingEvents = upcomingResponse.data.data;
-        console.log('✓ Found upcoming events at data.data');
       }
       // Check if data is array
       else if (Array.isArray(upcomingResponse.data)) {
         upcomingEvents = upcomingResponse.data;
-        console.log('✓ Found upcoming events at data');
       }
       
       if (Array.isArray(pastResponse.data?.data?.data)) {
         pastEvents = pastResponse.data.data.data;
-        console.log('✓ Found past events at data.data.data');
       } 
       else if (Array.isArray(pastResponse.data?.data)) {
         pastEvents = pastResponse.data.data;

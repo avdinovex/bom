@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import GuidelinesPopup from './PopUp'; // Import the guidelines popup
+import GuidelinesPopup from './PopUp';
+import { audienceRegistrationsAPI } from '../services/api';
 
 const AudienceForm = () => {
   const location = useLocation();
@@ -10,6 +11,7 @@ const AudienceForm = () => {
   const event = location.state?.event;
 
   const [showGuidelines, setShowGuidelines] = useState(true); // Show guidelines on mount
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -25,10 +27,149 @@ const AudienceForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayment = async (orderData) => {
+    const res = await loadRazorpayScript();
+
+    if (!res) {
+      toast.error('Razorpay SDK failed to load. Please check your connection.');
+      return;
+    }
+
+    const options = {
+      key: orderData.payment.razorpayKeyId,
+      amount: orderData.payment.amount * 100,
+      currency: orderData.payment.currency,
+      name: event?.title || 'Event Registration',
+      description: 'Audience Registration',
+      order_id: orderData.payment.orderId,
+      handler: async function (response) {
+        try {
+          setLoading(true);
+          const verifyData = {
+            registrationId: orderData.registration._id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          };
+
+          const result = await audienceRegistrationsAPI.verifyPayment(verifyData);
+
+          if (result.success) {
+            toast.success(
+              `🎉 Registration Successful!\n\nTicket #${result.data.registration.ticketNumber}\n\nA confirmation email has been sent to ${formData.email}`,
+              { duration: 6000 }
+            );
+            
+            // Reset form
+            setFormData({
+              name: '',
+              address: '',
+              phoneNumber: '',
+              email: ''
+            });
+            
+            // Navigate back to event page or home after a short delay
+            setTimeout(() => {
+              navigate(-1);
+            }, 3000);
+          }
+        } catch (error) {
+          console.error('Payment verification error:', error);
+          toast.error(error.response?.data?.message || 'Payment verification failed');
+        } finally {
+          setLoading(false);
+        }
+      },
+      prefill: {
+        name: formData.name,
+        email: formData.email,
+        contact: formData.phoneNumber
+      },
+      theme: {
+        color: '#ff4757'
+      },
+      modal: {
+        ondismiss: function() {
+          setLoading(false);
+          toast.error('Payment cancelled');
+        }
+      }
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Form submission logic will be added later
-    console.log('Form submitted:', formData);
+
+    if (!event || !event._id) {
+      toast.error('Event information is missing');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const registrationData = {
+        eventId: event._id,
+        personalInfo: {
+          name: formData.name,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          address: formData.address
+        }
+      };
+
+      const response = await audienceRegistrationsAPI.createOrder(registrationData);
+
+      console.log('Registration API Response:', response);
+
+      if (response.success) {
+        console.log('Payment required:', response.data.payment.required);
+        console.log('Payment amount:', response.data.payment.amount);
+        
+        if (response.data.payment.required) {
+          // Handle payment
+          setLoading(false); // Stop loading before opening payment modal
+          await handlePayment(response.data);
+        } else {
+          // Free registration - show success message
+          toast.success(
+            `🎉 Registration Successful!\n\nTicket #${response.data.registration.ticketNumber}\n\nA confirmation email has been sent to ${formData.email}`,
+            { duration: 6000 }
+          );
+          
+          // Reset form
+          setFormData({
+            name: '',
+            address: '',
+            phoneNumber: '',
+            email: ''
+          });
+          
+          // Navigate back after a short delay
+          setTimeout(() => {
+            navigate(-1);
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGuidelinesAccept = () => {
@@ -143,8 +284,9 @@ const AudienceForm = () => {
                   type="submit"
                   style={styles.registerButton}
                   className="register-btn"
+                  disabled={loading}
                 >
-                  Register
+                  {loading ? 'Processing...' : 'Register'}
                 </button>
               </form>
             </div>

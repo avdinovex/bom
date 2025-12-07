@@ -57,7 +57,9 @@ import AdminSponsorCategories from './pages/admin/SponsorCategories';
 import AdminCoupons from './pages/admin/Coupons';
 import AdminTestimonials from './pages/admin/Testimonials';
 import AdminEventBookings from './pages/admin/EventBookings';
+import AdminAudienceRegistrations from './pages/admin/AudienceRegistrations';
 import BlogDetails from "./pages/BlogDetails.jsx";
+import RegistrationSuccess from "./pages/RegistrationSuccess.jsx";
 
 // Event Detail Wrapper Component
 function EventDetail() {
@@ -163,6 +165,7 @@ function App() {
           <Route path="/audience-or-rider" element={<AudienceOrRider />} />
           <Route path="/audience-registration" element={<AudienceForm />} />
           <Route path="/participant-registration" element={<EventBookingForm />} />
+          <Route path="/registration-success" element={<RegistrationSuccess />} />
 
            <Route path="/riders" element={<Riders />} />
           {/* User Authentication Routes */}
@@ -203,6 +206,7 @@ function App() {
             <Route path="blogs" element={<AdminBlogs />} />
             <Route path="bookings" element={<Bookings />} />
             <Route path="event-bookings" element={<AdminEventBookings />} />
+            <Route path="audience-registrations" element={<AdminAudienceRegistrations />} />
             <Route path="sponsors" element={<AdminSponsors />} />
             <Route path="sponsor-categories" element={<AdminSponsorCategories />} />
             <Route path="coupons" element={<AdminCoupons />} />

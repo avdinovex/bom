@@ -282,6 +282,11 @@ export const eventsAPI = {
     const response = await api.delete(`/admin/events/${id}`);
     return response.data;
   },
+
+  updateAudiencePricing: async (id, data) => {
+    const response = await api.patch(`/admin/events/${id}/audience-pricing`, data);
+    return response.data;
+  },
 };
 
 // Blogs API
@@ -492,6 +497,69 @@ export const publicEventsAPI = {
   
   search: async (params = {}) => {
     const response = await api.get('/events/search', { params });
+    return response.data;
+  },
+};
+
+// Audience Registrations API
+export const audienceRegistrationsAPI = {
+  // Public endpoints
+  validateCoupon: async (data) => {
+    const response = await api.post('/audience-registrations/validate-coupon', data);
+    return response.data;
+  },
+
+  createOrder: async (data) => {
+    const response = await api.post('/audience-registrations/create-order', data);
+    return response.data;
+  },
+
+  verifyPayment: async (data) => {
+    const response = await api.post('/audience-registrations/verify-payment', data);
+    return response.data;
+  },
+
+  getMyRegistrations: async () => {
+    const response = await api.get('/audience-registrations/my-registrations');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/audience-registrations/${id}`);
+    return response.data;
+  },
+
+  // Admin endpoints
+  getAll: async (params = {}) => {
+    const response = await api.get('/admin/audience-registrations', { params });
+    return response.data;
+  },
+
+  getStats: async (params = {}) => {
+    const response = await api.get('/admin/audience-registrations/stats', { params });
+    return response.data;
+  },
+
+  updateStatus: async (id, data) => {
+    const response = await api.patch(`/admin/audience-registrations/${id}/status`, data);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/admin/audience-registrations/${id}`);
+    return response.data;
+  },
+
+  resendConfirmation: async (id, data) => {
+    const response = await api.post(`/admin/audience-registrations/${id}/resend-confirmation`, data);
+    return response.data;
+  },
+
+  exportCSV: async (params = {}) => {
+    const response = await api.get('/admin/audience-registrations/export/csv', {
+      params,
+      responseType: 'blob'
+    });
     return response.data;
   },
 };

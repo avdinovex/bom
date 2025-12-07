@@ -306,6 +306,54 @@ class WhatsAppService {
       return false;
     }
   }
+
+  /**
+   * Send audience registration confirmation via WhatsApp
+   * @param {Object} registration - Audience registration object
+   * @param {Object} event - Event object
+   */
+  async sendAudienceConfirmation(registration, event) {
+    try {
+      const { personalInfo, ticketNumber, paymentInfo } = registration;
+      const eventDate = event.eventDate 
+        ? new Date(event.eventDate).toLocaleString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          })
+        : 'TBD';
+
+      const message = `🎉 *Registration Confirmed!*
+
+Dear *${personalInfo.name}*,
+
+Your registration for *${event.title}* has been confirmed successfully!
+
+*Event Details:*
+📅 Date: ${eventDate}
+📍 Location: ${event.venue?.name || event.location || 'TBD'}
+
+${ticketNumber ? `*Ticket Number:* ${ticketNumber}\n` : ''}
+${paymentInfo?.amount > 0 ? `*Amount Paid:* ₹${paymentInfo.amount}\n` : ''}
+
+*Important Instructions:*
+• Arrive 30 minutes before the event
+• Carry a valid ID proof
+• Keep this confirmation handy
+• Check your email for updates
+
+We look forward to seeing you at the event! 🎉
+
+*Brotherhood Of Mumbai*
+${process.env.FRONTEND_URL || 'https://brotherhoodofmumbai.com'}`;
+
+      await this.sendTextMessage(personalInfo.phoneNumber, message);
+      logger.info(`Audience confirmation WhatsApp sent to ${personalInfo.phoneNumber}`);
+    } catch (error) {
+      logger.error('Error sending audience confirmation WhatsApp:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

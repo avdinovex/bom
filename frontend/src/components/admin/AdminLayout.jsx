@@ -60,6 +60,11 @@ const AdminLayout = () => {
       icon: FiCreditCard
     },
     {
+      name: 'Audience Registrations',
+      href: '/admin/audience-registrations',
+      icon: FiUsers
+    },
+    {
       name: 'Events',
       href: '/admin/events',
       icon: FiCalendar

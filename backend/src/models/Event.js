@@ -280,6 +280,22 @@ const eventSchema = new Schema({
     type: Boolean,
     default: true
   },
+
+  // Audience-specific fields
+  audienceTicketPrice: {
+    type: Number,
+    default: 0,
+    min: [0, 'Audience ticket price cannot be negative']
+  },
+  audienceCapacity: {
+    type: Number,
+    min: [0, 'Audience capacity cannot be negative']
+  },
+  audienceBookedCount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Audience booked count cannot be negative']
+  },
   
   // Event Requirements & Guidelines
   requirements: {

@@ -14,12 +14,13 @@ const router = express.Router();
 // @desc    Get all events (admin)
 // @access  Admin
 router.get('/', validate(schemas.eventQuery, 'query'), asyncHandler(async (req, res) => {
-  const { page, limit, sortBy, sortOrder, category, isActive, search } = req.query;
+  const { page, limit, sortBy, sortOrder, category, isActive, status, search } = req.query;
   const { skip, limit: limitNumber, page: pageNumber } = getPagination(page, limit);
   
   const filter = {};
   if (category) filter.category = category;
   if (isActive !== undefined) filter.isActive = isActive === 'true';
+  if (status) filter.status = status;
   if (search) {
     filter.$or = [
       { title: { $regex: search, $options: 'i' } },
@@ -534,6 +535,53 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   
   await event.deleteOne();
   res.json(new ApiResponse(200, null, 'Event deleted successfully'));
+}));
+
+// @route   PATCH /api/admin/events/:id/audience-pricing
+// @desc    Update audience ticket price and capacity for an event
+// @access  Admin
+router.patch('/:id/audience-pricing', asyncHandler(async (req, res) => {
+  const { audienceTicketPrice, audienceCapacity } = req.body;
+
+  // Validate inputs
+  if (audienceTicketPrice !== undefined && (isNaN(audienceTicketPrice) || audienceTicketPrice < 0)) {
+    throw new ApiError(400, 'Invalid audience ticket price');
+  }
+
+  if (audienceCapacity !== undefined && (isNaN(audienceCapacity) || audienceCapacity < 0)) {
+    throw new ApiError(400, 'Invalid audience capacity');
+  }
+
+  const event = await Event.findById(req.params.id);
+  if (!event) {
+    throw new ApiError(404, 'Event not found');
+  }
+
+  // Update fields if provided
+  if (audienceTicketPrice !== undefined) {
+    event.audienceTicketPrice = parseFloat(audienceTicketPrice);
+  }
+
+  if (audienceCapacity !== undefined) {
+    const newCapacity = parseInt(audienceCapacity);
+    // Check if new capacity is less than already booked count
+    if (event.audienceBookedCount > newCapacity) {
+      throw new ApiError(400, `Cannot set capacity lower than current bookings (${event.audienceBookedCount})`);
+    }
+    event.audienceCapacity = newCapacity;
+  }
+
+  await event.save();
+
+  res.json(new ApiResponse(200, {
+    event: {
+      _id: event._id,
+      title: event.title,
+      audienceTicketPrice: event.audienceTicketPrice,
+      audienceCapacity: event.audienceCapacity,
+      audienceBookedCount: event.audienceBookedCount
+    }
+  }, 'Audience pricing updated successfully'));
 }));
 
 export default router;
