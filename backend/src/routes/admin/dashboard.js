@@ -179,7 +179,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
 // @desc    Get recent activity (admin)
 // @access  Admin
 router.get('/recent-activity', asyncHandler(async (req, res) => {
-  const [recentUsers, recentRideBookings, recentEventBookings, recentBlogs] = await Promise.all([
+  const [recentUsers, recentRideBookings, recentEventBookings, recentAudienceRegistrations, recentBlogs] = await Promise.all([
     User.find()
       .select('fullName email createdAt')
       .sort({ createdAt: -1 })
@@ -196,6 +196,11 @@ router.get('/recent-activity', asyncHandler(async (req, res) => {
       .select('user event amount status createdAt')
       .sort({ createdAt: -1 })
       .limit(5),
+    AudienceRegistration.find()
+      .populate('event', 'title')
+      .select('name email phoneNumber event paymentInfo.amount paymentInfo.paymentStatus createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5),
     Blog.find({ isPublished: true })
       .populate('author', 'fullName')
       .select('title author publishedAt views')
@@ -203,11 +208,18 @@ router.get('/recent-activity', asyncHandler(async (req, res) => {
       .limit(5)
   ]);
 
-  // Combine and sort ride and event bookings by date
+  // Combine and sort ride bookings, event bookings, and audience registrations by date
   const allBookings = [
     ...recentRideBookings.map(b => ({ ...b.toObject(), type: 'ride' })),
-    ...recentEventBookings.map(b => ({ ...b.toObject(), type: 'event' }))
-  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    ...recentEventBookings.map(b => ({ ...b.toObject(), type: 'event' })),
+    ...recentAudienceRegistrations.map(r => ({ 
+      ...r.toObject(), 
+      type: 'audience',
+      user: { fullName: r.name },
+      amount: r.paymentInfo?.amount || 0,
+      status: r.paymentInfo?.paymentStatus === 'completed' ? 'paid' : 'pending'
+    }))
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
 
   res.json(new ApiResponse(200, {
     recentUsers,

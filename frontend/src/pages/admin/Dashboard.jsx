@@ -87,6 +87,32 @@ const Dashboard = () => {
     }
   ], [stats, formatCurrency]);
 
+  const getBookingTypeIcon = useCallback((type) => {
+    switch(type) {
+      case 'ride':
+        return { icon: FiMap, color: 'text-purple-600', bgColor: 'bg-purple-100' };
+      case 'event':
+        return { icon: FiCalendar, color: 'text-blue-600', bgColor: 'bg-blue-100' };
+      case 'audience':
+        return { icon: FiUsers, color: 'text-green-600', bgColor: 'bg-green-100' };
+      default:
+        return { icon: FiCreditCard, color: 'text-gray-600', bgColor: 'bg-gray-100' };
+    }
+  }, []);
+
+  const getBookingTypeLabel = useCallback((type) => {
+    switch(type) {
+      case 'ride':
+        return 'Ride Booking';
+      case 'event':
+        return 'Event Booking';
+      case 'audience':
+        return 'Audience Registration';
+      default:
+        return 'Booking';
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -149,20 +175,33 @@ const Dashboard = () => {
 
                 {/* Recent Bookings */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Bookings</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Bookings & Registrations</h4>
                   {recentActivity.recentBookings?.length > 0 ? (
                     <div className="space-y-2">
-                      {recentActivity.recentBookings.slice(0, 3).map((booking, index) => (
-                        <div key={booking._id || index} className="flex items-center text-sm">
-                          <div className="h-6 w-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                            <FiCreditCard className="h-3 w-3 text-green-600" />
+                      {recentActivity.recentBookings.slice(0, 5).map((booking, index) => {
+                        const typeInfo = getBookingTypeIcon(booking.type);
+                        const TypeIcon = typeInfo.icon;
+                        return (
+                          <div key={booking._id || index} className="flex items-start text-sm border-l-2 pl-3 py-1" style={{ borderColor: typeInfo.color.replace('text-', '#') }}>
+                            <div className={`h-6 w-6 ${typeInfo.bgColor} rounded-full flex items-center justify-center mr-3 flex-shrink-0`}>
+                              <TypeIcon className={`h-3 w-3 ${typeInfo.color}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">{booking.user?.fullName}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${typeInfo.bgColor} ${typeInfo.color} font-medium`}>
+                                  {getBookingTypeLabel(booking.type)}
+                                </span>
+                              </div>
+                              <div className="text-gray-600 text-xs mt-0.5">
+                                {booking.type === 'event' ? booking.event?.title : booking.type === 'ride' ? booking.ride?.title : booking.event?.title}
+                                {' • '}
+                                <span className="font-medium text-green-600">{formatCurrency(booking.amount)}</span>
+                              </div>
+                            </div>
                           </div>
-                          <span className="font-medium">{booking.user?.fullName}</span>
-                          <span className="text-gray-500 ml-2">
-                            booked {booking.type === 'event' ? booking.event?.title : booking.ride?.title} - {formatCurrency(booking.amount)}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500">No recent bookings</p>
@@ -209,6 +248,37 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Revenue Breakdown */}
+      {stats?.revenue && (
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <FiCreditCard className="mr-2 h-5 w-5" />
+              Revenue Breakdown
+            </h3>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-600 mb-1">Ride Bookings</p>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.revenue.rideRevenue || 0)}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats.revenue.rideBookings || 0} bookings</p>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-600 mb-1">Event Bookings</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.revenue.eventRevenue || 0)}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats.revenue.eventBookings || 0} bookings</p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-600 mb-1">Audience Registrations</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.revenue.audienceRevenue || 0)}</p>
+                <p className="text-sm text-gray-500 mt-1">{stats.revenue.audienceRegistrations || 0} registrations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Monthly Growth Chart Placeholder */}
       {stats?.monthlyGrowth && (

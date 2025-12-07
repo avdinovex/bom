@@ -217,7 +217,7 @@ router.post('/seed', asyncHandler(async (req, res) => {
   const defaultConfigs = [
     {
       entityType: 'audience',
-      displayName: 'Audience',
+      displayName: 'Audience - One Day Pass',
       icon: 'Eye',
       description: 'Join us as a spectator and witness the thrill of the event. Perfect for enthusiasts who want to experience the excitement without riding.',
       features: [

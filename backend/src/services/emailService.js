@@ -733,7 +733,14 @@ class EmailService {
 
     try {
       const { personalInfo, paymentInfo, ticketNumber } = registration;
-      const eventDate = this.formatDateToIST(event.eventDate);
+      // Format date without time
+      const eventDate = this.formatDateToIST(event.eventDate || event.startDate, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Asia/Kolkata'
+      });
 
       const mailOptions = {
         from: `"Brotherhood Of Mumbai" <${process.env.EMAIL_USER}>`,
@@ -844,7 +851,7 @@ class EmailService {
                   <span class="detail-value">${event.title}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">Date & Time:</span>
+                  <span class="detail-label">Date:</span>
                   <span class="detail-value">${eventDate}</span>
                 </div>
                 ${event.venue?.name ? `
@@ -894,6 +901,25 @@ class EmailService {
                     <li>Check your email regularly for any event updates</li>
                     <li>Follow all event guidelines and instructions from the organizers</li>
                   </ul>
+                </div>
+
+                <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                  <strong style="color: #ff9800;">⚠️ Terms & Conditions:</strong>
+                  <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                    <li>Tickets are non-refundable & non-transferable.</li>
+                    <li>Valid ID & digital ticket required for entry.</li>
+                    <li>Access only to spectator zones; no entry into paddock / track areas.</li>
+                    <li>No outside food, drinks, alcohol, drugs allowed.</li>
+                    <li>Weapons & hazardous items banned.</li>
+                    <li>Follow staff & security instructions.</li>
+                    <li>Organizers not responsible for lost belongings.</li>
+                    <li>Photos/videos only from allowed areas; no drones.</li>
+                    <li>Parking at your own risk.</li>
+                    <li>Misconduct may result in removal without refund.</li>
+                    <li>Audience attends at own risk; organizers not liable for injuries.</li>
+                    <li>Wristband must be worn at all times.</li>
+                  </ol>
+                  <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">By attending this event, you agree to abide by all terms and conditions.</p>
                 </div>
 
                 <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
