@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiUser, FiCreditCard, FiCheck, FiArrowLeft, FiArrowRight, FiUsers, FiX, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import GuidelinesPopup from './PopUp';
 
-const EventBookingForm = ({ event, onClose, onSuccess }) => {
+const EventBookingForm = ({ event: eventProp, onClose, onSuccess }) => {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get event from prop or location state
+  const event = eventProp || location.state?.event;
+  
+  // Handle close action - use provided onClose or navigate back
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/events');
+    }
+  };
+  
+  // Redirect if no event data available
+  React.useEffect(() => {
+    if (!event) {
+      toast.error('No event data found. Please select an event first.');
+      navigate('/events');
+    }
+  }, [event, navigate]);
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingType, setBookingType] = useState('individual');
   const [loading, setLoading] = useState(false);
@@ -45,6 +68,11 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
     // If user closes without accepting, go back
     navigate(-1);
   };
+
+  // Early return if no event data (will redirect via useEffect)
+  if (!event) {
+    return null;
+  }
 
   // Show guidelines popup first
   if (showGuidelines) {
@@ -122,6 +150,11 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error('Please enter a coupon code');
+      return;
+    }
+
+    if (!event) {
+      toast.error('Event data not available. Please try again.');
       return;
     }
 
@@ -246,6 +279,16 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   };
 
   const calculateTotal = () => {
+    // Return zero values if no event data
+    if (!event) {
+      return {
+        subtotal: 0,
+        discount: 0,
+        total: 0,
+        pricePerPerson: 0
+      };
+    }
+    
     const groupSize = bookingType === 'group' ? formData.groupMembers.length : 1;
     
     // Calculate price with early bird pricing if applicable
@@ -274,6 +317,11 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
   };
 
   const handlePayment = async () => {
+    if (!event) {
+      toast.error('Event data not available. Please try again.');
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -380,7 +428,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
         },
         modal: {
           ondismiss: () => {
-            toast.info('Payment cancelled or closed');
+            toast('Payment cancelled or closed');
             setLoading(false);
           },
           confirm_close: true,
@@ -976,13 +1024,13 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       </div>
       <h2 style={styles.successTitle}>Booking Confirmed!</h2>
       <p style={styles.successText}>
-        Your {bookingType === 'group' ? 'group ' : ''}booking for <strong>{event.title}</strong> has been confirmed.
+        Your {bookingType === 'group' ? 'group ' : ''}booking for <strong>{event?.title || 'the event'}</strong> has been confirmed.
         {bookingType === 'group' && ` Total riders: ${formData.groupMembers.length}`}
       </p>
       <p style={styles.successSubText}>
         A confirmation email has been sent to <strong>{formData.email}</strong>
       </p>
-      <button onClick={onClose} style={styles.closeButton}>
+      <button onClick={handleClose} style={styles.closeButton}>
         Close
       </button>
     </div>
@@ -993,7 +1041,7 @@ const EventBookingForm = ({ event, onClose, onSuccess }) => {
       <div style={styles.modal}>
         <div style={styles.header}>
           <h2 style={styles.title}>Book Your Ride</h2>
-          <button onClick={onClose} style={styles.closeBtn}>×</button>
+          <button onClick={handleClose} style={styles.closeBtn}>×</button>
         </div>
 
         <div style={styles.progressBar}>
